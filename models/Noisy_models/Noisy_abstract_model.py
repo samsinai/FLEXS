@@ -8,17 +8,15 @@ class Noisy_abstract_model(Model):
     """Behaves like a ground truth model however corrupts a ground truth model with noise,
     which is modulated by distance to already measured sequences"""
 
-    def __init__(self,ground_truth_oracle, bias=0, max_uncertainty=1, signal_strength=0.5, cache=True, landscape_id=-1, start_id=-1):
+    def __init__(self,ground_truth_oracle, signal_strength=0.9, cache=True, landscape_id=-1, start_id=-1):
         self.oracle = ground_truth_oracle
         self.measured_sequences = {} # save the measured sequences for the model
         self.model_sequences = {} # cache the sequences for later queries
         self.cost = 0
         self.evals = 0
-        self._bias = bias
-        self.max_uncertainty = max_uncertainty
         self.ss = signal_strength
         self.cache = cache
-        self.model_type =f'NAMb{self._bias}ss{self.ss}maxunc{self.max_uncertainty}'
+        self.model_type =f'NAMb_ss{self.ss}'
         self.landscape_id = landscape_id
         self.start_id = start_id
 
@@ -49,13 +47,11 @@ class Noisy_abstract_model(Model):
 
     def add_noise(self,sequence,distance, neighbor_seq):
         signal = self.oracle.get_fitness(sequence)
-        #neighbor_seq_fitness = self.oracle.get_fitness(neighbor_seq) 
-        # noise = np.random.normal(distance * self._bias * neighbor_seq_fitness,
-        #  scale = neighbor_seq_fitness* min(self.max_uncertainty,distance)**2)
-        noise = neighbor_seq_fitness*(1+np.random.normal(distance * self._bias , scale = min(self.max_uncertainty, distance)**2))
-        #noise = neighbor_seq_fitness*(1+np.random.normal(self._bias , scale = self.max_uncertainty**2))
+        neighbor_seq_fitness = self.oracle.get_fitness(neighbor_seq) 
 
-        alpha = (self.ss) #** distance 
+        noise = np.random.exponential(scale=neighbor_seq_fitness) 
+
+        alpha = (self.ss) ** distance 
         return signal,noise,alpha
 
 

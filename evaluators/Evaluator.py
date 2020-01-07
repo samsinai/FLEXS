@@ -87,7 +87,6 @@ class Evaluator():
                   landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id,\
                                       "signal_strength": ss , \
-                                      "max_uncertainty": 4 ,\
                                        }
                   self.run_on_NAM(oracle,landscape_idents, start_seq)
               landscape_idents={"landscape_id":landscape_id,\
@@ -102,7 +101,6 @@ class Evaluator():
         landscape_idents={"landscape_id":landscape_id,\
                                   "start_id":start_seq_id,\
                                   "signal_strength": 1 , \
-                                  "max_uncertainty": 4 ,\
                                    }
         self.explorer.batch_size = 100
         for virtual_screen in [1, 10, 100, 1000]:
@@ -117,7 +115,6 @@ class Evaluator():
         landscape_idents={"landscape_id":landscape_id,\
                                   "start_id":start_seq_id,\
                                   "signal_strength": 1 , \
-                                  "max_uncertainty": 4 ,\
                                    }
         for num_batches in [1, 10, 100, 1000]:
             self.explorer.batch_size = int(1000/num_batches)
@@ -132,7 +129,6 @@ class Evaluator():
         landscape_idents={"landscape_id":landscape_id,\
                                   "start_id":start_seq_id,\
                                   "signal_strength": 1 , \
-                                  "max_uncertainty": 4 ,\
                                    }
         with open(self.explorer.path+f'times{landscape_id}.csv', 'a') as outfile:
             out_string = "landscape_id,batch_size,virtual_screen,time_3xrounds\n"
