@@ -32,7 +32,7 @@ class Noisy_abstract_model(Model):
         new_dist = 1000
         closest = None
         for seq in self.measured_sequences:
-            dist=editdistance.eval(sequence,seq)
+            dist = editdistance.eval(sequence,seq)
             if dist==1:
                new_dist=1
                closest = seq
@@ -49,7 +49,7 @@ class Noisy_abstract_model(Model):
         signal = self.oracle.get_fitness(sequence)
         neighbor_seq_fitness = self.oracle.get_fitness(neighbor_seq) 
 
-        noise = np.random.exponential(scale=neighbor_seq_fitness) 
+        noise = np.random.exponential(scale = neighbor_seq_fitness) 
 
         alpha = (self.ss) ** distance 
         return signal,noise,alpha
@@ -90,5 +90,31 @@ class Noisy_abstract_model(Model):
             self.evals += 1
             return self.model_sequences[sequence]   
 
+
+class Null_model(Noisy_abstract_model):
+
+    def __init__(self, ground_truth_oracle,cache=True, landscape_id=-1, start_id=-1):
+        self.measured_sequences = {} # save the measured sequences for the model
+        self.model_sequences = {} # cache the sequences for later queries
+        self.cost = 0
+        self.evals = 0
+        self.cache = cache
+        self.model_type =f'Null'
+        self.landscape_id = landscape_id
+        self.start_id = start_id
+        self.oracle = ground_truth_oracle
+        self.average_fitness = 0
+   
+    def update_model(self,new_sequences):
+        self.measure_true_landscape(new_sequences)
+        fitnesses = []
+        for seq in self.measured_sequences:
+            fitnesses.append(self.measured_sequences[seq])
+        self.average_fitness = np.mean(fitnesses)
+
+    def _fitness_function(self,sequence):
+
+        surrogate_fitness = np.random.exponential(scale = self.average_fitness) 
+        return surrogate_fitness
 
 

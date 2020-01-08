@@ -8,7 +8,7 @@ class TF_binding_landscape_constructor():
        self.loaded_landscapes=[]
        self.starting_seqs = {}
 
-    def load_landscapes(self,data_path="data/TF_binding_landscapes", landscapes_to_test = None):
+    def load_landscapes(self,data_path="../data/TF_binding_landscapes", landscapes_to_test = None):
         start_seqs= pd.read_csv(f'{data_path}/TF_starting_id.csv', sep=",")
         for i, row in start_seqs.iterrows():
             self.starting_seqs[row["id"]] = row["start"] 
@@ -25,7 +25,7 @@ class TF_binding_landscape_constructor():
         
     def construct_landscape_object(self,landscape_file):
 
-        landscape_id = landscape_file.strip("data/TF_binding_landscapes/landscapes/").strip("_8mers.txt")
+        landscape_id = landscape_file.strip("../data/TF_binding_landscapes/landscapes/").strip("_8mers.txt")
         landscape = TF_binding_landscape()
         landscape.construct(landscape_file)
 

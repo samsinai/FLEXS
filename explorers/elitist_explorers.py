@@ -120,12 +120,12 @@ class XE_IS(Base_explorer):
 class Greedy(XE_IS):
 
 
-    def __init__(self, mu=0.01, recomb_rate=0, threshold=0.05, batch_size = 100, alphabet ="UCGA" , virtual_screen = 10, rho=1, path = "./simulations/" , debug=False):
+    def __init__(self, mu=1, recomb_rate=0, threshold=0.05, batch_size = 100, alphabet ="UCGA" , virtual_screen = 10, rho=1, path = "./simulations/" , debug=False):
         
         super(Greedy, self).__init__(batch_size=batch_size, alphabet=alphabet, virtual_screen=virtual_screen, path=path, debug= debug)
         self.threshold = threshold
         self.recomb_rate = recomb_rate
-        self.mu = mu
+        self.mu = mu #number of mutations per *sequence*.
         self.rho = rho
         self.explorer_type = f'Greedy_mu{self.mu}_tr{self.threshold}_r{self.recomb_rate}_rho{self.rho}'
 
@@ -191,10 +191,10 @@ class Greedy(XE_IS):
 
 
             for seq in parents:
-                child = generate_random_mutant(seq, self.mu ,self.alphabet)
+                child = generate_random_mutant(seq, self.mu*1/len(seq) ,self.alphabet)
                 children = [child]
                 while len(ret)+len(children) < self.virtual_screen * self.batch_size and self.model.get_fitness(child) > self.model.get_fitness(seq) :
-                    child = generate_random_mutant(seq, self.mu ,self.alphabet)
+                    child = generate_random_mutant(seq, self.mu * 1/len(seq),self.alphabet)
                     children.append(child)
                 ret.extend(children)
             ret = self._remove_ineligibles(ret)

@@ -27,9 +27,7 @@ class Base_explorer(Explorer):
         with open(self.file_to_write,"a") as output_file:
                 batch = self.get_last_batch()
                 for sequence in self.batches[batch]:
-                        output_file.write(f'{batch},{sequence},{self.batches[batch][sequence][1]},\
-                            {self.batches[batch][sequence][0]},{self.batch_size},{self.model.cost},{self.model.evals},{self.model.landscape_id},\
-                            {self.model.start_id},{self.model.model_type},{self.virtual_screen}, {self.horizon},{self.explorer_type}\n')
+                        output_file.write(f'{batch},{sequence},{self.batches[batch][sequence][1]},{self.batches[batch][sequence][0]},{self.batch_size},{self.model.cost},{self.model.evals},{self.model.landscape_id},{self.model.start_id},{self.model.model_type},{self.virtual_screen}, {self.horizon},{self.explorer_type}\n')
 
 
     def get_last_batch(self):

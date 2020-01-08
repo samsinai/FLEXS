@@ -1,17 +1,18 @@
 
 import yaml 
-from models.Noisy_models.Noisy_abstract_model import Noisy_abstract_model
+from models.Noisy_models.Noisy_abstract_model import Noisy_abstract_model, Null_model
 from models.Noisy_models.Neural_network_models import NN_model
-from itertools import chain
+from pathlib import Path
 
 LANDSCAPE_TYPES ={"RNA": [2],"TF": []}#["RNA","TF","GFP","ADDITIVE"]
 LANDSCAPE_ALPHABET={"RNA": "UCGA", "TF": "TCGA"}
 
 
 class Evaluator():
-    def __init__(self, explorer, landscape_types = LANDSCAPE_TYPES, path="./simulations/evals/"):
+    def __init__(self, explorer, landscape_types = LANDSCAPE_TYPES, path="./simulations/property_evaluation/"):
         self.explorer = explorer
-        self.path =  path      
+        self.path =  path
+        Path(self.path).mkdir(exist_ok=True)      
         #self.dict_explorer_args = dict_explorer_args
         self.landscape_types = landscape_types
         self.landscape_generator = {}
@@ -22,7 +23,7 @@ class Evaluator():
         if "RNA" in self.landscape_types:
             from models.Ground_truth_oracles.RNA_landscape_models import RNA_landscape_constructor
             RNALconstructor = RNA_landscape_constructor()
-            RNALconstructor.load_landscapes("data/RNA_landscapes/RNA_landscape_config.yaml", landscapes_to_test=self.landscape_types["RNA"])
+            RNALconstructor.load_landscapes("../data/RNA_landscapes/RNA_landscape_config.yaml", landscapes_to_test=self.landscape_types["RNA"])
             self.landscape_generator["RNA"] = RNALconstructor.generate_from_loaded_landscapes()
 
         if "TF" in self.landscape_types:
@@ -33,6 +34,18 @@ class Evaluator():
 
         print (f'loading complete')
 
+    def run_on_null_model(self, landscape_oracle, Null_args, start_seq, num_batches = 10, hot_start = False, verbose = False, overwrite = False):
+
+        noisy_landscape = Null_model(landscape_oracle,**Null_args)
+        start_seq = start_seq
+        if hot_start:
+           pass
+        else: 
+           noisy_landscape.reset([start_seq])
+        self.explorer.set_model(noisy_landscape)
+        self.explorer.run(num_batches, overwrite, verbose)
+
+
     def run_on_NAM(self, landscape_oracle, NAM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False):
 
         noisy_landscape = Noisy_abstract_model(landscape_oracle,**NAM_args)
@@ -42,7 +55,7 @@ class Evaluator():
         else: 
            noisy_landscape.reset([start_seq])
         self.explorer.set_model(noisy_landscape)
-        self.explorer.run(num_batches, verbose, overwrite)
+        self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
 
     def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False):
         
@@ -76,26 +89,31 @@ class Evaluator():
                       start_seq = landscape["starting_seqs"][starting_seq]
                       property_of_interest_evaluator(oracle, start_seq, landscape_id, start_seq_id)
                       starts_per_landscape += 1
-                      if starts_per_landscape == num_starts:
+                      if starts_per_landscape >= num_starts:
                          break
             
     def consistency_robustness_independence(self, oracle, start_seq, landscape_id, start_seq_id):
-              self.explorer.path =  self.path +"CRI/"
+              Path(self.path+ "consistency_robustness_independence/").mkdir(exist_ok=True)
+              self.explorer.path = self.path+"consistency_robustness_independence/" 
+
               print (f'start seq {start_seq_id}')
 
-              for ss in [0,0.5,0.95,1]:
+              for ss in [0,0.5,0.9,1]:
                   landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id,\
                                       "signal_strength": ss , \
                                        }
-                  self.run_on_NAM(oracle,landscape_idents, start_seq)
+                  self.run_on_NAM(oracle,landscape_idents, start_seq, verbose=True)
               landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id}
               self.run_on_NNmodel(oracle,landscape_idents, start_seq)
+              self.run_on_null_model(oracle,landscape_idents,start_seq)
 
 
     def efficiency(self, oracle, start_seq, landscape_id, start_seq_id):
-        self.explorer.path =  self.path + "EF/"
+        Path(self.path+ "efficiency/").mkdir(exist_ok=True)
+        self.explorer.path = self.path+"efficiency/" 
+
         print (f'start seq {start_seq_id}')
 
         landscape_idents={"landscape_id":landscape_id,\
@@ -109,7 +127,9 @@ class Evaluator():
 
 
     def adaptivity(self, oracle, start_seq, landscape_id, start_seq_id):
-        self.explorer.path =  self.path + "ADAP/"
+        Path(self.path+ "adaptivity/").mkdir(exist_ok=True)
+        self.explorer.path =  self.path+ "adaptivity/"
+
         print (f'start seq {start_seq_id}')
 
         landscape_idents={"landscape_id":landscape_id,\
@@ -123,7 +143,9 @@ class Evaluator():
 
     def scalability(self, oracle, start_seq, landscape_id, start_seq_id):
         import time
-        self.explorer.path =  self.path + "SCA/"
+        Path(self.path+ "scalability/").mkdir(exist_ok=True)
+        self.explorer.path =  self.path+ "scalability/"
+
         self.explorer.debug = True
         print (f'start seq {start_seq_id}')
         landscape_idents={"landscape_id":landscape_id,\
