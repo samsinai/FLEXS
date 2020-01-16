@@ -8,6 +8,45 @@ RNAA="UGCA" # RNA alphabet
 DNAA= "TGCA" # DNA alphabet
 BA="01" #  binary alphabet
 
+def renormalize_moves(one_hot_input,rewards_output):
+    """ensures that staying in place gives no reward"""
+    zero_current_state=(one_hot_input-1)*-1
+    return np.multiply(rewards_output,zero_current_state)
+    
+def sample_greedy(matrix):
+    i,j=matrix.shape
+    max_arg=np.argmax(matrix)
+    y=max_arg%j
+    x=int(max_arg/j)
+    output=np.zeros((i,j))
+    output[x][y]=matrix[x][y]
+    return output
+
+def sample_random(matrix):
+    i,j=matrix.shape
+    non_zero_moves=np.nonzero(matrix)
+   # print (non_zero_moves)
+    k=len(non_zero_moves)
+    l=len(non_zero_moves[0])
+    if k!=0 and l!=0:
+        rand_arg=random.choice([[non_zero_moves[alph][pos] for alph in range(k)] for pos in range(l)])
+    else:
+        rand_arg=[random.randint(0,i-1),random.randint(0,j-1)]
+    #print (rand_arg)
+    y=rand_arg[1]
+    x=rand_arg[0]
+    output=np.zeros((i,j))
+    output[x][y]=matrix[x][y]
+    return output   
+    
+def construct_mutant_from_sample(pwm_sample,one_hot_base):
+    one_hot = np.zeros(one_hot_base.shape)
+    one_hot += one_hot_base
+    i,j = np.nonzero(pwm_sample)# this can be problematic for non-positive fitnesses
+    one_hot[:,j] = 0
+    one_hot[i,j] = 1
+    return one_hot
+
 def translate_string_to_one_hot(sequence,order_list):
     out=np.zeros((len(order_list),len(sequence)))
     for i in range(len(sequence)):
