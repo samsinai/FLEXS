@@ -52,7 +52,7 @@ class DQN_Explorer(Base_explorer):
     '''
     def __init__(self, batch_size=100, alphabet='UCGA',
                  virtual_screen=10, path="./simulations/", debug=False, 
-                 memory_size=100000, train_epochs=40,
+                 seq_len=40, memory_size=100000, train_epochs=40,
                  generations=10, gamma=0.9, device = "cpu", noise_alpha=1):
         '''
         Unintuitive variables:
@@ -65,17 +65,17 @@ class DQN_Explorer(Base_explorer):
         super(DQN_Explorer, self).__init__(batch_size=batch_size, alphabet=alphabet, virtual_screen=virtual_screen, path=path, debug=debug)
         self.explorer_type='DQN_Explorer'
         self.alphabet_size = len(alphabet)
-        start_sequence = generate_random_sequences(40, 1, alphabet=self.alphabet)[0]
+        start_sequence = generate_random_sequences(seq_len, 1, alphabet=self.alphabet)[0]
         self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
-        self.seq_size = len(start_sequence)
-        self.q_network = build_q_network(self.seq_size, len(self.alphabet), device)
+        self.seq_len = len(start_sequence)
+        self.q_network = build_q_network(self.seq_len, len(self.alphabet), device)
         self.q_network.eval()
         self.start_sequence = translate_string_to_one_hot(start_sequence, self.alphabet)
         self.memory_size = memory_size
         self.batch_size = batch_size
         self.gamma = gamma 
         self.generations = generations 
-        self.memory = PrioritizedReplayBuffer(len(self.alphabet) * self.seq_size, 
+        self.memory = PrioritizedReplayBuffer(len(self.alphabet) * self.seq_len, 
                                               memory_size, batch_size, 0.6)
         self.best_fitness = 0
         
@@ -106,7 +106,7 @@ class DQN_Explorer(Base_explorer):
         return np.array(rewards), np.array(actions), np.array(states), np.array(next_states) 
     
     def calculate_next_q_values(self, state_v):
-        dim = self.alphabet_size * self.seq_size
+        dim = self.alphabet_size * self.seq_len
         states_repeated = state_v.repeat(1, dim).reshape(-1, dim)
         actions_repeated = torch.FloatTensor(np.identity(dim)).repeat(len(state_v), 1)
         next_states_actions = torch.cat((states_repeated, actions_repeated), 1)
@@ -151,7 +151,7 @@ class DQN_Explorer(Base_explorer):
     def get_action_and_mutant(self, epsilon):
         state_tensor = torch.FloatTensor([self.state.ravel()])
         prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
-        prediction = prediction.reshape((len(self.alphabet), self.seq_size))
+        prediction = prediction.reshape((len(self.alphabet), self.seq_len))
         # make action
         moves = renormalize_moves(self.state, prediction)
         p = random.random()
@@ -173,7 +173,7 @@ class DQN_Explorer(Base_explorer):
             if reward >= self.best_fitness:
                 state_tensor = torch.FloatTensor([self.state.ravel()])
                 prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
-                prediction = prediction.reshape((len(self.alphabet), self.seq_size))
+                prediction = prediction.reshape((len(self.alphabet), self.seq_len))
                 self.top_sequence.append((reward, new_state, self.model.cost))
             self.best_fitness = max(self.best_fitness, reward)
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())

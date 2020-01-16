@@ -43,13 +43,13 @@ from utils.replay_buffers import PrioritizedReplayBuffer
 class BO_Explorer(Base_explorer):
     def __init__(self, batch_size=100, alphabet='UCGA',
                  virtual_screen=10, path="./simulations/", debug=False, 
-                 method = 'EI', train_epochs=10):
+                 seq_len=40, method = 'EI', train_epochs=10):
         super(BO_Explorer, self).__init__(batch_size=batch_size, alphabet=alphabet, virtual_screen=virtual_screen, path=path, debug=debug)
         self.explorer_type='BO_Ensemble'
         self.alphabet_len = len(alphabet)
-        start_sequence = generate_random_sequences(40, 1, alphabet=self.alphabet)[0]
+        start_sequence = generate_random_sequences(seq_len, 1, alphabet=self.alphabet)[0]
         self.state = translate_string_to_one_hot(start_sequence, alphabet)
-        self.seq_len = 40
+        self.seq_len = seq_len
         self.method = method
         self.batch_size = batch_size 
         self.train_epochs = train_epochs
