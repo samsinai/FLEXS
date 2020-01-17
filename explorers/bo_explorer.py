@@ -47,8 +47,6 @@ class BO_Explorer(Base_explorer):
         super(BO_Explorer, self).__init__(batch_size=batch_size, alphabet=alphabet, virtual_screen=virtual_screen, path=path, debug=debug)
         self.explorer_type='BO_Ensemble'
         self.alphabet_len = len(alphabet)
-        start_sequence = generate_random_sequences(seq_len, 1, alphabet=self.alphabet)[0]
-        self.state = translate_string_to_one_hot(start_sequence, alphabet)
         self.seq_len = seq_len
         self.method = method
         self.batch_size = batch_size 
@@ -57,9 +55,8 @@ class BO_Explorer(Base_explorer):
         self.best_fitness = 0
         self.top_sequence = []
         # use PER buffer, same as in DQN 
-        self.memory = PrioritizedReplayBuffer(self.alphabet_len*self.seq_len, 
-                                              100000, batch_size, 0.6)
         self.ensemble = self.create_ensemble()
+        self.total_actions = 0
 
     def create_model(self, kernel_initializer, kernel_regularizer, bias_initializer):
         input_layer = Input(shape=(self.alphabet_len*self.seq_len,))
@@ -90,7 +87,6 @@ class BO_Explorer(Base_explorer):
         return ensemble 
     
     def train_models(self):
-        print('Training models')
         for i in range(len(self.ensemble)):
             for epoch in range(self.train_epochs):
                 batch = self.memory.sample_batch()
@@ -104,8 +100,18 @@ class BO_Explorer(Base_explorer):
     def UCB(self, vals):
         discount = 0.01 
         return np.mean(vals) - discount*np.std(vals)
+
+    def initialize_data_structures(self):
+        start_sequence = list(self.model.measured_sequences)[0]
+        self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
+        self.seq_len = len(start_sequence)
+        self.memory = PrioritizedReplayBuffer(self.alphabet_len*self.seq_len, 
+                                              100000, self.batch_size, 0.6) 
                    
     def pick_action(self):
+        if self.total_actions == 0:
+            # if model/start sequence got reset
+            self.initialize_data_structures()
         state = self.state.copy()
         possible_actions = [(i, j) for i in range(self.alphabet_len) 
                             for j in range(self.seq_len) if state[i, j] == 0]
@@ -140,10 +146,11 @@ class BO_Explorer(Base_explorer):
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
         if self.model.cost % self.batch_size == 0 and self.model.cost > 0:
             self.train_models()
+        self.total_actions += 1
             
     def propose_samples(self):
         samples = []
         for _ in range(self.batch_size):
-            samples.append(translate_one_hot_to_string(self.state,self.alphabet))
             self.pick_action()
+            samples.append(translate_one_hot_to_string(self.state,self.alphabet))
         return samples 

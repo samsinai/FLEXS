@@ -65,26 +65,16 @@ class DQN_Explorer(Base_explorer):
         super(DQN_Explorer, self).__init__(batch_size=batch_size, alphabet=alphabet, virtual_screen=virtual_screen, path=path, debug=debug)
         self.explorer_type='DQN_Explorer'
         self.alphabet_size = len(alphabet)
-        start_sequence = generate_random_sequences(seq_len, 1, alphabet=self.alphabet)[0]
-        self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
-        self.seq_len = len(start_sequence)
-        self.q_network = build_q_network(self.seq_len, len(self.alphabet), device)
-        self.q_network.eval()
-        self.start_sequence = translate_string_to_one_hot(start_sequence, self.alphabet)
         self.memory_size = memory_size
-        self.batch_size = batch_size
         self.gamma = gamma 
         self.generations = generations 
-        self.memory = PrioritizedReplayBuffer(len(self.alphabet) * self.seq_len, 
-                                              memory_size, batch_size, 0.6)
         self.best_fitness = 0
-        
         self.train_epochs = train_epochs
         self.epsilon_min = 0.1
-        
+        self.device = device
         self.top_sequence = []
-
         self.times_seen = Counter()
+        self.total_actions = 0
         
     def reset_position(self,sequence):
         self.state=translate_string_to_one_hot(sequence,self.alphabet)
@@ -163,7 +153,19 @@ class DQN_Explorer(Base_explorer):
 
         return action, mutant
     
+    def initialize_data_structures(self):
+        start_sequence = list(self.model.measured_sequences)[0]
+        self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
+        self.seq_len = len(start_sequence)
+        self.q_network = build_q_network(self.seq_len, len(self.alphabet), self.device)
+        self.q_network.eval()
+        self.memory = PrioritizedReplayBuffer(len(self.alphabet) * self.seq_len, 
+                                                self.memory_size, self.batch_size, 0.6)            
+    
     def pick_action(self):
+        if self.total_actions == 0:
+            # if model/start sequence got reset
+            self.initialize_data_structures()
         eps = max(self.epsilon_min, (0.5 - self.model.cost / (self.batch_size * self.generations)))
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)
@@ -179,11 +181,12 @@ class DQN_Explorer(Base_explorer):
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
         if self.model.cost > 0 and self.model.cost % self.batch_size == 0:
             avg_loss = self.train_actor(self.train_epochs)
+        self.total_actions += 1
     
     def propose_samples(self):
         samples = []
         for _ in range(self.batch_size):
-            samples.append(translate_one_hot_to_string(self.state, self.alphabet))
             self.pick_action()
+            samples.append(translate_one_hot_to_string(self.state, self.alphabet))
         return samples 
             
