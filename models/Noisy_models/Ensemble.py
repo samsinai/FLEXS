@@ -8,8 +8,31 @@ class Ensemble_models(Model):
 
       @property
       def model_type(self):
-          return ("_").join(model.model_type for model in self.models)
+          return "ENS_"+("_").join(model.model_type for model in self.models)
 
+      @property      
+      def measured_sequences(self):
+          measured_sequences_out = {}
+          for model in self.models:
+              measured_sequences_out.update(model.measured_sequences)
+          return measured_sequences_out
+
+      @property
+      def cost(self):
+          return len(self.measured_sequences)
+      
+      @property
+      def evals(self):
+        return sum([model.evals for model in self.models])
+
+      @property
+      def landscape_id(self):
+        return self.models[0].landscape_id
+
+      @property
+      def start_id(self):
+        return self.models[0].start_id      
+      
       def add_model(self, model):
           self.list_of_models.append(model)
 
@@ -23,6 +46,7 @@ class Ensemble_models(Model):
       def update_model(self,sequences):
           for model in self.models:
               model.update_model(sequences)
+
       def get_r2s(self):
           r2s=[]
           for model in self.models:
