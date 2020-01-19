@@ -1,3 +1,4 @@
+import copy 
 import os 
 from collections import deque, Counter
 import random
@@ -183,10 +184,29 @@ class DQN_Explorer(Base_explorer):
             avg_loss = self.train_actor(self.train_epochs)
         self.total_actions += 1
     
+    '''       
+    def propose_samples(self):
+        samples = []
+        init_cost = copy.deepcopy(self.model.cost) 
+        total_proposed = 0
+        # try to make as many new sequences as possible, then fill the remainder up 
+        while (self.model.cost - init_cost) < self.batch_size and \
+            total_proposed < self.batch_size*self.virtual_screen - (self.model.cost - init_cost):
+            cost = copy.deepcopy(self.model.cost) 
+            self.pick_action()
+            if cost != self.model.cost: # new sequence
+                samples.append(translate_one_hot_to_string(self.state, self.alphabet))
+            total_proposed += 1
+        new_seq_made = (self.model.cost - init_cost)
+        for _ in range(self.batch_size - new_seq_made):
+            self.pick_action()
+            samples.append(translate_one_hot_to_string(self.state, self.alphabet))
+        return samples 
+    '''
     def propose_samples(self):
         samples = []
         for _ in range(self.batch_size):
             self.pick_action()
-            samples.append(translate_one_hot_to_string(self.state, self.alphabet))
+            samples.append(translate_one_hot_to_string(self.state,self.alphabet))
         return samples 
             

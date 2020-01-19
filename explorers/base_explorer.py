@@ -1,6 +1,6 @@
-from flsd.meta.explorer import Explorer
+from meta.explorer import Explorer
 import os.path
-from flsd.utils.sequence_utils import generate_random_mutant
+from utils.sequence_utils import generate_random_mutant
 
 
 class Base_explorer(Explorer):
