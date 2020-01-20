@@ -55,7 +55,7 @@ class BO_Explorer(Base_explorer):
         self.best_fitness = 0
         self.top_sequence = []
         # use PER buffer, same as in DQN 
-        self.total_actions = 0
+        self.model_type = 'blank'
     
     def train_models(self):
         for i in range(len(self.model.models)):
@@ -78,7 +78,7 @@ class BO_Explorer(Base_explorer):
                                               100000, self.batch_size, 0.6) 
                    
     def pick_action(self):
-        if self.total_actions == 0:
+        if self.model.cost == 0:
             # if model/start sequence got reset
             self.initialize_data_structures()
         state = self.state.copy()
@@ -95,17 +95,16 @@ class BO_Explorer(Base_explorer):
             x[actions[i]] = 1 
             actions_to_screen.append(x)
             state_to_screen = construct_mutant_from_sample(x, state)
-            states_to_screen.append(state_to_screen)
-        states_to_screen = np.array(states_to_screen).reshape((len(states_to_screen), -1))
-        ensemble_preds = [self.model.get_fitness(state) for state in states_to_screen]
+            states_to_screen.append(translate_one_hot_to_string(state_to_screen, self.alphabet))
+        ensemble_preds = [self.model.get_fitness_distribution(state) for state in states_to_screen]
         method_pred = [self.EI(vals) for vals in ensemble_preds] if self.method == 'EI' \
             else [self.UCB(vals) for vals in ensemble_preds]
         action_ind = np.argmax(method_pred)
         action = actions_to_screen[action_ind]
-        new_state = states_to_screen[action_ind].reshape((self.alphabet_len, self.seq_len))
-        self.state = new_state
+        new_state_string = states_to_screen[action_ind]
+        self.state = translate_string_to_one_hot(new_state_string, self.alphabet)
+        new_state = self.state
         reward = np.mean(ensemble_preds[action_ind])
-        new_state_string = translate_one_hot_to_string(new_state, self.alphabet)
         if not new_state_string in self.model.measured_sequences:
             if reward >= self.best_fitness:
                 self.top_sequence.append((reward, new_state, self.model.cost))
@@ -113,7 +112,6 @@ class BO_Explorer(Base_explorer):
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
         if self.model.cost % self.batch_size == 0 and self.model.cost > 0:
             self.train_models()
-        self.total_actions += 1
 
     '''       
     def propose_samples(self):
@@ -136,6 +134,10 @@ class BO_Explorer(Base_explorer):
     '''
     def propose_samples(self):
         samples = []
+        if self.model.model_type != self.model_type:
+            # indicates model has been reset 
+            self.model_type = self.model.model_type
+            self.initialize_data_structures()
         for _ in range(self.batch_size):
             self.pick_action()
             samples.append(translate_one_hot_to_string(self.state,self.alphabet))

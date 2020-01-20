@@ -75,7 +75,7 @@ class DQN_Explorer(Base_explorer):
         self.device = device
         self.top_sequence = []
         self.times_seen = Counter()
-        self.total_actions = 0
+        self.model_type = 'blank'
         
     def reset_position(self,sequence):
         self.state=translate_string_to_one_hot(sequence,self.alphabet)
@@ -164,9 +164,6 @@ class DQN_Explorer(Base_explorer):
                                                 self.memory_size, self.batch_size, 0.6)            
     
     def pick_action(self):
-        if self.total_actions == 0:
-            # if model/start sequence got reset
-            self.initialize_data_structures()
         eps = max(self.epsilon_min, (0.5 - self.model.cost / (self.batch_size * self.generations)))
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)
@@ -180,9 +177,8 @@ class DQN_Explorer(Base_explorer):
                 self.top_sequence.append((reward, new_state, self.model.cost))
             self.best_fitness = max(self.best_fitness, reward)
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
-        if self.model.cost > 0 and self.model.cost % self.batch_size == 0:
+        if self.model.cost > 0 and self.model.cost % self.batch_size == 0 and len(self.memory) >= self.batch_size:
             avg_loss = self.train_actor(self.train_epochs)
-        self.total_actions += 1
     
     '''       
     def propose_samples(self):
@@ -205,6 +201,11 @@ class DQN_Explorer(Base_explorer):
     '''
     def propose_samples(self):
         samples = []
+        if self.model.model_type != self.model_type:
+            print('Initializing', self.model_type)
+            # indicates model has been reset 
+            self.model_type = self.model.model_type
+            self.initialize_data_structures()
         for _ in range(self.batch_size):
             self.pick_action()
             samples.append(translate_one_hot_to_string(self.state,self.alphabet))
