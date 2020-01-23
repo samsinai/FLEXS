@@ -1,6 +1,7 @@
 from meta.explorer import Explorer
 import os.path
 from utils.sequence_utils import generate_random_mutant
+import uuid
 
 
 class Base_explorer(Explorer):
@@ -14,6 +15,7 @@ class Base_explorer(Explorer):
         self.horizon = 1
         self.path = path
         self.debug = debug
+        self.run_id = str(uuid.uuid1())
     
     @property
     def file_to_write(self):
@@ -22,12 +24,12 @@ class Base_explorer(Explorer):
     def write(self,round, overwrite):
         if not os.path.exists(self.file_to_write) or (round==0 and overwrite):
             with open(self.file_to_write,"w") as output_file:
-                output_file.write("""batch,sequence,true_score,model_score,batch_size,measurement_cost,virtual_evals,landscape_id,start_id,model_type, virtual_screen,horizon,explorer_type\n""")
+                output_file.write("""id,batch,sequence,true_score,model_score,batch_size,measurement_cost,virtual_evals,landscape_id,start_id,model_type, virtual_screen,horizon,explorer_type\n""")
 
         with open(self.file_to_write,"a") as output_file:
                 batch = self.get_last_batch()
                 for sequence in self.batches[batch]:
-                        output_file.write(f'{batch},{sequence},{self.batches[batch][sequence][1]},{self.batches[batch][sequence][0]},{self.batch_size},{self.model.cost},{self.model.evals},{self.model.landscape_id},{self.model.start_id},{self.model.model_type},{self.virtual_screen}, {self.horizon},{self.explorer_type}\n')
+                        output_file.write(f'{self.run_id},{batch},{sequence},{self.batches[batch][sequence][1]},{self.batches[batch][sequence][0]},{self.batch_size},{self.model.cost},{self.model.evals},{self.model.landscape_id},{self.model.start_id},{self.model.model_type},{self.virtual_screen}, {self.horizon},{self.explorer_type}\n')
 
 
     def get_last_batch(self):
@@ -36,7 +38,7 @@ class Base_explorer(Explorer):
 
     def set_model(self,model, reset = True):
         if reset:
-            self.batches={-1:""}     
+           self.reset()   
         self.model = model
         if self.model.cost > 0:
             batch = self.get_last_batch()+1
@@ -59,6 +61,10 @@ class Base_explorer(Explorer):
         self.model.update_model(to_measure)
         for seq in to_measure:
             self.batches[last_batch+1][seq].append(self.model.get_fitness(seq))
+
+    def reset(self):
+        """Resets the explorer, overwrite if you are working with a stateful explorer"""
+        self.batches = {-1:""}
    
 
     def run(self,rounds, overwrite=False, verbose=True):

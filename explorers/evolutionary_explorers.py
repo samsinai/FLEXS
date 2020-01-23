@@ -119,9 +119,10 @@ class WF(Evolution):
         probabilities_from_fitness=np.cumsum(fitnesses)
         replicated_sequences=[]
         for i in range(self.batch_size):
-            sample=np.random.uniform()
-            picked_sequence_index=np.searchsorted(probabilities_from_fitness,sample)
-            new_sequence=generate_random_mutant(current_population[picked_sequence_index], self.mu/len(seq), alphabet=self.alphabet)
+            sample = np.random.uniform()
+            picked_sequence_index = np.searchsorted(probabilities_from_fitness,sample)
+            seq = current_population[picked_sequence_index]
+            new_sequence=generate_random_mutant(seq, self.mu/len(seq), alphabet=self.alphabet)
             replicated_sequences.append(new_sequence)
             
         if self.recomb_rate > 0: 
@@ -135,16 +136,16 @@ class WF(Evolution):
 
 
 class ML_WF(Evolution):
-    def __init__(self, mu=1, rho=1, recomb_rate=0.0, beta=100, batch_size = 100, alphabet ="UCGA" , virtual_screen = 0,path = "./simulations/" ):
-        super(WF, self).__init__(mu, rho, recomb_rate, beta, batch_size , alphabet , virtual_screen, path)
+    def __init__(self, mu=1, rho=1, recomb_rate=0.0, beta=100, batch_size = 100, alphabet ="UCGA" , virtual_screen = 20,path = "./simulations/" ):
+        super(ML_WF, self).__init__(mu, rho, recomb_rate, beta, batch_size , alphabet , virtual_screen, path)
         self.explorer_type =f'MLWFG_mu{self.mu}_r{self.recomb_rate}_rho{self.rho}_beta{self.beta}'
 
     def sub_sample_greedy(self,sequences):
         top_seqs_and_fits=[]
         for seq in set(sequences):
-            seq_and_fitness.append((self.model.get_fitness(seq),seq))
+            top_seqs_and_fits.append((self.model.get_fitness(seq),seq))
 
-        top_seqs_and_fits=sorted(seq_and_fitness,reverse=True) 
+        top_seqs_and_fits=sorted(top_seqs_and_fits,reverse=True) 
         return [t[1] for t in  top_seqs_and_fits][:self.batch_size]
 
 
@@ -162,7 +163,8 @@ class ML_WF(Evolution):
         while len(replicated_sequences)< self.batch_size * self.virtual_screen:
             sample = np.random.uniform()
             picked_sequence_index = np.searchsorted(probabilities_from_fitness,sample)
-            new_sequence = generate_random_mutant(current_population[picked_sequence_index], self.mu/len(seq), alphabet=self.alphabet)
+            seq = current_population[picked_sequence_index] 
+            new_sequence = generate_random_mutant(seq, self.mu/len(seq), alphabet=self.alphabet)
             replicated_sequences.append(new_sequence)
             
         if self.recomb_rate > 0: 
@@ -171,7 +173,7 @@ class ML_WF(Evolution):
         else:
             recombined_replicated_sequences_half = replicated_sequences  
 
-        all_sequences = list(set(recombined_replicated_sequences_half))[:self.batch_size*self.replicated_sequences]
+        all_sequences = list(set(recombined_replicated_sequences_half))[:self.batch_size*len(replicated_sequences)]
 
         selected_sequences = self.sub_sample_greedy(all_sequences)
 
