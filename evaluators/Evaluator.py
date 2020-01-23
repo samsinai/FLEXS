@@ -3,6 +3,7 @@ import yaml
 from models.Noisy_models.Noisy_abstract_model import Noisy_abstract_model, Null_model
 from models.Noisy_models.Neural_network_models import NN_model
 from pathlib import Path
+import uuid
 
 LANDSCAPE_TYPES ={"RNA": [2],"TF": []}#["RNA","TF","GFP","ADDITIVE"]
 LANDSCAPE_ALPHABET={"RNA": "UCGA", "TF": "TCGA"}
@@ -32,6 +33,8 @@ class Evaluator():
             TFconstructor.load_landscapes(landscapes_to_test=self.landscape_types["TF"])
             self.landscape_generator["TF"] = TFconstructor.generate_from_loaded_landscapes()
 
+
+        self.explorer.run_id = str(uuid.uuid1())
         print (f'loading complete')
 
     def run_on_null_model(self, landscape_oracle, Null_args, start_seq, num_batches = 10, hot_start = False, verbose = False, overwrite = False):
@@ -59,7 +62,7 @@ class Evaluator():
 
     def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False):
         
-        from utils.model_architectues import Linear, NLNN, CNNa
+        from utils.model_architectures import Linear, NLNN, CNNa
         
         for arch in [Linear,NLNN, CNNa]:
             
@@ -91,7 +94,7 @@ class Evaluator():
                       starts_per_landscape += 1
                       if starts_per_landscape >= num_starts:
                          break
-            
+
     def consistency_robustness_independence(self, oracle, start_seq, landscape_id, start_seq_id):
               Path(self.path+ "consistency_robustness_independence/").mkdir(exist_ok=True)
               self.explorer.path = self.path+"consistency_robustness_independence/" 
