@@ -54,8 +54,19 @@ class BO_Explorer(Base_explorer):
         self.virtual_screen = virtual_screen
         self.best_fitness = 0
         self.top_sequence = []
+        self.num_actions = 0
         # use PER buffer, same as in DQN 
         self.model_type = 'blank'
+
+    def initialize_data_structures(self):
+        start_sequence = list(self.model.measured_sequences)[0]
+        self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
+        self.seq_len = len(start_sequence)
+        self.memory = PrioritizedReplayBuffer(self.alphabet_len*self.seq_len, 
+                                              100000, self.batch_size, 0.6) 
+
+    def reset(self):
+        self.num_actions = 0
     
     def train_models(self):
         for i in range(len(self.model.models)):
@@ -69,13 +80,6 @@ class BO_Explorer(Base_explorer):
     def UCB(self, vals):
         discount = 0.01 
         return np.mean(vals) - discount*np.std(vals)
-
-    def initialize_data_structures(self):
-        start_sequence = list(self.model.measured_sequences)[0]
-        self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
-        self.seq_len = len(start_sequence)
-        self.memory = PrioritizedReplayBuffer(self.alphabet_len*self.seq_len, 
-                                              100000, self.batch_size, 0.6) 
                    
     def pick_action(self):
         if self.model.cost == 0:
@@ -112,32 +116,13 @@ class BO_Explorer(Base_explorer):
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
         if self.model.cost % self.batch_size == 0 and self.model.cost > 0:
             self.train_models()
+        self.num_actions += 1
 
-    '''       
     def propose_samples(self):
-        samples = []
-        init_cost = copy.deepcopy(self.model.cost) 
-        total_proposed = 0
-        # try to make as many new sequences as possible, then fill the remainder up 
-        while (self.model.cost - init_cost) < self.batch_size and \
-            total_proposed < self.batch_size*self.virtual_screen - (self.model.cost - init_cost):
-            cost = copy.deepcopy(self.model.cost) 
-            self.pick_action()
-            if cost != self.model.cost: # new sequence
-                samples.append(translate_one_hot_to_string(self.state, self.alphabet))
-            total_proposed += 1
-        new_seq_made = (self.model.cost - init_cost)
-        for _ in range(self.batch_size - new_seq_made):
-            self.pick_action()
-            samples.append(translate_one_hot_to_string(self.state, self.alphabet))
-        return samples 
-    '''
-    def propose_samples(self):
-        samples = []
-        if self.model.model_type != self.model_type:
-            # indicates model has been reset 
-            self.model_type = self.model.model_type
+        if self.num_actions == 0:
+            # indicates model was reset 
             self.initialize_data_structures()
+        samples = []
         for _ in range(self.batch_size):
             self.pick_action()
             samples.append(translate_one_hot_to_string(self.state,self.alphabet))
