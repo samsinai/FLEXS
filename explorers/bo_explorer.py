@@ -82,9 +82,6 @@ class BO_Explorer(Base_explorer):
         return np.mean(vals) - discount*np.std(vals)
                    
     def pick_action(self):
-        if self.model.cost == 0:
-            # if model/start sequence got reset
-            self.initialize_data_structures()
         state = self.state.copy()
         possible_actions = [(i, j) for i in range(self.alphabet_len) 
                             for j in range(self.seq_len) if state[i, j] == 0]
