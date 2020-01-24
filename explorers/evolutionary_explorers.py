@@ -140,7 +140,7 @@ class ML_WF(Evolution):
         super(ML_WF, self).__init__(mu, rho, recomb_rate, beta, batch_size , alphabet , virtual_screen, path)
         self.explorer_type =f'MLWFG_mu{self.mu}_r{self.recomb_rate}_rho{self.rho}_beta{self.beta}'
 
-    def sub_sample_greedy(self,sequences):
+    def sub_sample(self,sequences):
         top_seqs_and_fits=[]
         for seq in set(sequences):
             top_seqs_and_fits.append((self.model.get_fitness(seq),seq))
@@ -173,9 +173,9 @@ class ML_WF(Evolution):
         else:
             recombined_replicated_sequences_half = replicated_sequences  
 
-        all_sequences = list(set(recombined_replicated_sequences_half))[:self.batch_size*len(replicated_sequences)]
+        all_sequences = list(set(recombined_replicated_sequences_half))[:self.batch_size*self.virtual_screen]
 
-        selected_sequences = self.sub_sample_greedy(all_sequences)
+        selected_sequences = self.sub_sample(all_sequences)
 
         return selected_sequences
 

@@ -2,6 +2,7 @@
 from meta.model import Model
 import editdistance
 import numpy as np
+import random
 
 
 class Noisy_abstract_model(Model):
@@ -19,12 +20,14 @@ class Noisy_abstract_model(Model):
         self.model_type =f'NAMb_ss{self.ss}'
         self.landscape_id = landscape_id
         self.start_id = start_id
+        self.fitnesses = []
 
     def reset(self, sequences = None) :
         self.model_sequences = {}
         self.measured_sequences = {}
         self.cost = 0
         self.evals = 0
+        self.fitnesses = []
         if sequences:
             self.update_model(sequences)
 
@@ -49,7 +52,11 @@ class Noisy_abstract_model(Model):
         signal = self.oracle.get_fitness(sequence)
         neighbor_seq_fitness = self.oracle.get_fitness(neighbor_seq) 
 
-        noise = np.random.exponential(scale = neighbor_seq_fitness) 
+        try:
+           noise = random.choice(self.fitnesses)
+        except:
+           noise = np.random.exponential(scale = neighbor_seq_fitness) 
+ 
 
         alpha = (self.ss) ** distance 
         return signal,noise,alpha
@@ -71,7 +78,9 @@ class Noisy_abstract_model(Model):
         for sequence in sequences:
             if sequence not in self.measured_sequences:
                     self.cost += 1
-                    self.measured_sequences[sequence]=self.oracle.get_fitness(sequence)
+                    fitness = self.oracle.get_fitness(sequence)
+                    self.measured_sequences[sequence] = fitness
+                    self.fitnesses.append(fitness)
 
         self.model_sequences = {} #empty cache
 
@@ -103,7 +112,7 @@ class Null_model(Noisy_abstract_model):
         self.landscape_id = landscape_id
         self.start_id = start_id
         self.oracle = ground_truth_oracle
-        self.average_fitness = 0
+        self.average_fitness = 0.05
    
     def update_model(self,new_sequences):
         self.measure_true_landscape(new_sequences)

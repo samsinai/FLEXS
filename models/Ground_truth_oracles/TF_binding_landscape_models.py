@@ -15,11 +15,22 @@ class TF_binding_landscape_constructor():
 
         self.loaded_landscapes =   glob(f'{data_path}/landscapes/*')
 
-        if landscapes_to_test!="all":
+        if landscapes_to_test != "all":
           if landscapes_to_test: 
-              self.loaded_landscapes = [self.loaded_landscapes[i] for i in landscapes_to_test]
+              if type(landscapes_to_test[0]) == int:
+                self.loaded_landscapes = [self.loaded_landscapes[i] for i in landscapes_to_test]
+
+              elif type(landscapes_to_test[0]) == str:
+                filtered_list=[]
+                for landscape in landscapes_to_test:
+                  for filename in self.loaded_landscapes:
+                      if landscape in filename:
+                          filtered_list.append(filename)
+
+                self.loaded_landscapes = filtered_list
+
           else:
-              self.loaded_landscapes=[]
+              self.loaded_landscapes = []
             
         print(f'{len(self.loaded_landscapes)} TF landscapes loaded.')
         
@@ -45,9 +56,12 @@ class TF_binding_landscape(Ground_truth_oracle):
        
     def construct(self,landscape_file):
         data = pd.read_csv(f'{landscape_file}',sep="\t")
+        data["normed_e_score"]=data["E-score"]-data["E-score"].min()
+        data["normed_e_score"]= data["normed_e_score"]/data["normed_e_score"].max()
+
         for i,row in data.iterrows():
-            self.sequences[row["8-mer"]] = row["E-score"]
-            self.sequences[row["8-mer.1"]] = row["E-score"]
+            self.sequences[row["8-mer"]] = row["normed_e_score"]
+            self.sequences[row["8-mer.1"]] = row["normed_e_score"]
 
     def get_fitness(self,sequence):
         return self.sequences[sequence]
