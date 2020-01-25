@@ -24,7 +24,7 @@ class Base_explorer(Explorer):
     def write(self,round, overwrite):
         if not os.path.exists(self.file_to_write) or (round==0 and overwrite):
             with open(self.file_to_write,"w") as output_file:
-                output_file.write("""id,batch,sequence,true_score,model_score,batch_size,measurement_cost,virtual_evals,landscape_id,start_id,model_type, virtual_screen,horizon,explorer_type\n""")
+                output_file.write("""id,batch,sequence,true_score,model_score,batch_size,measurement_cost,virtual_evals,landscape_id,start_id,model_type,virtual_screen,horizon,explorer_type\n""")
 
         with open(self.file_to_write,"a") as output_file:
                 batch = self.get_last_batch()
@@ -69,6 +69,8 @@ class Base_explorer(Explorer):
 
     def run(self,rounds, overwrite=False, verbose=True):
         self.horizon = rounds
+        if not self.debug:
+                self.write(0, overwrite)
         for r in range(rounds):
             if verbose:
                print (f'round: {r}, cost: {self.model.cost}, evals: {self.model.evals}, top: {max(self.model.measured_sequences.values())}') 
