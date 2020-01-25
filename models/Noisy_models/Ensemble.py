@@ -23,7 +23,7 @@ class Ensemble_models(Model):
       
       @property
       def evals(self):
-        return sum([model.evals for model in self.models])
+        return np.mean([model.evals for model in self.models])
 
       @property
       def landscape_id(self):

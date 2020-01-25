@@ -13,6 +13,11 @@ class Ground_truth_oracle():
         pass
 
 
+    """This allows models to expose their uncertainty in their estimate, slower to compute than get_fitness, no caching"""
+    def get_fitness_distribution(self,sequence):
+        pass
+
+
 
 class Model(Ground_truth_oracle):
     """Base structure for all models"""

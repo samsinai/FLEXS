@@ -97,8 +97,17 @@ class Noisy_abstract_model(Model):
         else:
             self.model_sequences[sequence] = self._fitness_function(sequence)
             self.evals += 1
-            return self.model_sequences[sequence]   
+            return self.model_sequences[sequence]  
 
+    def get_fitness_distribution(self, sequence):
+
+        if sequence in self.measured_sequences: 
+            real_fitness = self.measured_sequences[sequence]
+            return [real_fitness for i in range(5)]
+        else:
+            estimated_fitnesses = [self._fitness_function(sequence) for i in range(5)]
+            self.evals+=1
+            return estimated_fitnesses
 
 class Null_model(Noisy_abstract_model):
 

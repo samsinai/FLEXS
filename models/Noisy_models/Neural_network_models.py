@@ -37,11 +37,7 @@ class NN_model(Model):
         self.neuralmodel.compile(loss='mean_squared_error',  optimizer="adam", metrics=['mse'])
         if sequences:
             self.update_model(sequences)
-    # def reset(self, nn_architeture):
-    #     self.neuralmodel = nn_architeture.get_model()
-    #     self.model_sequences={}
-    #     self.measured_sequences={}
-    #     self.cost=0
+
 
     def bootstrap(self,wt,alphabet):
         sequences=[wt]
