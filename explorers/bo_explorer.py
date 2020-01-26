@@ -114,13 +114,20 @@ class BO_Explorer(Base_explorer):
         if self.model.cost % self.batch_size == 0 and self.model.cost > 0:
             self.train_models()
         self.num_actions += 1
+        return new_state_string, reward 
 
     def propose_samples(self):
         if self.num_actions == 0:
             # indicates model was reset 
             self.initialize_data_structures()
         samples = []
-        for _ in range(self.batch_size):
-            self.pick_action()
-            samples.append(translate_one_hot_to_string(self.state,self.alphabet))
+        for _ in range(self.batch_size * self.virtual_screen):
+            new_state_string, reward = self.pick_action()
+            samples.append((reward, new_state_string))
+        samples = sorted(set(samples))[-self.batch_size:]
+        samples = [sample[1] for sample in samples]
+        for _ in range(self.batch_size - len(samples)):
+            # if we still do not have enough 
+            new_state_string, reward = self.pick_action()
+            samples.append(new_state_string) 
         return samples 

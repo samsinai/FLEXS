@@ -153,14 +153,12 @@ class DQN_Explorer(Base_explorer):
         return action, mutant          
     
     def pick_action(self):
-        is_sequence_new = False 
         eps = max(self.epsilon_min, (0.5 - self.model.cost / (self.batch_size * self.generations)))
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)
         new_state_string = translate_one_hot_to_string(new_state, self.alphabet)
         reward = self.model.get_fitness(new_state_string)
         if not new_state_string in self.model.measured_sequences:
-            is_sequence_new = True 
             if reward >= self.best_fitness:
                 state_tensor = torch.FloatTensor([self.state.ravel()])
                 prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
