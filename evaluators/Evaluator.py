@@ -2,6 +2,7 @@
 import yaml 
 from models.Noisy_models.Noisy_abstract_model import Noisy_abstract_model, Null_model
 from models.Noisy_models.Neural_network_models import NN_model
+from models.Noisy_models.Ensemble import Ensemble_models
 from pathlib import Path
 import uuid
 
@@ -60,22 +61,26 @@ class Evaluator():
         self.explorer.set_model(noisy_landscape)
         self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
 
-    def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False):
+    def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , ensemble=5, num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
         
         from utils.model_architectures import Linear, NLNN, CNNa
         
         for arch in [Linear,NLNN, CNNa]:
-            
-            nn_model=arch(len(start_seq), alphabet = self.explorer.alphabet)
-            nnlandscape=NN_model(landscape_oracle,nn_model, **NNM_args)
-            nnlandscape.reset()
 
+            nnlandscapes=[]
+            for i in range(ensemble):
+                nn_model=arch(len(start_seq), alphabet = self.explorer.alphabet)
+                nnlandscape=NN_model(landscape_oracle,nn_model, **NNM_args)
+                nnlandscapes.append(nnlandscape)
+
+            nn_ensemble_landscape = Ensemble_models(nnlandscapes)
+            nn_ensemble_landscape.reset()
             if hot_start:
                pass
             else: 
-               nnlandscape.update_model([start_seq])
+               nn_ensemble_landscape.update_model([start_seq])
 
-            self.explorer.set_model(nnlandscape)
+            self.explorer.set_model(nn_ensemble_landscape)
             self.explorer.run(num_batches, overwrite, verbose) 
 
 
