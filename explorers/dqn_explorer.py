@@ -43,7 +43,6 @@ class Q_Network(nn.Module):
     
 def build_q_network(sequence_len, alphabet_len, device):
     model = Q_Network(sequence_len, alphabet_len).to(device)
-    print(model)
     return model
 
 
@@ -53,7 +52,7 @@ class DQN_Explorer(Base_explorer):
     '''
     def __init__(self, batch_size=100, alphabet='UCGA',
                  virtual_screen=10, path="./simulations/", debug=False, 
-                 seq_len=40, memory_size=100000, train_epochs=40,
+                 memory_size=100000, train_epochs=20,
                  generations=10, gamma=0.9, device = "cpu", noise_alpha=1):
         '''
         Unintuitive variables:
@@ -154,12 +153,14 @@ class DQN_Explorer(Base_explorer):
         return action, mutant          
     
     def pick_action(self):
+        is_sequence_new = False 
         eps = max(self.epsilon_min, (0.5 - self.model.cost / (self.batch_size * self.generations)))
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)
         new_state_string = translate_one_hot_to_string(new_state, self.alphabet)
         reward = self.model.get_fitness(new_state_string)
         if not new_state_string in self.model.measured_sequences:
+            is_sequence_new = True 
             if reward >= self.best_fitness:
                 state_tensor = torch.FloatTensor([self.state.ravel()])
                 prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
@@ -170,14 +171,23 @@ class DQN_Explorer(Base_explorer):
         if self.model.cost > 0 and self.model.cost % self.batch_size == 0 and len(self.memory) >= self.batch_size:
             avg_loss = self.train_actor(self.train_epochs)
         self.num_actions += 1
+        return new_state_string, reward 
     
     def propose_samples(self):
         if self.num_actions == 0:
             # indicates model was reset 
             self.initialize_data_structures()
         samples = []
-        for _ in range(self.batch_size):
-            self.pick_action()
-            samples.append(translate_one_hot_to_string(self.state,self.alphabet))
+        for _ in range(self.batch_size * self.virtual_screen):
+            new_state_string, reward = self.pick_action()
+            samples.append((reward, new_state_string))
+        samples = sorted(set(samples))[-self.batch_size:]
+        samples = [sample[1] for sample in samples]
+        for _ in range(self.batch_size - len(samples)):
+            # if we still do not have enough 
+            new_state_string, reward = self.pick_action()
+            samples.append(new_state_string) 
+            
         return samples 
+    
             
