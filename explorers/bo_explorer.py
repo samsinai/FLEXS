@@ -44,11 +44,10 @@ from utils.replay_buffers import PrioritizedReplayBuffer
 class BO_Explorer(Base_explorer):
     def __init__(self, batch_size=100, alphabet='UCGA',
                  virtual_screen=10, path="./simulations/", debug=False, 
-                 seq_len=40, method = 'EI'):
+                 method = 'EI'):
         super(BO_Explorer, self).__init__(batch_size=batch_size, alphabet=alphabet, virtual_screen=virtual_screen, path=path, debug=debug)
         self.explorer_type='BO_Ensemble'
         self.alphabet_len = len(alphabet)
-        self.seq_len = seq_len
         self.method = method
         self.batch_size = batch_size 
         self.virtual_screen = virtual_screen
