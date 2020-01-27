@@ -68,10 +68,11 @@ class BO_Explorer(Base_explorer):
         self.num_actions = 0
     
     def train_models(self):
-        for i in range(len(self.model.models)):
-            batch = self.memory.sample_batch()
-            states = batch['next_obs']
-            self.model.models[i].update_model(states)
+        batch = self.memory.sample_batch()
+        states = batch['next_obs']
+        state_seqs = [translate_one_hot_to_string(state.reshape((-1, self.seq_len)), self.alphabet) 
+            for state in states]
+        self.model.update_model(state_seqs)
                 
     def EI(self, vals):
         return np.mean([max(val - self.best_fitness, 0) for val in vals])
