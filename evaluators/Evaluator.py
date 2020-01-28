@@ -106,16 +106,16 @@ class Evaluator():
 
               print (f'start seq {start_seq_id}')
 
-              for ss in [0,0.5,0.9,1]:
-                  landscape_idents={"landscape_id":landscape_id,\
-                                      "start_id":start_seq_id,\
-                                      "signal_strength": ss , \
-                                       }
-                  self.run_on_NAM(oracle,landscape_idents, start_seq, verbose=True)
+              # for ss in [0,0.5,0.9,1]:
+              #     landscape_idents={"landscape_id":landscape_id,\
+              #                         "start_id":start_seq_id,\
+              #                         "signal_strength": ss , \
+              #                          }
+              #     self.run_on_NAM(oracle,landscape_idents, start_seq, verbose=True)
               landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id}
               self.run_on_NNmodel(oracle,landscape_idents, start_seq, verbose=True)
-              self.run_on_null_model(oracle,landscape_idents,start_seq, verbose= True)
+              # self.run_on_null_model(oracle,landscape_idents,start_seq, verbose= True)
 
 
     def efficiency(self, oracle, start_seq, landscape_id, start_seq_id):
