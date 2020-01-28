@@ -15,7 +15,7 @@ if module_path not in sys.path:
 from utils.sequence_utils import (construct_mutant_from_sample, translate_one_hot_to_string,
     translate_string_to_one_hot)
 
-class FitnessLandscapeEnvironment(py_environment.PyEnvironment):
+class PPOEnvironment(py_environment.PyEnvironment):
     # Based on this: https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent/
     def __init__(self,
                  alphabet,
@@ -38,7 +38,7 @@ class FitnessLandscapeEnvironment(py_environment.PyEnvironment):
         self.alphabet_len = len(self.alphabet)
         
         # landscape/model/measurements
-        self.landscape = copy.deepcopy(landscape)
+        self.landscape = landscape
         self.previous_fitness = -float("inf")
         
         # sequence

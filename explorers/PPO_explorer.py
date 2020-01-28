@@ -3,67 +3,63 @@ import tensorflow as tf
 from functools import partial
 from tf_agents.agents.ppo import ppo_policy, ppo_agent, ppo_utils
 from tf_agents.drivers import dynamic_episode_driver
+from tf_agents.environments import tf_py_environment
+from tf_agents.environments.utils import validate_py_environment
 from tf_agents.metrics import tf_metrics
 from tf_agents.networks import actor_distribution_network
 from tf_agents.networks import value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
+from environments.PPO_environment import PPOEnvironment as PPOEnv
 from explorers.base_explorer import Base_explorer
 from utils.sequence_utils import translate_one_hot_to_string
 
 class PPO_explorer(Base_explorer):
     def __init__(self,
-                 ppo_agent,
-                 tf_env,
                  batch_size=100,
                  alphabet="UCGA",
                  virtual_screen=10,
                  path="./simulations/",
                  debug=False):
         super().__init__(batch_size,
-                                           alphabet,
-                                           virtual_screen,
-                                           path,
-                                           debug)
+                           alphabet,
+                           virtual_screen,
+                           path,
+                           debug)
     
-        self.agent = ppo_agent
         self.explorer_type = "PPO_Agent"
-        
-        self.tf_env = tf_env
         
         self.meas_seqs = []
         self.meas_seqs_it = 0
         
-        self.top_seqs = collections.deque(maxlen=50)
+        self.top_seqs = collections.deque(maxlen=self.batch_size)
         self.top_seqs_it = 0
         
-    def set_model(self,model, reset = True):
-        if reset:
-            self.batches={-1: ""}     
-        self.model = model
-        if self.model.cost > 0:
-            batch = self.get_last_batch()+1
-            self.batches[batch]={}
-            for seq in self.model.measured_sequences:
-                score = self.model.get_fitness(seq)
-                self.batches[batch][seq]=[score,score]
-    
-    @staticmethod
-    def initialize_new_agent(tf_env):
+    def initialize_env(self):
+        env = PPOEnv(alphabet=self.alphabet,
+                     starting_seq=self.meas_seqs[0][1],
+                     landscape=self.model,
+                     max_num_steps=self.virtual_screen)
+
+        validate_py_environment(env, episodes=1)
+
+        self.tf_env = tf_py_environment.TFPyEnvironment(env)
+        
+    def initialize_agent(self):
         actor_fc_layers = (200, 100)
         value_fc_layers = (200, 100)
         
         actor_net = actor_distribution_network.ActorDistributionNetwork(
-            tf_env.observation_spec(),
-            tf_env.action_spec(),
+            self.tf_env.observation_spec(),
+            self.tf_env.action_spec(),
             fc_layer_params=actor_fc_layers)
         value_net = value_network.ValueNetwork(
-            tf_env.observation_spec(), fc_layer_params=value_fc_layers)
+            self.tf_env.observation_spec(), fc_layer_params=value_fc_layers)
         
-        num_epochs = 50
+        num_epochs = 10
         agent = ppo_agent.PPOAgent(
-            tf_env.time_step_spec(),
-            tf_env.action_spec(),
+            self.tf_env.time_step_spec(),
+            self.tf_env.action_spec(),
             optimizer=tf.compat.v1.train.AdamOptimizer(learning_rate=1e-5),
             actor_net=actor_net,
             value_net=value_net,
@@ -72,7 +68,7 @@ class PPO_explorer(Base_explorer):
         )
         agent.initialize()
         
-        return agent
+        self.agent = agent
     
     def add_last_seq_in_trajectory(self, experience, new_seqs):
         """
@@ -96,18 +92,22 @@ class PPO_explorer(Base_explorer):
             self.meas_seqs_it = (self.meas_seqs_it + 1) % len(self.meas_seqs)
             self.tf_env.pyenv.envs[0].seq = self.meas_seqs[self.meas_seqs_it][1]
     
-    def train_agent(self):
+    def pretrain_agent(self):
         measured_seqs = [(self.model.get_fitness(seq),
                           seq, self.model.cost)
                           for seq in self.model.measured_sequences]
         measured_seqs = sorted(measured_seqs,
                                key=lambda x: x[0],
                                reverse=True)
-        self.top_seqs = collections.deque(measured_seqs, maxlen=50)
+
+        self.top_seqs = collections.deque(measured_seqs, maxlen=self.batch_size)
         self.meas_seqs = measured_seqs
         
-        batch_size = 100
-        max_env_steps = 10000
+        self.initialize_env()
+        self.initialize_agent()
+        
+        batch_size = self.batch_size
+        max_env_steps = 100
         
         all_seqs = set(self.model.measured_sequences)
         proposed_seqs = set()
@@ -175,22 +175,45 @@ class PPO_explorer(Base_explorer):
             replay_buffer.clear()
     
     def propose_samples(self):
+        all_seqs = set(self.model.measured_sequences)
         new_seqs = set()
         last_batch = self.get_last_batch()
+        
+        num_parallel_environments = 1
+        
+        replay_buffer_capacity = 10001
+        replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
+            self.agent.collect_data_spec,
+            batch_size=num_parallel_environments,
+            max_length=replay_buffer_capacity
+        )
             
         collect_driver = dynamic_episode_driver.DynamicEpisodeDriver(
             self.tf_env,
-            self.agent.policy,
-            observers = [partial(self.add_last_seq_in_trajectory,
+            self.agent.collect_policy,
+            observers = [replay_buffer.add_batch,
+                         partial(self.add_last_seq_in_trajectory,
                                  new_seqs=new_seqs)],
             num_episodes = 1
         )
         
-        while len(new_seqs) < self.batch_size:
+        # reset counter?
+        
+        while len(new_seqs.difference(all_seqs)) < self.batch_size:
             collect_driver.run()
-#             if self.debug:
-#                 print(len(new_seqs), self.batch_size)
-                
-            # TODO: Add training step here?
+            
+        new_seqs = new_seqs.difference(all_seqs)
+        
+        # add new sequences to measured_sequences and sort
+        self.meas_seqs += [(self.model.get_fitness(seq),
+                           seq, self.model.cost)
+                           for seq in new_seqs]
+        self.meas_seqs = sorted(self.meas_seqs,
+                               key=lambda x: x[0],
+                               reverse=True)
+            
+        trajectories = replay_buffer.gather_all()
+        total_loss, _ = self.agent.train(experience=trajectories)
+        replay_buffer.clear()
             
         return new_seqs
