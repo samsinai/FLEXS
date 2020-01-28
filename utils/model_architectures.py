@@ -52,7 +52,7 @@ class Linear(Architecture):
 
 class NLNN(Architecture):
     """Global epistasis model"""
-    def __init__(self, seq_len, batch_size=10, validation_split=0.1, epochs=20, alphabet="UCGA", hidden_dims=50):
+    def __init__(self, seq_len, batch_size=10, validation_split=0, epochs=20, alphabet="UCGA", hidden_dims=50):
         super(NLNN, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.hidden_dims = hidden_dims
         self.architecture_name=f'NLNN_hd{self.hidden_dims}'
@@ -77,7 +77,7 @@ class NLNN(Architecture):
 
 class CNNa(Architecture):
 
-    def __init__(self, seq_len, batch_size=10, validation_split=0.1, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+    def __init__(self, seq_len, batch_size=10, validation_split=0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
         super(CNNa, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.filters = filters
         self.hidden_dims = hidden_dims

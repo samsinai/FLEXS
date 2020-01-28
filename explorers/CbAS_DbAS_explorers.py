@@ -8,7 +8,6 @@ class DbAS_explorer(Base_explorer):
                  mutation_rate = 0.2, path = "./simulations/", debug=False):
         #super(DbAS_explorer, self).__init__(batch_size, alphabet, virtual_screen, path, debug)  # for Python 2
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)  # for Python 3
-        self.explorer_type = 'DbAS'
         self.generator = generator
         self.Q = Q  # percentile used as the fitness threshold
         self.n_new_proposals = n_new_proposals
@@ -16,6 +15,7 @@ class DbAS_explorer(Base_explorer):
         self.mutation_rate = mutation_rate
         self.all_proposals_ranked = []
         self.n_convergence = n_convergence  # assume convergence if max fitness doesn't change for n_convergence cycles
+        self.explorer_type = f'DbAS_Q{self.Q}'
 
 
     def propose_samples(self):
@@ -104,7 +104,6 @@ class CbAS_explorer(Base_explorer):
                  mutation_rate = 0.2, path = "./simulations/", debug=False):
         #super(DbAS_explorer, self).__init__(batch_size, alphabet, virtual_screen, path, debug)  # for Python 2
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)  # for Python 3
-        self.explorer_type = 'DbAS'
         self.generator = generator
         self.Q = Q  # percentile used as the fitness threshold
         self.n_new_proposals = n_new_proposals
@@ -112,6 +111,7 @@ class CbAS_explorer(Base_explorer):
         self.mutation_rate = mutation_rate
         self.all_proposals_ranked = []
         self.n_convergence = n_convergence  # assume convergence if max fitness doesn't change for n_convergence cycles
+        self.explorer_type = f'CbAS_Q{self.Q}'
 
 
     def propose_samples(self):
@@ -125,7 +125,7 @@ class CbAS_explorer(Base_explorer):
         print('Starting a CbAS cycle...')
         print('Initial training set size: ', len(initial_batch))
 
-        # store the initial model ar generator_0
+        # store the initial model as generator_0
         generator_0 = self.generator
         generator_0.get_model(seq_size=len(initial_batch[0]))
         generator_0.train_model(initial_batch, initial_weights)

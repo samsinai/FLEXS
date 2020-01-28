@@ -61,7 +61,7 @@ class Evaluator():
         self.explorer.set_model(noisy_landscape)
         self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
 
-    def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , ensemble=5, num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
+    def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , ensemble=1, num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
         
         from utils.model_architectures import Linear, NLNN, CNNa
         

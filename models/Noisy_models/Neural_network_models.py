@@ -78,7 +78,8 @@ class NN_model(Model):
 
         except:
             pass
-
+        print("getting in the fit functional")
+        print (len(X), len(Y))
         self.neuralmodel.fit(X,Y,epochs=self.epochs,validation_split=self.validation_split,batch_size=self.batch_size,verbose=0)
         if not self.batch_update:
             self.retrain_model()
@@ -93,7 +94,8 @@ class NN_model(Model):
 
         X=np.array(X)
         Y=np.array(Y)
-
+        print("getting in the retrain fit functional")
+        print (len(X), len(Y))
         self.neuralmodel.fit(X,Y,epochs=self.epochs,validation_split=self.validation_split,batch_size=self.batch_size,verbose=0)
 
 
