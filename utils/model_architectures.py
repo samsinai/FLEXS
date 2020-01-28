@@ -19,10 +19,11 @@ import numpy as np
 from scipy.special import logsumexp
 import random
 from utils.sequence_utils import generate_random_mutant
+from sklearn.preprocessing import normalize
 
 
 class Architecture():
-    def __init__(self, seq_len, batch_size=10, validation_split=0.1, epochs=20, alphabet="UCGA"):
+    def __init__(self, seq_len, batch_size=10, validation_split=0, epochs=20, alphabet="UCGA"):
         self.batch_size = batch_size
         self.validation_split = validation_split
         self.epochs = epochs
@@ -216,7 +217,7 @@ class VAE(Architecture):
         x_train = x_train.astype('float32')
         x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
 
-        early_stop = EarlyStopping(monitor='val_loss', patience=3)
+        early_stop = EarlyStopping(monitor='loss', patience=3)
 
         self.vae.fit(x_train, x_train,
                      verbose=self.verbose,
@@ -263,13 +264,18 @@ class VAE(Architecture):
         probabilities = []
         for sequence in proposals:
             sequence_one_hot = np.array(translate_string_to_one_hot(sequence, self.KEY_LIST))
+            #print('input seq', sequence_one_hot)
             sequence_one_hot_flattened = sequence_one_hot.flatten()
             sequence_one_hot_flattened_batch = np.array([sequence_one_hot_flattened for i in range(self.batch_size)])
             sequence_decoded_flattened = self.vae.predict(sequence_one_hot_flattened_batch, batch_size=self.batch_size)
             sequence_decoded = np.reshape(sequence_decoded_flattened, (self.batch_size, len(self.KEY_LIST), self.seq_size))[0]
+            sequence_decoded = normalize(sequence_decoded, axis=0, norm='l1')
+            #print('reconstructed', sequence_decoded)
             #log_prob = np.trace(np.log(np.matmul(sequence_one_hot.T,sequence_decoded)))
             log_prob = np.sum(np.log(np.sum(sequence_one_hot*sequence_decoded,axis=0)))
+            #print('log_prob', log_prob)
             probabilities.append(log_prob)
+        probabilities = np.nan_to_num(probabilities)
         return probabilities
 
 
