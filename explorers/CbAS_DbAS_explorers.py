@@ -158,10 +158,19 @@ class CbAS_explorer(Base_explorer):
 
             # calculate the weights for the proposed batch
             log_probs_0 = generator_0.calculate_log_probability(proposals)
-            log_probs_1 = self.generator.calculate_log_probability(proposals)
-            weights_probs = [np.exp(logp0 - logp1) for (logp0, logp1) in list(zip(log_probs_0, log_probs_1))]
-            weights_cdf = [1 if score >= gamma else 0 for score in scores]  # DbAS weights
+            log_probs_t = self.generator.calculate_log_probability(proposals)
+            #print('log p 0', log_probs_0)
+            #print('log p t', log_probs_t)
+            #print('log0', log_probs_0)
+            #print('logt', log_probs_t)
+            #print('log0-logt', np.array(log_probs_0)-np.array(log_probs_t))
+            weights_probs = [np.exp(logp0 - logpt) for (logp0, logpt) in list(zip(log_probs_0, log_probs_t))]
+            weights_probs = np.nan_to_num(weights_probs)
+            #print('weights_probs', weights_probs)
+            weights_cdf = [1 if score >= gamma else 0 for score in scores]
+            #print('weights_cdf', weights_cdf)
             weights = list(np.array(weights_cdf) * np.array(weights_probs))
+            #print('weights', weights)
 
 
             # add proposed samples to the total sample pool
