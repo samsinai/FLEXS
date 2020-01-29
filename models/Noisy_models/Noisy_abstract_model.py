@@ -50,14 +50,15 @@ class Noisy_abstract_model(Model):
 
     def add_noise(self,sequence,distance, neighbor_seq):
         signal = self.oracle.get_fitness(sequence)
-        neighbor_seq_fitness = self.oracle.get_fitness(neighbor_seq) 
+
 
         try:
-           noise = random.choice(self.fitnesses)
-        except:
+           neighbor_seq_fitness = self.oracle.get_fitness(neighbor_seq) 
            noise = np.random.exponential(scale = neighbor_seq_fitness) 
  
-
+        except:
+           noise = random.choice(self.fitnesses)
+           
         alpha = (self.ss) ** distance 
         return signal,noise,alpha
 
