@@ -122,11 +122,11 @@ class NN_model(Model):
         try:
             if self.model_flavor == "Keras":
                 x = np.array([translate_string_to_one_hot(sequence,self.alphabet)])
-                return max(min(10000, self.neuralmodel.predict(x)[0][0]),-10000)
+                return max(min(1, self.neuralmodel.predict(x)[0][0]),0)
 
             else:
                 x = np.array([translate_string_to_one_hot(sequence,self.alphabet).flatten()])
-                return max(min(10000, self.neuralmodel.predict(x)[0]),-10000)
+                return max(min(1, self.neuralmodel.predict(x)[0]),0)
 
         except:
             print (sequence)
