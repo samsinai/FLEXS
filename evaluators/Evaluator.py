@@ -44,7 +44,7 @@ class Evaluator():
     def load_ensemble(self, ML_ensemble):
         ensemble = []
         for key in ML_ensemble:
-            if key == "Linear":
+            if key == "LNN":
                from utils.model_architectures import Linear
                ensemble.append(Linear)
 
@@ -55,6 +55,27 @@ class Evaluator():
             elif key == "CNNa":
                from utils.model_architectures import CNNa
                ensemble.append(CNNa)
+
+            elif key == "Linear":
+               from utils.model_architectures import SKLinear
+               ensemble.append(SKLinear)
+
+            elif key == "Lasso":
+               from utils.model_architectures import SKLasso
+               ensemble.append(SKLasso)
+
+            elif key == "RF":
+               from utils.model_architectures import SKRF
+               ensemble.append(SKRF)  
+
+            elif key == "GB":
+               from utils.model_architectures import SKGB
+               ensemble.append(SKGB)  
+            
+            elif key == "NE":
+               from utils.model_architectures import SKNeighbors
+               ensemble.append(SKNeighbors)  
+
         return ensemble
 
     def run_on_null_model(self, landscape_oracle, Null_args, start_seq, num_batches = 10, hot_start = False, verbose = False, overwrite = False):
@@ -80,7 +101,7 @@ class Evaluator():
         self.explorer.set_model(noisy_landscape)
         self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
 
-    def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , ensemble=5, num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
+    def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
         
         #from utils.model_architectures import Linear, NLNN, CNNa
         nnlandscapes = []
@@ -122,12 +143,12 @@ class Evaluator():
 
               print (f'start seq {start_seq_id}')
 
-              for ss in [0,0.5,0.9,1]:
-                  landscape_idents={"landscape_id":landscape_id,\
-                                      "start_id":start_seq_id,\
-                                      "signal_strength": ss , \
-                                       }
-                  self.run_on_NAM(oracle,landscape_idents, start_seq, verbose=True)
+              # for ss in [0,0.5,0.9,1]:
+              #     landscape_idents={"landscape_id":landscape_id,\
+              #                         "start_id":start_seq_id,\
+              #                         "signal_strength": ss , \
+              #                          }
+              #     self.run_on_NAM(oracle,landscape_idents, start_seq, verbose=True)
               landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id}
               self.run_on_NNmodel(oracle,landscape_idents, start_seq, verbose=True)

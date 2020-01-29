@@ -35,7 +35,7 @@ class SKLinear(Architecture):
 
 class SKLasso(Architecture):
     def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
-        super(SKLinear, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        super(SKLasso, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.architecture_name=f'SKLasso'
 
     def get_model(self):
@@ -43,7 +43,7 @@ class SKLasso(Architecture):
 
 class SKRF(Architecture):
     def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
-        super(SKLinear, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        super(SKRF, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.architecture_name=f'SKRF'
 
     def get_model(self):
@@ -51,11 +51,19 @@ class SKRF(Architecture):
 
 class SKNeighbors(Architecture):
     def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
-        super(SKLinear, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        super(SKNeighbors, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.architecture_name=f'SKNeighbors'
 
     def get_model(self):
         return KNeighborsRegressor()
+
+class SKGB(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKGB, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKGB'
+
+    def get_model(self):
+        return GradientBoostingRegressor()
 
 
 class Linear(Architecture):

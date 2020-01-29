@@ -95,8 +95,11 @@ class NN_model(Model):
 
         except:
             pass
+        if self.model_flavor == "Keras":
+            self.neuralmodel.fit(X,Y,epochs=self.epochs,validation_split=self.validation_split,batch_size=self.batch_size,verbose=0)
+        else: 
+            self.neuralmodel.fit(X,Y)
 
-        self.neuralmodel.fit(X,Y,epochs=self.epochs,validation_split=self.validation_split,batch_size=self.batch_size,verbose=0)
         if not self.batch_update:
             self.retrain_model()
 
@@ -117,10 +120,16 @@ class NN_model(Model):
 
     def _fitness_function(self,sequence):
         try:
-            x=np.array([translate_string_to_one_hot(sequence,self.alphabet)])#.flatten()]
+            if self.model_flavor == "Keras":
+                x = np.array([translate_string_to_one_hot(sequence,self.alphabet)])
+                return max(min(10000, self.neuralmodel.predict(x)[0][0]),-10000)
+
+            else:
+                x = np.array([translate_string_to_one_hot(sequence,self.alphabet).flatten()])
+                return max(min(10000, self.neuralmodel.predict(x)[0]),-10000)
+
         except:
             print (sequence)
-        return max(min(200, self.neuralmodel.predict(x)[0][0]),-200)
     
     def measure_true_landscape(self,sequences):
         for sequence in sequences:

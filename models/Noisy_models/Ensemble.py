@@ -57,16 +57,18 @@ class Ensemble_models(Model):
              else: 
                 model.reset()
 
-      def update_model(self,sequences, bootstrap= True):
+      def update_model(self,sequences):#, bootstrap= True):
           for model in self.models:
-              if bootstrap:
-                 sub_sequences = random.sample(sequences, int(len(sequences)*0.75))
-                 model.update_model(sub_sequences)
-              else:
+              # if bootstrap and len(sequences)>20:
+              #    sub_sequences = random.sample(sequences, int(len(sequences)*1))
+              #    model.update_model(sub_sequences)
+              # else:
                  model.update_model(sequences)
           try:
               self.weighted_r2s = self.get_weighted_r2s()
-          except:
+              print (self.weighted_r2s)
+          except Exception as e:
+              print (e)
               print ("R^2 not computed for this type of model")
 
       def get_weighted_r2s(self):
@@ -75,7 +77,12 @@ class Ensemble_models(Model):
               r2s.append(max(0.001,model.r2))  
           weighted_r2s = [r/sum(r2s) for r in r2s]
           return weighted_r2s 
-
+      
+      def get_r2s(self):
+          r2s = []
+          for model in self.models:
+              r2s.append(model.r2) 
+          return r2s 
 
       def get_fitness(self, sequence):
           if sequence in self.measured_sequences: 
