@@ -44,7 +44,7 @@ class DynaPPO_explorer(Base_explorer):
                            path,
                            debug)
     
-        self.explorer_type = "DynaPPO_Agent"
+        self.explorer_type = f"DynaPPO_Agent_{threshold}_{num_experiment_rounds}_{num_model_rounds}"
         self.agent = None
         self.tf_env = None
         self.oracle = oracle
