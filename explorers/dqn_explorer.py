@@ -87,6 +87,7 @@ class DQN_Explorer(Base_explorer):
                                                 self.memory_size, self.batch_size, 0.6)  
 
     def reset(self):
+        self.batches = {-1:""}
         self.num_actions = 0
     
     def sample(self):
@@ -109,6 +110,7 @@ class DQN_Explorer(Base_explorer):
         Calculate MSE between actual state action values,
         and expected state action values from DQN
         """
+        self.q_network.train()
         rewards, actions, states, next_states = \
         batch['rews'], batch['acts'], batch['obs'], batch['next_obs']
         
@@ -120,6 +122,7 @@ class DQN_Explorer(Base_explorer):
         next_state_values = self.calculate_next_q_values(next_states_v)
         next_state_values = next_state_values.max(1)[0].detach()
         expected_state_action_values = next_state_values * self.gamma + rewards_v
+        self.q_network.eval()
         
         return nn.MSELoss()(state_action_values, expected_state_action_values)
 
