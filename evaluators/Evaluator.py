@@ -11,13 +11,15 @@ LANDSCAPE_ALPHABET={"RNA": "UCGA", "TF": "TCGA"}
 
 
 class Evaluator():
-    def __init__(self, explorer, landscape_types = LANDSCAPE_TYPES, path="./simulations/property_evaluation/"):
+    def __init__(self, explorer, landscape_types = LANDSCAPE_TYPES, path="./simulations/property_evaluation/", ML_ensemble=["CNNa","CNNa","CNNa"]):
         self.explorer = explorer
         self.path =  path
-        Path(self.path).mkdir(exist_ok=True)      
-        #self.dict_explorer_args = dict_explorer_args
+        Path(self.path).mkdir(exist_ok=True)   
+
         self.landscape_types = landscape_types
         self.landscape_generator = {}
+        if ML_ensemble:
+           self.ML_ensemble = self.load_ensemble(ML_ensemble)
         self.load_landscapes()
 
     def load_landscapes(self):
@@ -37,6 +39,44 @@ class Evaluator():
 
         self.explorer.run_id = str(uuid.uuid1())
         print (f'loading complete')
+
+
+    def load_ensemble(self, ML_ensemble):
+        ensemble = []
+        for key in ML_ensemble:
+            if key == "LNN":
+               from utils.model_architectures import Linear
+               ensemble.append(Linear)
+
+            elif key == "NLNN":
+               from utils.model_architectures import NLNN
+               ensemble.append(NLNN)
+
+            elif key == "CNNa":
+               from utils.model_architectures import CNNa
+               ensemble.append(CNNa)
+
+            elif key == "Linear":
+               from utils.model_architectures import SKLinear
+               ensemble.append(SKLinear)
+
+            elif key == "Lasso":
+               from utils.model_architectures import SKLasso
+               ensemble.append(SKLasso)
+
+            elif key == "RF":
+               from utils.model_architectures import SKRF
+               ensemble.append(SKRF)  
+
+            elif key == "GB":
+               from utils.model_architectures import SKGB
+               ensemble.append(SKGB)  
+            
+            elif key == "NE":
+               from utils.model_architectures import SKNeighbors
+               ensemble.append(SKNeighbors)  
+
+        return ensemble
 
     def run_on_null_model(self, landscape_oracle, Null_args, start_seq, num_batches = 10, hot_start = False, verbose = False, overwrite = False):
 
@@ -61,27 +101,24 @@ class Evaluator():
         self.explorer.set_model(noisy_landscape)
         self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
 
-    def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , ensemble=5, num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
+    def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
         
-        from utils.model_architectures import Linear, NLNN, CNNa
-        
-        for arch in [Linear,NLNN, CNNa]:
+        #from utils.model_architectures import Linear, NLNN, CNNa
+        nnlandscapes = []
+        for arch in self.ML_ensemble:
+            nn_model = arch(len(start_seq), alphabet = self.explorer.alphabet)
+            nnlandscape = NN_model(landscape_oracle,nn_model, **NNM_args)
+            nnlandscapes.append(nnlandscape)
 
-            nnlandscapes=[]
-            for i in range(ensemble):
-                nn_model=arch(len(start_seq), alphabet = self.explorer.alphabet)
-                nnlandscape=NN_model(landscape_oracle,nn_model, **NNM_args)
-                nnlandscapes.append(nnlandscape)
+        nn_ensemble_landscape = Ensemble_models(nnlandscapes)
+        nn_ensemble_landscape.reset()
+        if hot_start:
+           pass
+        else: 
+           nn_ensemble_landscape.update_model([start_seq])
 
-            nn_ensemble_landscape = Ensemble_models(nnlandscapes)
-            nn_ensemble_landscape.reset()
-            if hot_start:
-               pass
-            else: 
-               nn_ensemble_landscape.update_model([start_seq])
-
-            self.explorer.set_model(nn_ensemble_landscape)
-            self.explorer.run(num_batches, overwrite, verbose) 
+        self.explorer.set_model(nn_ensemble_landscape)
+        self.explorer.run(num_batches, overwrite, verbose) 
 
 
     def evaluate_for_landscapes(self, property_of_interest_evaluator, num_starts=100):

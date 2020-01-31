@@ -9,7 +9,7 @@ from keras.layers import Embedding
 from keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
 
 class Architecture():
-    def __init__(self, seq_len, batch_size=10, validation_split=0.1, epochs=20, alphabet="UCGA"):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA"):
         self.batch_size = batch_size
         self.validation_split = validation_split
         self.epochs = epochs
@@ -23,6 +23,46 @@ class Architecture():
 
     def get_model(self):
         raise NotImplementedError( "You need to define an Architecture")
+
+class SKLinear(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKLinear, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKLinear'
+
+    def get_model(self):
+        return LinearRegression()
+
+class SKLasso(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKLasso, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKLasso'
+
+    def get_model(self):
+        return Lasso()
+
+class SKRF(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKRF, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKRF'
+
+    def get_model(self):
+        return RandomForestRegressor()
+
+class SKNeighbors(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKNeighbors, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKNeighbors'
+
+    def get_model(self):
+        return KNeighborsRegressor()
+
+class SKGB(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKGB, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKGB'
+
+    def get_model(self):
+        return GradientBoostingRegressor()
 
 
 class Linear(Architecture):
@@ -38,7 +78,7 @@ class Linear(Architecture):
 
 class NLNN(Architecture):
     """Global epistasis model"""
-    def __init__(self, seq_len, batch_size=10, validation_split=0.1, epochs=20, alphabet="UCGA", hidden_dims=50):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", hidden_dims=50):
         super(NLNN, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.hidden_dims = hidden_dims
         self.architecture_name=f'NLNN_hd{self.hidden_dims}'
@@ -46,7 +86,7 @@ class NLNN(Architecture):
 
     def get_model(self):
 
-        non_lin_model=Sequential()
+        non_lin_model = Sequential()
         non_lin_model.add(Flatten())
         non_lin_model.add(Dense(1,input_shape=(self.seq_len* self.alphabet_len,),use_bias=False))
         non_lin_model.add(Activation('linear'))
