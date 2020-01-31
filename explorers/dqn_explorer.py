@@ -87,6 +87,7 @@ class DQN_Explorer(Base_explorer):
                                                 self.memory_size, self.batch_size, 0.6)  
 
     def reset(self):
+        self.batches = {-1:""}
         self.num_actions = 0
     
     def sample(self):

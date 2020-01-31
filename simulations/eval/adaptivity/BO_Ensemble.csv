@@ -1,2 +1,0 @@
-id,batch,sequence,true_score,model_score,batch_size,measurement_cost,virtual_evals,landscape_id,start_id,model_type,virtual_screen,horizon,explorer_type
-c3c1fbd2-420f-11ea-b457-acde48001122,0,AUGGGCCGGACCCC,0.5437468768175177,0.5437468768175177,1000,1,0,B1L14RNA1,startRNAL14_0,NAMb_ss1,20, 1,BO_Ensemble

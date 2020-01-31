@@ -65,6 +65,7 @@ class BO_Explorer(Base_explorer):
                                               100000, self.batch_size, 0.6) 
 
     def reset(self):
+        self.batches = {-1:""}
         self.num_actions = 0
     
     def train_models(self):
