@@ -1,8 +1,4 @@
 import sys
-from sklearn.linear_model import BayesianRidge, LinearRegression, Lasso, LogisticRegression
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, ExtraTreesRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.gaussian_process import GaussianProcessRegressor
 
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation,Flatten
@@ -61,7 +57,7 @@ class NLNN(Architecture):
         return non_lin_model
 
 class CNNa(Architecture):
-    def __init__(self, seq_len, batch_size=10, validation_split=0.1, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
         super(CNNa, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.filters = filters
         self.hidden_dims = hidden_dims
@@ -110,35 +106,3 @@ class Logistic(Architecture):
         model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mse'])
         return model
     
-class KNN(Architecture):
-    def get_model(self):
-        model = KNeighborsRegressor()
-        return model
-    
-class GradientBoosting(Architecture):
-    def get_model(self):
-        model = GradientBoostingRegressor()
-        return model
-    
-class RandomForest(Architecture):
-    def get_model(self):
-        model = RandomForestRegressor()
-        return model
-    
-class Bayesian(Architecture):
-    def get_model(self):
-        model = BayesianRidge()
-        return model
-    
-class ExtraTrees(Architecture):
-    def get_model(self):
-        model = ExtraTreesRegressor()
-        return model
-    
-class GaussianProcess(Architecture):
-    def get_model(self):
-        model = GaussianProcessRegressor()
-        return model
-    
-keras_architectures = [Linear, NLNN, CNNa, Logistic]
-sklearn_architectures = [KNN, GradientBoosting, RandomForest, Bayesian, ExtraTrees, GaussianProcess]
