@@ -1,4 +1,7 @@
 import sys
+from sklearn.linear_model import LinearRegression,Lasso, LogisticRegression
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor
 
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation,Flatten
@@ -57,6 +60,7 @@ class NLNN(Architecture):
         return non_lin_model
 
 class CNNa(Architecture):
+
     def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
         super(CNNa, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.filters = filters
