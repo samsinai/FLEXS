@@ -1,3 +1,16 @@
+"""
+DynaPPO implementation.
+for N experiment rounds
+    collect samples with policy
+    train policy on samples
+    fit candidate models on samples and compute R^2
+    select models which pass threshold
+    if model subset is not empty then
+        for M model-based training rounds
+            sample batch of sequences from policy and observe ensemble reward
+            update policy on observed data
+"""
+
 import collections
 import tensorflow as tf
 from functools import partial
@@ -10,15 +23,19 @@ from tf_agents.networks import actor_distribution_network
 from tf_agents.networks import value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
-from environments.PPO_environment import PPOEnvironment as PPOEnv
+from environments.DynaPPO_environment import DynaPPOEnvironment as DynaPPOEnv
 from explorers.base_explorer import Base_explorer
 from utils.sequence_utils import translate_one_hot_to_string
 
-class PPO_explorer(Base_explorer):
+class DynaPPO_explorer(Base_explorer):
     def __init__(self,
+                 oracle,
                  batch_size=100,
                  alphabet="UCGA",
                  virtual_screen=10,
+                 threshold=0.5,
+                 num_experiment_rounds=5,
+                 num_model_rounds=10,
                  path="./simulations/",
                  debug=False):
         super().__init__(batch_size,
@@ -27,7 +44,14 @@ class PPO_explorer(Base_explorer):
                            path,
                            debug)
     
-        self.explorer_type = "PPO_Agent"
+        self.explorer_type = f"DynaPPO_Agent_{threshold}_{num_experiment_rounds}_{num_model_rounds}"
+        self.agent = None
+        self.tf_env = None
+        self.oracle = oracle
+        
+        self.threshold = threshold
+        self.num_experiment_rounds = num_experiment_rounds
+        self.num_model_rounds = num_model_rounds
         
         self.meas_seqs = []
         self.meas_seqs_it = 0
@@ -36,14 +60,19 @@ class PPO_explorer(Base_explorer):
         self.top_seqs_it = 0
         
     def initialize_env(self):
-        env = PPOEnv(alphabet=self.alphabet,
-                     starting_seq=self.meas_seqs[0][1],
-                     landscape=self.model,
-                     max_num_steps=self.virtual_screen)
-
+        env = DynaPPOEnv(alphabet=self.alphabet,
+                         starting_seq=self.meas_seqs[0][1],
+                         landscape=self.model,
+                         max_num_steps=self.virtual_screen,
+                         oracle=self.oracle,
+                         oracle_reward=False)
+        
         validate_py_environment(env, episodes=1)
 
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
+        
+    def set_tf_env_reward(self, is_oracle):
+        self.tf_env.pyenv.envs[0].oracle_reward = is_oracle
         
     def initialize_agent(self):
         actor_fc_layers = (200, 100)
@@ -92,33 +121,14 @@ class PPO_explorer(Base_explorer):
             self.meas_seqs_it = (self.meas_seqs_it + 1) % len(self.meas_seqs)
             self.tf_env.pyenv.envs[0].seq = self.meas_seqs[self.meas_seqs_it][1]
     
-    def pretrain_agent(self):
-        measured_seqs = [(self.model.get_fitness(seq),
-                          seq, self.model.cost)
-                          for seq in self.model.measured_sequences]
-        measured_seqs = sorted(measured_seqs,
-                               key=lambda x: x[0],
-                               reverse=True)
-
-        self.top_seqs = collections.deque(measured_seqs, maxlen=self.batch_size)
-        self.meas_seqs = measured_seqs
-        
-        self.initialize_env()
-        self.initialize_agent()
-        
-        batch_size = self.batch_size
-        max_env_steps = 100
+    def perform_model_based_training_step(self):
+        # change reward to ensemble based
+        self.set_tf_env_reward(is_oracle=False)
         
         all_seqs = set(self.model.measured_sequences)
-        proposed_seqs = set()
-        measured_seqs = []
-        
+        new_seqs = set()
+
         num_parallel_environments = 1
-        env_steps_metric = tf_metrics.EnvironmentSteps()
-        step_metrics = [
-            tf_metrics.NumberOfEpisodes(),
-            env_steps_metric
-        ]
         
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
@@ -126,53 +136,103 @@ class PPO_explorer(Base_explorer):
             batch_size=num_parallel_environments,
             max_length=replay_buffer_capacity
         )
-        
+
         collect_driver = dynamic_episode_driver.DynamicEpisodeDriver(
             self.tf_env,
             self.agent.collect_policy,
-            observers=[replay_buffer.add_batch,
-                       partial(self.add_last_seq_in_trajectory,
-                               new_seqs=proposed_seqs)] + step_metrics,
-            num_episodes=1
+            observers = [replay_buffer.add_batch,
+                         partial(self.add_last_seq_in_trajectory,
+                                 new_seqs=new_seqs)],
+            num_episodes = 1
         )
-        while env_steps_metric.result() < max_env_steps:
-            print(f"Episodes: {env_steps_metric.result().numpy()}/{max_env_steps}")
 
-            # generate new sequences
-            for _ in range(batch_size):
-                collect_driver.run()
+        while len(new_seqs) < self.batch_size:
+            collect_driver.run()
 
-            # get proposed sequences which have not already been measured
-            # (since the landscape is not updating)
-            new_seqs = proposed_seqs.difference(all_seqs)
+        new_seqs = new_seqs.difference(all_seqs)
+
+        self.meas_seqs += [(self.model.get_fitness(seq),
+                           seq, self.model.cost)
+                           for seq in new_seqs]
+        self.meas_seqs = sorted(self.meas_seqs,
+                           key=lambda x: x[0],
+                           reverse=True)
+
+        # train policy on samples collected
+        trajectories = replay_buffer.gather_all()
+        total_loss, _ = self.agent.train(experience=trajectories)
+        replay_buffer.clear()
+        
+    def perform_experiment_based_training_step(self):       
+        # change reward to oracle based
+        self.set_tf_env_reward(is_oracle=True)
+        
+        all_seqs = set(self.model.measured_sequences)
+        new_seqs = set()
+        last_batch = self.get_last_batch()
+        
+        num_parallel_environments = 1
+        
+        replay_buffer_capacity = 10001
+        replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
+            self.agent.collect_data_spec,
+            batch_size=num_parallel_environments,
+            max_length=replay_buffer_capacity
+        )
             
-            # add new sequences to measured_sequences and sort
-            self.meas_seqs += [(self.model.get_fitness(seq),
-                               seq, self.model.cost)
-                               for seq in new_seqs]
-            self.meas_seqs = sorted(self.meas_seqs,
-                                   key=lambda x: x[0],
-                                   reverse=True)
-
-            print(f"Number of measured sequences: {len(self.meas_seqs)}")
-            # if we have a new winner
-            if len(self.top_seqs) == 0 or self.meas_seqs[0][0] > self.top_seqs[-1][0]:
-                print("New top sequence:", self.meas_seqs[0])
-                self.top_seqs.append(self.meas_seqs[0])
-
-            # add proposed sequences to set of all sequences
-            all_seqs.update(proposed_seqs)
+        collect_driver = dynamic_episode_driver.DynamicEpisodeDriver(
+            self.tf_env,
+            self.agent.collect_policy,
+            observers = [replay_buffer.add_batch,
+                         partial(self.add_last_seq_in_trajectory,
+                                 new_seqs=new_seqs)],
+            num_episodes = 1
+        )
+        
+        while len(new_seqs) < self.batch_size:
+            collect_driver.run()
             
-            # reset counter
-            self.meas_seqs_it = 0
-
-            # reset proposed sequences
-            proposed_seqs.clear()
-
-            # train from the agent's trajectories
-            trajectories = replay_buffer.gather_all()
-            total_loss, _ = self.agent.train(experience=trajectories)
-            replay_buffer.clear()
+        new_seqs = new_seqs.difference(all_seqs)
+        
+        # train policy on samples collected
+        trajectories = replay_buffer.gather_all()
+        total_loss, _ = self.agent.train(experience=trajectories)
+        replay_buffer.clear()
+        
+        self.meas_seqs += [(self.model.get_fitness(seq),
+                           seq, self.model.cost)
+                           for seq in new_seqs]
+        self.meas_seqs = sorted(self.meas_seqs,
+                               key=lambda x: x[0],
+                               reverse=True)
+        
+        # fit candidate models
+        self.model.update_model([s[1] for s in self.meas_seqs])
+        
+        # select subset of models
+        r2s = self.model.get_r2s()
+        self.model.models = [self.model.models[i] for i, r2 in enumerate(r2s) if r2 >= self.threshold]
+        if len(self.model.models) == 0:
+            raise ValueError("No candidate models passed threshold.")
+        
+        for m in range(self.num_model_rounds):
+            self.perform_model_based_training_step()
+    
+    def learn_policy(self):
+        self.meas_seqs = [(self.model.get_fitness(seq),
+                          seq, self.model.cost)
+                          for seq in self.model.measured_sequences]
+        self.meas_seqs = sorted(self.meas_seqs,
+                               key=lambda x: x[0],
+                               reverse=True)
+        
+        if self.tf_env is None:
+            self.initialize_env()
+        if self.agent is None:
+            self.initialize_agent()
+            
+        for n in range(self.num_experiment_rounds):
+            self.perform_experiment_based_training_step()
     
     def propose_samples(self):
         all_seqs = set(self.model.measured_sequences)

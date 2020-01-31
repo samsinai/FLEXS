@@ -1,4 +1,4 @@
-"""Environment for PPO agent."""
+"""Environment for DyNA-PPO agent."""
 
 import copy
 import numpy as np
@@ -15,13 +15,15 @@ if module_path not in sys.path:
 from utils.sequence_utils import (construct_mutant_from_sample, translate_one_hot_to_string,
     translate_string_to_one_hot)
 
-class PPOEnvironment(py_environment.PyEnvironment):
+class DynaPPOEnvironment(py_environment.PyEnvironment):
     # Based on this: https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent/
     def __init__(self,
                  alphabet,
                  starting_seq,
                  landscape,
-                 max_num_steps):
+                 max_num_steps,
+                 oracle,
+                 oracle_reward=False):
         """Args:
             alphabet: Usually UCGA.
             starting_seq: When initializing the environment,
@@ -31,6 +33,8 @@ class PPOEnvironment(py_environment.PyEnvironment):
             max_num_steps: Maximum number of steps before
                 episode is forced to terminate. Usually the
                 virtual screening ratio.
+            oracle_reward: Whether or not to give reward based
+                on oracle or on ensemble model.
         """
         
         # alphabet
@@ -40,6 +44,8 @@ class PPOEnvironment(py_environment.PyEnvironment):
         # landscape/model/measurements
         self.landscape = landscape
         self.previous_fitness = -float("inf")
+        self.oracle = oracle
+        self.oracle_reward = oracle_reward
         
         # sequence
         self.seq = starting_seq
@@ -130,7 +136,10 @@ class PPOEnvironment(py_environment.PyEnvironment):
                         np.array(self._state, dtype=np.float32), -1)
                 self.episode_seqs[state_string] = 1
                 
-                reward = self.landscape.get_fitness(state_string)
+                if self.oracle_reward:
+                    reward = self.oracle.get_fitness(state_string)
+                else:
+                    reward = self.landscape.get_fitness(state_string)
                 
                 # if my reward is not increasing, then terminate
                 if reward < self.previous_fitness:
