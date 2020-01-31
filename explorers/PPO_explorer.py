@@ -35,6 +35,8 @@ class PPO_explorer(Base_explorer):
         self.top_seqs = collections.deque(maxlen=self.batch_size)
         self.top_seqs_it = 0
         
+        self.has_pretrained_agent = False
+        
     def initialize_env(self):
         env = PPOEnv(alphabet=self.alphabet,
                      starting_seq=self.meas_seqs[0][1],
@@ -107,7 +109,7 @@ class PPO_explorer(Base_explorer):
         self.initialize_agent()
         
         batch_size = self.batch_size
-        max_env_steps = 100
+        max_env_steps = 50*self.batch_size
         
         all_seqs = set(self.model.measured_sequences)
         proposed_seqs = set()
@@ -173,8 +175,13 @@ class PPO_explorer(Base_explorer):
             trajectories = replay_buffer.gather_all()
             total_loss, _ = self.agent.train(experience=trajectories)
             replay_buffer.clear()
+            
+        self.has_pretrained_agent = True
     
     def propose_samples(self):
+        if not self.has_pretrained_agent:
+            self.pretrain_agent()
+            
         all_seqs = set(self.model.measured_sequences)
         new_seqs = set()
         last_batch = self.get_last_batch()
