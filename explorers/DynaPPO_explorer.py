@@ -29,7 +29,6 @@ from utils.sequence_utils import translate_one_hot_to_string
 
 class DynaPPO_explorer(Base_explorer):
     def __init__(self,
-                 oracle,
                  batch_size=100,
                  alphabet="UCGA",
                  virtual_screen=10,
@@ -47,7 +46,7 @@ class DynaPPO_explorer(Base_explorer):
         self.explorer_type = f"DynaPPO_Agent_{threshold}_{num_experiment_rounds}_{num_model_rounds}"
         self.agent = None
         self.tf_env = None
-        self.oracle = oracle
+        self.oracle = None
         
         self.threshold = threshold
         self.num_experiment_rounds = num_experiment_rounds
@@ -58,6 +57,8 @@ class DynaPPO_explorer(Base_explorer):
         
         self.top_seqs = collections.deque(maxlen=self.batch_size)
         self.top_seqs_it = 0
+        
+        self.has_learned_policy = False
         
     def initialize_env(self):
         env = DynaPPOEnv(alphabet=self.alphabet,
@@ -219,6 +220,9 @@ class DynaPPO_explorer(Base_explorer):
             self.perform_model_based_training_step()
     
     def learn_policy(self):
+        if self.oracle is None:
+            self.oracle = self.model
+        
         self.meas_seqs = [(self.model.get_fitness(seq),
                           seq, self.model.cost)
                           for seq in self.model.measured_sequences]
@@ -233,8 +237,13 @@ class DynaPPO_explorer(Base_explorer):
             
         for n in range(self.num_experiment_rounds):
             self.perform_experiment_based_training_step()
+            
+        self.has_learned_policy = True
     
     def propose_samples(self):
+        if not self.has_learned_policy:
+            self.learn_policy()
+        
         all_seqs = set(self.model.measured_sequences)
         new_seqs = set()
         last_batch = self.get_last_batch()

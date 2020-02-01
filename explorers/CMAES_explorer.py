@@ -21,6 +21,10 @@ class CMAES_explorer(Base_explorer):
         self.lam = self.batch_size
         self.round = 0
         
+        self.has_been_initialized = False
+        
+        self.seen_sequences = {}
+        
     def initialize_params(self):
         # to be called after set_model
         seq = list(self.model.measured_sequences.keys())[0]
@@ -49,6 +53,8 @@ class CMAES_explorer(Base_explorer):
         
         self.chiN = np.sqrt(N)*(1-1/(4*N)+1/(21*N**2))
         
+        self.has_been_initialized = True
+        
     def convert_mvn_to_seq(self, mvn):
         # converts multivariate normal to one hot
         mvn = mvn.reshape((self.alphabet_len, self.seq_len))
@@ -62,9 +68,15 @@ class CMAES_explorer(Base_explorer):
         
     def _sample(self):
         samples = []
-        for i in range(self.lam):
+        
+        while len(samples) < self.lam:
             x = np.random.multivariate_normal(self.mean, (self.sigma**2)*self.cov)
             seq = self.convert_mvn_to_seq(x)
+            
+            if seq in self.seen_sequences:
+                continue
+                
+            self.seen_sequences[seq] = 1
             fitness = self.model.get_fitness(seq)
             
             samples.append((x, fitness))
@@ -76,7 +88,8 @@ class CMAES_explorer(Base_explorer):
         for i in range(self.mu):
             s += self.weights[i-1]*samples[i][0]
             
-        self.mean = s
+        # THIS CLIPPING IS NON-STANDARD
+        self.mean = np.clip(s, -1, 1)
         
     def expectation(self):
         return np.sqrt(self.N)*(1-1/(4*self.N)+1/(21*self.N**2))
@@ -103,6 +116,9 @@ class CMAES_explorer(Base_explorer):
             + self.cmu*weighted_sum
 
     def propose_samples(self):
+        if not self.has_been_initialized:
+            self.initialize_params()
+        
         # in CMAES we _minimize_ an objective, so I'll conveniently reverse
         samples = sorted(self._sample(), key=lambda s: s[1], reverse=True)
             
