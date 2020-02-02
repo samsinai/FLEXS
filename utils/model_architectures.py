@@ -5,7 +5,7 @@ import sys
 
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation,Flatten
-from keras.layers import Embedding
+from keras import optimizers
 from keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
 
 import keras.backend as K
@@ -138,6 +138,7 @@ class VAE(Architecture):
         self.vae = Model()
         self.decoder = Model()
         self.verbose = verbose
+        self.name = 'VAE'
 
 
     def _sampling(self, args):  # reparameterization
@@ -176,12 +177,14 @@ class VAE(Architecture):
         decoder_2 = Dense(self.intermediate_dim, activation='elu')
         decoder_2d = Dropout(0.7)
         decoder_3 = Dense(self.intermediate_dim, activation='elu')
-        decoder_out = Dense(self.output_dim, activation='sigmoid')  # columnwise softmax?
+        decoder_out = Dense(self.output_dim, activation='sigmoid')
         x_decoded_mean = decoder_out(decoder_3(decoder_2d(decoder_2(decoder_1(z)))))
 
         self.vae = Model(x, x_decoded_mean)
 
-        self.vae.compile(optimizer="adam", loss=self._vae_loss, metrics=["categorical_accuracy", "top_k_categorical_accuracy"])
+        opt = optimizers.Adam(clipvalue=1.0)
+
+        self.vae.compile(optimizer=opt, loss=self._vae_loss)
 
         decoder_input = Input(shape=(self.latent_dim,))
         _x_decoded_mean = decoder_out(decoder_3(decoder_2d(decoder_2(decoder_1(decoder_input)))))
@@ -226,6 +229,7 @@ class VAE(Architecture):
                      epochs=self.epochs,
                      batch_size=self.batch_size,
                      validation_split=self.validation_split, callbacks=[early_stop])
+
         return
 
 
@@ -235,44 +239,58 @@ class VAE(Architecture):
         """
         z = np.random.randn(1, self.latent_dim)  # sampling from the latent space (normal distr in this case)
         x_reconstructed = self.decoder.predict(z)  # decoding
-        x_one_hot = np.reshape(x_reconstructed, (len(self.KEY_LIST), self.seq_size))
+        x_reconstructed_matrix = np.reshape(x_reconstructed, (len(self.KEY_LIST), self.seq_size))
+
+        while np.isnan(x_reconstructed_matrix).any():  # repeat the sampling if NaNs in x_reconstructed_matrix
+            print('GOT A RECONSTRUCTION WITH NANS')
+            z = np.random.randn(1, self.latent_dim)
+            x_reconstructed = self.decoder.predict(z)
+            x_reconstructed_matrix = np.reshape(x_reconstructed, (len(self.KEY_LIST), self.seq_size))
 
         # sample from the reconstructed pwm with Boltzmann weights
         # reject repeated sequences and ones that are in existing_samples
         #temp_list = [0.001, 0.01, 0.05, 0.1, 0.2]
         proposals = []
         temperature = 0.001
-        subsequent_duplicates = 0
+        weights = pwm_to_boltzmann_weights(x_reconstructed_matrix, temperature)
+        repetitions = 0
+
         while len(proposals) < n_samples:
-            weights = pwm_to_boltzmann_weights(x_one_hot, temperature)
             new_seq = []
             for pos in range(self.seq_size):
                 new_seq.extend(random.choices(self.KEY_LIST, weights[:, pos]))
             new_seq = ''.join(new_seq)
             if (new_seq not in proposals) and (new_seq not in existing_samples):
+                #print('new seq, tot:', len(proposals))
                 proposals.append(new_seq)
             else:
-                subsequent_duplicates += 1
-            if subsequent_duplicates >= 10:
-                temperature = 2*temperature
-
+                #print('repetition, tot:', len(proposals))
+                #print('temp:', temperature)
+                repetitions += 1
+                # if repetitions > 100:
+                    #print('seq', x_reconstructed_matrix)
+                    #print('weights', weights)
+                temperature = 1.3*temperature
+                weights = pwm_to_boltzmann_weights(x_reconstructed_matrix, temperature)
 
         return proposals
 
 
-    def calculate_log_probability(self, proposals):
+    def calculate_log_probability(self, proposals, vae=None):
+        if not vae:
+            vae = self.vae
         probabilities = []
         for sequence in proposals:
             sequence_one_hot = np.array(translate_string_to_one_hot(sequence, self.KEY_LIST))
             #print('input seq', sequence_one_hot)
             sequence_one_hot_flattened = sequence_one_hot.flatten()
             sequence_one_hot_flattened_batch = np.array([sequence_one_hot_flattened for i in range(self.batch_size)])
-            sequence_decoded_flattened = self.vae.predict(sequence_one_hot_flattened_batch, batch_size=self.batch_size)
+            sequence_decoded_flattened = vae.predict(sequence_one_hot_flattened_batch, batch_size=self.batch_size)
             sequence_decoded = np.reshape(sequence_decoded_flattened, (self.batch_size, len(self.KEY_LIST), self.seq_size))[0]
             sequence_decoded = normalize(sequence_decoded, axis=0, norm='l1')
             #print('reconstructed', sequence_decoded)
             #log_prob = np.trace(np.log(np.matmul(sequence_one_hot.T,sequence_decoded)))
-            log_prob = np.sum(np.log(np.sum(sequence_one_hot*sequence_decoded,axis=0)))
+            log_prob = np.sum(np.log(10e-10 + np.sum(sequence_one_hot*sequence_decoded,axis=0)))
             #print('log_prob', log_prob)
             probabilities.append(log_prob)
         probabilities = np.nan_to_num(probabilities)
