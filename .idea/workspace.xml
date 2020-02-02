@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="0e7ce8cc-8c4d-4553-9212-fa8868c1d1ff" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/evaluators/Evaluator.py" beforeDir="false" afterPath="$PROJECT_DIR$/evaluators/Evaluator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/Tutorial.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/Tutorial.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/explorers/elitist_explorers.py" beforeDir="false" afterPath="$PROJECT_DIR$/explorers/elitist_explorers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/Noisy_models/Ensemble.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/Noisy_models/Ensemble.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/Noisy_models/Neural_network_models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/Noisy_models/Neural_network_models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/Noisy_models/Noisy_abstract_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/Noisy_models/Noisy_abstract_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/Analyze_evaluation_runs-TF.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/Analyze_evaluation_runs-TF.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/Run evaluations.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/Run evaluations.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/model_architectures.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/model_architectures.py" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/utils/model_architectures.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-3119">
+              <caret line="120" selection-start-line="120" selection-end-line="120" />
+              <folding>
+                <element signature="e#0#10#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/explorers/CbAS_DbAS_explorers.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="378">
+              <caret line="97" column="29" selection-start-line="97" selection-start-column="29" selection-end-line="97" selection-end-column="29" />
+              <folding>
+                <element signature="e#0#49#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/utils/multi_dimensional_model.py">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/evaluators/Evaluator.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="263">
+              <caret line="138" column="6" selection-start-line="138" selection-start-column="6" selection-end-line="138" selection-end-column="6" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/models/Noisy_models/Neural_network_models.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-46">
+              <caret line="121" selection-start-line="121" selection-end-line="121" />
+              <folding>
+                <element signature="e#1#19#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/models/Noisy_models/Ensemble.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="735">
+              <caret line="49" column="23" selection-start-line="49" selection-start-column="23" selection-end-line="49" selection-end-column="23" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/explorers/base_explorer.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="465">
+              <caret line="31" column="176" selection-start-line="31" selection-start-column="166" selection-end-line="31" selection-end-column="176" />
+              <folding>
+                <element signature="e#0#34#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/explorers/elitist_explorers.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="270">
+              <caret line="18" column="90" selection-start-line="18" selection-start-column="27" selection-end-line="18" selection-end-column="90" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>self.model</find>
+      <find>mutation</find>
+      <find>generator_0</find>
+      <find>copy</find>
+      <find>x_one_hot</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/evaluators/Evaluator.py" />
+        <option value="$PROJECT_DIR$/explorers/CbAS_DbAS_explorers.py" />
+        <option value="$PROJECT_DIR$/utils/model_architectures.py" />
+        <option value="$PROJECT_DIR$/models/Noisy_models/Neural_network_models.py" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectConfigurationFiles">
+    <option name="files">
+      <list>
+        <option value="$PROJECT_DIR$/.idea/FLSD-Sandbox.iml" />
+        <option value="$PROJECT_DIR$/.idea/misc.xml" />
+        <option value="$PROJECT_DIR$/.idea/vcs.xml" />
+        <option value="$PROJECT_DIR$/.idea/modules.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/R_User_Library.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="79" />
+    <option name="y" value="23" />
+    <option name="width" value="1077" />
+    <option name="height" value="791" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="evaluators" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="explorers" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="meta" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="models" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="models" type="462c0819:PsiDirectoryNode" />
+              <item name="Noisy_models" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="simulations" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="simulations" type="462c0819:PsiDirectoryNode" />
+              <item name="evaluations3" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="simulations" type="462c0819:PsiDirectoryNode" />
+              <item name="evaluations3" type="462c0819:PsiDirectoryNode" />
+              <item name="consistency_robustness_independence" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="simulations" type="462c0819:PsiDirectoryNode" />
+              <item name="evaluations4" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="simulations" type="462c0819:PsiDirectoryNode" />
+              <item name="evaluations4" type="462c0819:PsiDirectoryNode" />
+              <item name="consistency_robustness_independence" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="simulations" type="462c0819:PsiDirectoryNode" />
+              <item name="evaluations_test_six6" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="simulations" type="462c0819:PsiDirectoryNode" />
+              <item name="evaluations_test_six6" type="462c0819:PsiDirectoryNode" />
+              <item name="consistency_robustness_independence" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="FLSD-Sandbox" type="b2602c69:ProjectViewProjectNode" />
+              <item name="FLSD-Sandbox" type="462c0819:PsiDirectoryNode" />
+              <item name="utils" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0e7ce8cc-8c4d-4553-9212-fa8868c1d1ff" name="Default Changelist" comment="" />
+      <created>1580154330271</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1580154330271</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="79" y="23" width="1077" height="791" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Favorites" side_tool="true" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24927536" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="Python Console" />
+      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.3290398" />
+      <window_info anchor="right" id="R Packages" />
+      <window_info anchor="right" id="R Graphics" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/models/Noisy_models/Ensemble.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="735">
+          <caret line="49" column="23" selection-start-line="49" selection-start-column="23" selection-end-line="49" selection-end-column="23" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/explorers/base_explorer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="31" column="176" selection-start-line="31" selection-start-column="166" selection-end-line="31" selection-end-column="176" />
+          <folding>
+            <element signature="e#0#34#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/evaluators/Evaluator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="263">
+          <caret line="138" column="6" selection-start-line="138" selection-start-column="6" selection-end-line="138" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/explorers/elitist_explorers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="18" column="90" selection-start-line="18" selection-start-column="27" selection-end-line="18" selection-end-column="90" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utils/multi_dimensional_model.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/explorers/CbAS_DbAS_explorers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="378">
+          <caret line="97" column="29" selection-start-line="97" selection-start-column="29" selection-end-line="97" selection-end-column="29" />
+          <folding>
+            <element signature="e#0#49#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/utils/model_architectures.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3119">
+          <caret line="120" selection-start-line="120" selection-end-line="120" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/models/Noisy_models/Neural_network_models.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-46">
+          <caret line="121" selection-start-line="121" selection-end-line="121" />
+          <folding>
+            <element signature="e#1#19#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
