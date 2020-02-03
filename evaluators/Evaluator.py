@@ -11,15 +11,21 @@ LANDSCAPE_ALPHABET={"RNA": "UCGA", "TF": "TCGA"}
 
 
 class Evaluator():
-    def __init__(self, explorer, landscape_types = LANDSCAPE_TYPES, path="./simulations/property_evaluation/", ML_ensemble=["CNNa","CNNa","CNNa"]):
+    def __init__(self, explorer,
+     landscape_types = LANDSCAPE_TYPES, 
+      path="./simulations/property_evaluation/", 
+      ML_ensemble=["CNNa","CNNa","CNNa"],
+      adaptive_ensemble=True):
         self.explorer = explorer
         self.path =  path
         Path(self.path).mkdir(exist_ok=True)   
 
         self.landscape_types = landscape_types
         self.landscape_generator = {}
+        self.ML_ensemble=[]
         if ML_ensemble:
-           self.ML_ensemble = self.load_ensemble(ML_ensemble)
+           self.ML_ensemble = self.load_ensemble(ML_ensemble)           
+        self.adaptive = adaptive_ensemble 
         self.load_landscapes()
 
     def load_landscapes(self):
@@ -80,45 +86,101 @@ class Evaluator():
 
     def run_on_null_model(self, landscape_oracle, Null_args, start_seq, num_batches = 10, hot_start = False, verbose = False, overwrite = False):
 
-        noisy_landscape = Null_model(landscape_oracle,**Null_args)
-        start_seq = start_seq
-        if hot_start:
-           pass
-        else: 
-           noisy_landscape.reset([start_seq])
-        self.explorer.set_model(noisy_landscape)
-        self.explorer.run(num_batches, overwrite, verbose)
+      print ("Running null ", Null_args)
+
+      if not self.ML_ensemble:
+
+          noisy_landscape = Null_model(landscape_oracle,**Null_args)
+          start_seq = start_seq
+          if hot_start:
+             pass
+          else: 
+             noisy_landscape.reset([start_seq])
+          self.explorer.set_model(noisy_landscape)
+          self.explorer.run(num_batches, overwrite, verbose)
+
+      else:
+          nnlandscapes=[]
+          for k in range(len(self.ML_ensemble)):
+              noisy_landscape = Null_model(landscape_oracle,**Null_args)
+              nnlandscapes.append(noisy_landscape)
+
+
+          nam_ensemble_landscape = Ensemble_models(nnlandscapes,adaptive=self.adaptive)
+          nam_ensemble_landscape.reset()
+          if hot_start:
+             pass
+          else: 
+             nam_ensemble_landscape.update_model([start_seq])
+          self.explorer.set_model(nam_ensemble_landscape)
+          self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)   
 
 
     def run_on_NAM(self, landscape_oracle, NAM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False):
 
-        noisy_landscape = Noisy_abstract_model(landscape_oracle,**NAM_args)
-        start_seq = start_seq
-        if hot_start:
-           pass
-        else: 
-           noisy_landscape.reset([start_seq])
-        self.explorer.set_model(noisy_landscape)
-        self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
+      print ("Running  NAM", NAM_args)
+
+      if not self.ML_ensemble:
+            noisy_landscape = Noisy_abstract_model(landscape_oracle,**NAM_args)
+            if hot_start:
+               pass
+            else: 
+               noisy_landscape.reset([start_seq])
+            self.explorer.set_model(noisy_landscape)
+            self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
+      else:
+            nnlandscapes=[]
+            for k in range(len(self.ML_ensemble)):
+                noisy_landscape = Noisy_abstract_model(landscape_oracle,**NAM_args)
+                nnlandscapes.append(noisy_landscape)
+
+
+            nam_ensemble_landscape = Ensemble_models(nnlandscapes,adaptive = self.adaptive)
+            nam_ensemble_landscape.reset()
+            if hot_start:
+               pass
+            else: 
+               nam_ensemble_landscape.update_model([start_seq])
+            self.explorer.set_model(nam_ensemble_landscape)
+            self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
+
 
     def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
 
-        #from utils.model_architectures import Linear, NLNN, CNNa
-        nnlandscapes = []
-        for arch in self.ML_ensemble:
-            nn_model = arch(len(start_seq), alphabet = self.explorer.alphabet)
-            nnlandscape = NN_model(landscape_oracle,nn_model, **NNM_args)
-            nnlandscapes.append(nnlandscape)
+        print ("Running NN", NNM_args)
 
-        nn_ensemble_landscape = Ensemble_models(nnlandscapes)
-        nn_ensemble_landscape.reset()
-        if hot_start:
-           pass
-        else: 
-           nn_ensemble_landscape.update_model([start_seq])
+        if not self.ML_ensemble:
+            nnlandscapes = []
+            from utils.model_architectures import SKLinear,SKRF, NLNN, CNNa
 
-        self.explorer.set_model(nn_ensemble_landscape)
-        self.explorer.run(num_batches, overwrite, verbose) 
+            for arch in [SKLinear, SKRF, NLNN, CNNa]:
+                nn_model = arch(len(start_seq), alphabet = self.explorer.alphabet)
+                nnlandscape = NN_model(landscape_oracle,nn_model, **NNM_args)
+
+                if hot_start:
+                   pass
+                else: 
+                   nnlandscape.update_model([start_seq])
+
+                self.explorer.set_model(nnlandscape)
+                self.explorer.run(num_batches, overwrite, verbose) 
+
+        else:  
+            nnlandscapes = []
+            for arch in self.ML_ensemble:
+                nn_model = arch(len(start_seq), alphabet = self.explorer.alphabet)
+                nnlandscape = NN_model(landscape_oracle,nn_model, **NNM_args)
+                nnlandscapes.append(nnlandscape)
+
+            nn_ensemble_landscape = Ensemble_models(nnlandscapes,adaptive=self.adaptive)
+            nn_ensemble_landscape.reset()
+            if hot_start:
+               pass
+            else: 
+               nn_ensemble_landscape.update_model([start_seq])
+
+            self.explorer.set_model(nn_ensemble_landscape)
+            self.explorer.run(num_batches, overwrite, verbose) 
 
 
     def evaluate_for_landscapes(self, property_of_interest_evaluator, num_starts=100):
@@ -176,15 +238,13 @@ class Evaluator():
         self.explorer.path =  self.path+ "adaptivity/"
 
         print (f'start seq {start_seq_id}')
-
         landscape_idents={"landscape_id":landscape_id,\
-                                  "start_id":start_seq_id,\
-                                  "signal_strength": 1 , \
-                                   }
+                                      "start_id":start_seq_id}
+        self.ML_ensemble = self.load_ensemble(["Linear","RF","CNNa"])
         for num_batches in [1, 10, 100, 1000]:
             self.explorer.batch_size = int(1000/num_batches)
             self.explorer.virtual_screen = 20
-            self.run_on_NAM(oracle,landscape_idents, start_seq, num_batches=num_batches)
+            self.run_on_NNmodel(oracle,landscape_idents, start_seq, verbose=True)
 
     def scalability(self, oracle, start_seq, landscape_id, start_seq_id):
         import time
