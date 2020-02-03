@@ -20,6 +20,7 @@ from scipy.special import logsumexp
 import random
 from utils.sequence_utils import generate_random_mutant
 from sklearn.preprocessing import normalize
+from utils.exceptions import GenerateError
 
 
 class Architecture():
@@ -161,11 +162,9 @@ class CNNa(Architecture):
 
 class VAE(Architecture):
 
-    def __init__(self, alphabet=None, batch_size=100, latent_dim=2, intermediate_dim=250, epochs=10,\
+    def __init__(self, batch_size=100, latent_dim=2, intermediate_dim=250, epochs=10,\
                  epsilon_std=1.0, beta=1, validation_split=0.05, min_training_size=100, mutation_rate=0.1,
                  verbose=True):
-        self.alphabet = alphabet
-        self.KEY_LIST = list(alphabet)
         self.batch_size = batch_size
         self.latent_dim = latent_dim
         self.intermediate_dim = intermediate_dim
@@ -193,8 +192,10 @@ class VAE(Architecture):
         return xent_loss + self.beta * kl_loss
 
 
-    def get_model(self, seq_size=0):
+    def get_model(self, seq_size=0, alphabet=None):
 
+        self.alphabet = alphabet
+        self.KEY_LIST = list(self.alphabet)
         self.seq_size = seq_size
         self.original_dim = len(self.KEY_LIST) * self.seq_size
         self.output_dim = len(self.KEY_LIST) * self.seq_size
@@ -222,7 +223,7 @@ class VAE(Architecture):
 
         self.vae = Model(x, x_decoded_mean)
 
-        opt = optimizers.Adam(clipvalue=1.0)
+        opt = optimizers.Adam(lr=0.0001, clipvalue=0.5)
 
         self.vae.compile(optimizer=opt, loss=self._vae_loss)
 
@@ -273,7 +274,7 @@ class VAE(Architecture):
         return
 
 
-    def generate(self, n_samples, existing_samples):
+    def generate(self, n_samples, existing_samples, existing_weights):
         """
         generate n_samples new samples such that none of them are in existing_samples
         """
@@ -281,11 +282,15 @@ class VAE(Architecture):
         x_reconstructed = self.decoder.predict(z)  # decoding
         x_reconstructed_matrix = np.reshape(x_reconstructed, (len(self.KEY_LIST), self.seq_size))
 
-        while np.isnan(x_reconstructed_matrix).any():  # repeat the sampling if NaNs in x_reconstructed_matrix
-            print('GOT A RECONSTRUCTION WITH NANS')
-            z = np.random.randn(1, self.latent_dim)
-            x_reconstructed = self.decoder.predict(z)
-            x_reconstructed_matrix = np.reshape(x_reconstructed, (len(self.KEY_LIST), self.seq_size))
+        if np.isnan(x_reconstructed_matrix).any() or np.isinf(x_reconstructed_matrix).any():
+            raise GenerateError('NaN and/or inf in the reconstruction matrix')
+            # print('GOT A RECONSTRUCTION MATRIX WITH NANS OR INFS')
+            # print('RETRAINING THE VAE FROM SCRATCH (EXCLUDING LAST PROPOSED BATCH)...')
+            # self.get_model(self.seq_size)
+            # self.train_model(existing_samples[:-n_samples], existing_weights[:-n_samples])
+            # z = np.random.randn(1, self.latent_dim)
+            # x_reconstructed = self.decoder.predict(z)
+            # x_reconstructed_matrix = np.reshape(x_reconstructed, (len(self.KEY_LIST), self.seq_size))
 
         # sample from the reconstructed pwm with Boltzmann weights
         # reject repeated sequences and ones that are in existing_samples
