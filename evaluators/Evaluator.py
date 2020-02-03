@@ -14,6 +14,7 @@ class Evaluator():
     def __init__(self, explorer, landscape_types = LANDSCAPE_TYPES, path="./simulations/property_evaluation/", ML_ensemble=["CNNa","CNNa","CNNa"]):
         self.explorer = explorer
         self.path =  path
+        self.verbose = False
         Path(self.path).mkdir(exist_ok=True)   
 
         self.landscape_types = landscape_types
@@ -87,7 +88,7 @@ class Evaluator():
         else: 
            noisy_landscape.reset([start_seq])
         self.explorer.set_model(noisy_landscape)
-        self.explorer.run(num_batches, overwrite, verbose)
+        self.explorer.run(num_batches, overwrite, verbose=self.verbose)
 
 
     def run_on_NAM(self, landscape_oracle, NAM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False):
@@ -99,7 +100,7 @@ class Evaluator():
         else: 
            noisy_landscape.reset([start_seq])
         self.explorer.set_model(noisy_landscape)
-        self.explorer.run(num_batches, overwrite= overwrite, verbose=verbose)
+        self.explorer.run(num_batches, overwrite= overwrite, verbose=self.verbose)
 
     def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
         
@@ -118,7 +119,7 @@ class Evaluator():
            nn_ensemble_landscape.update_model([start_seq])
 
         self.explorer.set_model(nn_ensemble_landscape)
-        self.explorer.run(num_batches, overwrite, verbose) 
+        self.explorer.run(num_batches, overwrite, verbose=self.verbose) 
 
 
     def evaluate_for_landscapes(self, property_of_interest_evaluator, num_starts=100):
@@ -144,6 +145,7 @@ class Evaluator():
               print (f'start seq {start_seq_id}')
 
               for ss in [0,0.5,0.9,1]:
+                  print(f"Evaluating for signal_strength: {ss}")
                   landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id,\
                                       "signal_strength": ss , \
@@ -167,6 +169,7 @@ class Evaluator():
                                    }
         self.explorer.batch_size = 100
         for virtual_screen in [1, 10, 100, 1000]:
+            print(f"Evaluating for virtual_screen: {virtual_screen}")
             self.explorer.virtual_screen = virtual_screen
             self.run_on_NAM(oracle,landscape_idents, start_seq)
 
@@ -182,6 +185,7 @@ class Evaluator():
                                   "signal_strength": 1 , \
                                    }
         for num_batches in [1, 10, 100, 1000]:
+            print(f"Evaluating for num_batches: {num_batches}")
             self.explorer.batch_size = int(1000/num_batches)
             self.explorer.virtual_screen = 20
             self.run_on_NAM(oracle,landscape_idents, start_seq, num_batches=num_batches)
@@ -202,6 +206,7 @@ class Evaluator():
             outfile.write(out_string)
             for batch_size in [100, 1000]:
                 for virtual_screen in [1, 10, 100]:
+                    print(f"Evaluating for virtual_screen: {virtual_screen}, batch_size: {batch_size}")
                     self.explorer.batch_size = batch_size
                     self.explorer.virtual_screen = virtual_screen
                     start = time.time()
