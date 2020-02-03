@@ -44,13 +44,15 @@ class DynaPPO_explorer(Base_explorer):
                            debug)
     
         self.explorer_type = f"DynaPPO_Agent_{threshold}_{num_experiment_rounds}_{num_model_rounds}"
-        self.agent = None
-        self.tf_env = None
-        self.oracle = None
-        
         self.threshold = threshold
         self.num_experiment_rounds = num_experiment_rounds
         self.num_model_rounds = num_model_rounds
+        self.reset()
+        
+    def reset(self):
+        self.agent = None
+        self.tf_env = None
+        self.oracle = None
         
         self.meas_seqs = []
         self.meas_seqs_it = 0
@@ -59,6 +61,14 @@ class DynaPPO_explorer(Base_explorer):
         self.top_seqs_it = 0
         
         self.has_learned_policy = False
+        
+    def reset_measured_seqs(self):
+        self.meas_seqs = [(self.model.get_fitness(seq),
+                          seq, self.model.cost)
+                          for seq in self.model.measured_sequences]
+        self.meas_seqs = sorted(self.meas_seqs,
+                               key=lambda x: x[0],
+                               reverse=True)
         
     def initialize_env(self):
         env = DynaPPOEnv(alphabet=self.alphabet,
@@ -243,6 +253,9 @@ class DynaPPO_explorer(Base_explorer):
     def propose_samples(self):
         if not self.has_learned_policy:
             self.learn_policy()
+            
+        if len(self.meas_seqs) == 0:
+            self.reset_measured_seqs()
         
         all_seqs = set(self.model.measured_sequences)
         new_seqs = set()

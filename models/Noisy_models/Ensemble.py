@@ -65,7 +65,9 @@ class Ensemble_models(Model):
               # else:
                  model.update_model(sequences)
           try:
+              self.r2s=self.get_r2s()
               self.weighted_r2s = self.get_weighted_r2s()
+              #print (self.r2s)
               print (self.weighted_r2s)
           except Exception as e:
               print (e)
@@ -82,6 +84,7 @@ class Ensemble_models(Model):
           r2s = []
           for model in self.models:
               r2s.append(model.r2) 
+          self.r2s=r2s
           return r2s 
 
       def get_fitness(self, sequence):
