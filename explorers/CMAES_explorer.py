@@ -18,6 +18,9 @@ class CMAES_explorer(Base_explorer):
                          path,
                          debug)
         self.explorer_type = f"CMAES"
+        self.reset()
+        
+    def reset(self):
         self.lam = self.batch_size
         self.round = 0
         
@@ -35,7 +38,7 @@ class CMAES_explorer(Base_explorer):
         N = self.seq_len * self.alphabet_len
         self.N = N
         self.mu = self.lam//2
-        self.weights = [np.log(self.mu+0.5)-np.log(i) for i in range(1, self.mu+1)]
+        self.weights = np.array([np.log(self.mu+0.5)-np.log(i) for i in range(1, self.mu+1)])
         self.weights /= sum(self.weights)
         self.mueff = sum(self.weights)**2/sum([w**2 for w in self.weights])
         

@@ -28,7 +28,8 @@ class PPO_explorer(Base_explorer):
                            debug)
     
         self.explorer_type = "PPO_Agent"
-        
+    
+    def reset(self):
         self.meas_seqs = []
         self.meas_seqs_it = 0
         
@@ -36,6 +37,17 @@ class PPO_explorer(Base_explorer):
         self.top_seqs_it = 0
         
         self.has_pretrained_agent = False
+        
+    def reset_measured_seqs(self):
+        measured_seqs = [(self.model.get_fitness(seq),
+                          seq, self.model.cost)
+                          for seq in self.model.measured_sequences]
+        measured_seqs = sorted(measured_seqs,
+                               key=lambda x: x[0],
+                               reverse=True)
+
+        self.top_seqs = collections.deque(measured_seqs, maxlen=self.batch_size)
+        self.meas_seqs = measured_seqs
         
     def initialize_env(self):
         env = PPOEnv(alphabet=self.alphabet,
@@ -109,7 +121,7 @@ class PPO_explorer(Base_explorer):
         self.initialize_agent()
         
         batch_size = self.batch_size
-        max_env_steps = 50*self.batch_size
+        max_env_steps = 1000
         
         all_seqs = set(self.model.measured_sequences)
         proposed_seqs = set()
@@ -143,6 +155,8 @@ class PPO_explorer(Base_explorer):
             # generate new sequences
             for _ in range(batch_size):
                 collect_driver.run()
+                if env_steps_metric.result() >= max_env_steps:
+                    break
 
             # get proposed sequences which have not already been measured
             # (since the landscape is not updating)
@@ -182,9 +196,13 @@ class PPO_explorer(Base_explorer):
         if not self.has_pretrained_agent:
             self.pretrain_agent()
             
+        if len(self.meas_seqs) == 0:
+            self.reset_measured_seqs()
+            
+        print("Proposing samples...")
+            
         all_seqs = set(self.model.measured_sequences)
         new_seqs = set()
-        last_batch = self.get_last_batch()
         
         num_parallel_environments = 1
         
