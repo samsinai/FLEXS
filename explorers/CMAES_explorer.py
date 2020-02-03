@@ -72,7 +72,8 @@ class CMAES_explorer(Base_explorer):
     def _sample(self):
         samples = []
         
-        while len(samples) < self.lam:
+        attempts = 0
+        while attempts < self.lam * self.virtual_screen:
             x = np.random.multivariate_normal(self.mean, (self.sigma**2)*self.cov)
             seq = self.convert_mvn_to_seq(x)
             
@@ -81,6 +82,7 @@ class CMAES_explorer(Base_explorer):
                 
             self.seen_sequences[seq] = 1
             fitness = self.model.get_fitness(seq)
+            attempts += 1
             
             samples.append((x, fitness))
         return samples
@@ -91,8 +93,8 @@ class CMAES_explorer(Base_explorer):
         for i in range(self.mu):
             s += self.weights[i-1]*samples[i][0]
             
-        # THIS CLIPPING IS NON-STANDARD
-        self.mean = np.clip(s, -1, 1)
+        # THIS NORMALIZATION IS NON-STANDARD
+        self.mean /= np.linalg.norm(self.mean)
         
     def expectation(self):
         return np.sqrt(self.N)*(1-1/(4*self.N)+1/(21*self.N**2))
@@ -123,7 +125,7 @@ class CMAES_explorer(Base_explorer):
             self.initialize_params()
         
         # in CMAES we _minimize_ an objective, so I'll conveniently reverse
-        samples = sorted(self._sample(), key=lambda s: s[1], reverse=True)
+        samples = sorted(self._sample(), key=lambda s: s[1], reverse=True)[:self.batch_size]
             
         self.old_mean = self.mean
         self.compute_new_mean(samples)

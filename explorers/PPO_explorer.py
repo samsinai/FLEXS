@@ -121,7 +121,7 @@ class PPO_explorer(Base_explorer):
         self.initialize_agent()
         
         batch_size = self.batch_size
-        max_env_steps = 1000
+        max_env_steps = self.batch_size * self.virtual_screen
         
         all_seqs = set(self.model.measured_sequences)
         proposed_seqs = set()
