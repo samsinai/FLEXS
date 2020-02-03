@@ -3,6 +3,9 @@ from meta.model import Model
 import editdistance
 import numpy as np
 import random
+from sklearn.metrics import explained_variance_score, r2_score
+from scipy.stats import pearsonr
+
 
 
 class Noisy_abstract_model(Model):
@@ -21,12 +24,14 @@ class Noisy_abstract_model(Model):
         self.landscape_id = landscape_id
         self.start_id = start_id
         self.fitnesses = []
+        self.r2 = signal_strength **2 #this is a proxy
 
     def reset(self, sequences = None) :
         self.model_sequences = {}
         self.measured_sequences = {}
         self.cost = 0
         self.evals = 0
+        self.r2= self.ss**2
         self.fitnesses = []
         if sequences:
             self.update_model(sequences)
@@ -58,7 +63,7 @@ class Noisy_abstract_model(Model):
  
         except:
            noise = random.choice(self.fitnesses)
-           
+
         alpha = (self.ss) ** distance 
         return signal,noise,alpha
 
@@ -76,13 +81,21 @@ class Noisy_abstract_model(Model):
 
 
     def measure_true_landscape(self,sequences):
+        predictions=[]
+        results=[]
         for sequence in sequences:
             if sequence not in self.measured_sequences:
                     self.cost += 1
                     fitness = self.oracle.get_fitness(sequence)
+                    if sequence in self.model_sequences:
+                        model_fitness = self.model_sequences[sequence] 
+                        predictions.append(model_fitness)
+                        results.append(fitness)
                     self.measured_sequences[sequence] = fitness
                     self.fitnesses.append(fitness)
-
+        if results:
+           # self.r2 =r2_score(results,predictions)
+             self.r2=pearsonr(results,predictions)[0]**2
         self.model_sequences = {} #empty cache
 
     def update_model(self,new_sequences):
@@ -123,6 +136,7 @@ class Null_model(Noisy_abstract_model):
         self.start_id = start_id
         self.oracle = ground_truth_oracle
         self.average_fitness = 0.05
+        self.ss=0
    
     def update_model(self,new_sequences):
         self.measure_true_landscape(new_sequences)
