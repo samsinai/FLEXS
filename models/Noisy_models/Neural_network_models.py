@@ -4,8 +4,8 @@ from meta.model import Model
 import random
 from utils.sequence_utils import translate_string_to_one_hot
 from sklearn.metrics import explained_variance_score, r2_score
+from scipy.stats import pearsonr
 import keras
-
 import sklearn 
 
 #These names need to get fixed to reflect that it supports SKlearn models as well
@@ -39,6 +39,7 @@ class NN_model(Model):
         self.model_sequences = {}
         self.measured_sequences = {}
         self.cost = 0
+        self.r2 = 0
         if self.model_flavor == "Keras":
             self.neuralmodel = keras.models.clone_model(self.neuralmodel)
             self.neuralmodel.compile(loss='mean_squared_error',  optimizer="adam", metrics=['mse'])
@@ -91,7 +92,13 @@ class NN_model(Model):
 
         try:
             y_pred=self.neuralmodel.predict(X)
-            self.r2=r2_score(Y,y_pred)
+            #self.r2=r2_score(Y,y_pred)
+            if self.model_flavor == "Keras":
+                y_pred= y_pred.flatten()
+            # print (y_pred)
+            # print (Y)
+
+            self.r2=pearsonr(Y,y_pred)[0]**2
 
         except:
             pass
