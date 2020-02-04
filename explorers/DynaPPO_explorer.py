@@ -12,8 +12,10 @@ for N experiment rounds
 """
 
 import collections
+import numpy as np
 import tensorflow as tf
 from functools import partial
+from sklearn.metrics import r2_score
 from tf_agents.agents.ppo import ppo_policy, ppo_agent, ppo_utils
 from tf_agents.drivers import dynamic_episode_driver
 from tf_agents.environments import tf_py_environment
@@ -25,7 +27,8 @@ from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 from environments.DynaPPO_environment import DynaPPOEnvironment as DynaPPOEnv
 from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import translate_one_hot_to_string
+from utils.sequence_utils import translate_one_hot_to_string, translate_string_to_one_hot
+from utils.model_architectures import Linear, NLNN, CNNa, SKLinear, SKLasso, SKRF, SKGB, SKNeighbors
 
 class DynaPPO_explorer(Base_explorer):
     def __init__(self,
@@ -52,7 +55,8 @@ class DynaPPO_explorer(Base_explorer):
     def reset(self):
         self.agent = None
         self.tf_env = None
-        self.oracle = None
+        self.internal_ensemble = None
+        self.internal_ensemble_archs = None        
         
         self.meas_seqs = []
         self.meas_seqs_it = 0
@@ -75,12 +79,23 @@ class DynaPPO_explorer(Base_explorer):
                          starting_seq=self.meas_seqs[0][1],
                          landscape=self.model,
                          max_num_steps=self.virtual_screen,
-                         oracle=self.oracle,
+                         ensemble_fitness=self.get_internal_ensemble_fitness,
                          oracle_reward=False)
         
         validate_py_environment(env, episodes=1)
 
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
+    
+    def initialize_internal_ensemble(self):
+        ens = [Linear, NLNN, CNNa, SKLinear, SKLasso, SKRF, SKGB, SKNeighbors]
+        ens_archs = [Linear, NLNN, CNNa, SKLinear, SKLasso, SKRF, SKGB, SKNeighbors]
+        
+        ens_archs = [arch(len(self.meas_seqs[0][1]), alphabet=self.alphabet) for arch in ens_archs]
+        ens = [arch.get_model() for arch in ens_archs]
+            
+        self.internal_ensemble = ens
+        self.internal_ensemble_archs = ens_archs
+        self.internal_ensemble_calls = 0
         
     def set_tf_env_reward(self, is_oracle):
         self.tf_env.pyenv.envs[0].oracle_reward = is_oracle
@@ -131,6 +146,67 @@ class DynaPPO_explorer(Base_explorer):
             
             self.meas_seqs_it = (self.meas_seqs_it + 1) % len(self.meas_seqs)
             self.tf_env.pyenv.envs[0].seq = self.meas_seqs[self.meas_seqs_it][1]
+            
+    def get_oracle_sequences_and_fitness(self, sequences):        
+        X = []
+        Y = []
+        
+        for sequence in sequences:
+            x=translate_string_to_one_hot(sequence, self.alphabet)
+            y=self.model.get_fitness(sequence)
+
+            X.append(x)
+            Y.append(y)
+                
+        return np.array(X), np.array(Y)
+    
+    def get_internal_ensemble_fitness(self, sequence):
+        reward = 0
+        working_models = 0
+        for i, (model, arch) in enumerate(zip(self.internal_ensemble, self.internal_ensemble_archs)):
+            x = np.array(translate_string_to_one_hot(sequence, self.alphabet))
+            if type(arch) in [Linear, NLNN, CNNa]:
+                reward += max(min(200, model.predict(x[np.newaxis])[0]), -200)
+                working_models += 1
+            elif type(arch) in [SKLinear, SKLasso, SKRF, SKGB, SKNeighbors]:
+                x = x.reshape(1, np.prod(x.shape))
+                reward += max(min(200, model.predict(x)[0]), -200)
+                working_models += 1
+            else:
+                raise ValueError(type(arch))
+        self.internal_ensemble_calls += 1
+        return reward/working_models
+    
+    def fit_internal_ensemble(self, sequences):
+        X, Y = self.get_oracle_sequences_and_fitness(sequences)
+        
+        internal_r2s = []
+        
+        for i, (model, arch) in enumerate(zip(self.internal_ensemble, self.internal_ensemble_archs)):
+            if type(arch) in [Linear, NLNN, CNNa]:
+                model.fit(X, Y,
+                          epochs=arch.epochs,
+                          validation_split=arch.validation_split,
+                          batch_size=arch.batch_size,
+                          verbose=0)
+                y_pred = model.predict(X)
+                internal_r2s.append(r2_score(Y, y_pred))
+            elif type(arch) in [SKLinear, SKLasso, SKRF, SKGB, SKNeighbors]:
+                X = X.reshape(X.shape[0], np.prod(X.shape[1:]))
+                model.fit(X, Y)
+                y_pred = model.predict(X)
+                internal_r2s.append(r2_score(Y, y_pred))
+            else:
+                raise ValueError(type(arch))
+                
+        self.filter_models(np.array(internal_r2s))
+            
+    def filter_models(self, r2s):
+        # filter out models by threshold
+        good = r2s > self.threshold
+        print(f"Allowing {np.sum(good)}/{len(good)} models.")
+        self.internal_ensemble_archs = np.array(self.internal_ensemble_archs)[good]
+        self.internal_ensemble = np.array(self.internal_ensemble)[good]
     
     def perform_model_based_training_step(self):
         # change reward to ensemble based
@@ -157,17 +233,13 @@ class DynaPPO_explorer(Base_explorer):
             num_episodes = 1
         )
 
-        while len(new_seqs) < self.batch_size:
+        effective_budget = self.batch_size * self.virtual_screen
+        print("MODEL EFFECTIVE BUDGET", effective_budget)
+        self.internal_ensemble_calls = 0
+        while self.internal_ensemble_calls < effective_budget:
             collect_driver.run()
 
         new_seqs = new_seqs.difference(all_seqs)
-
-        self.meas_seqs += [(self.model.get_fitness(seq),
-                           seq, self.model.cost)
-                           for seq in new_seqs]
-        self.meas_seqs = sorted(self.meas_seqs,
-                           key=lambda x: x[0],
-                           reverse=True)
 
         # train policy on samples collected
         trajectories = replay_buffer.gather_all()
@@ -200,7 +272,11 @@ class DynaPPO_explorer(Base_explorer):
             num_episodes = 1
         )
         
-        while len(new_seqs) < self.batch_size:
+        effective_budget = (self.horizon*self.batch_size*self.virtual_screen/2)/(self.num_experiment_rounds)
+        print("EXPERIMENT EFFECTIVE BUDGET", effective_budget)
+
+        previous_evals = self.model.evals
+        while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
             
         new_seqs = new_seqs.difference(all_seqs)
@@ -218,21 +294,12 @@ class DynaPPO_explorer(Base_explorer):
                                reverse=True)
         
         # fit candidate models
-        self.model.update_model([s[1] for s in self.meas_seqs])
-        
-        # select subset of models
-        r2s = self.model.get_r2s()
-        self.model.models = [self.model.models[i] for i, r2 in enumerate(r2s) if r2 >= self.threshold]
-        if len(self.model.models) == 0:
-            raise ValueError("No candidate models passed threshold.")
+        self.fit_internal_ensemble([s[1] for s in self.meas_seqs])
         
         for m in range(self.num_model_rounds):
             self.perform_model_based_training_step()
     
-    def learn_policy(self):
-        if self.oracle is None:
-            self.oracle = self.model
-        
+    def learn_policy(self):        
         self.meas_seqs = [(self.model.get_fitness(seq),
                           seq, self.model.cost)
                           for seq in self.model.measured_sequences]
@@ -244,6 +311,8 @@ class DynaPPO_explorer(Base_explorer):
             self.initialize_env()
         if self.agent is None:
             self.initialize_agent()
+        if self.internal_ensemble is None:
+            self.initialize_internal_ensemble()
             
         for n in range(self.num_experiment_rounds):
             self.perform_experiment_based_training_step()
@@ -280,16 +349,28 @@ class DynaPPO_explorer(Base_explorer):
         )
         
         # reset counter?
+        self.meas_seqs_it = 0
         
-        while len(new_seqs.difference(all_seqs)) < self.batch_size:
+        # since we used part of the total budget for pretraining, amortize this cost
+        effective_budget = (self.horizon*self.batch_size*self.virtual_screen/2)/self.horizon
+        
+        previous_evals = self.model.evals
+        while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
+            # we've looped over, found nothing new
+            if self.meas_seqs_it == 0:
+                break
             
         new_seqs = new_seqs.difference(all_seqs)
         
         # add new sequences to measured_sequences and sort
-        self.meas_seqs += [(self.model.get_fitness(seq),
+        new_meas_seqs = [(self.model.get_fitness(seq),
                            seq, self.model.cost)
                            for seq in new_seqs]
+        new_meas_seqs = sorted(new_meas_seqs,
+                               key=lambda x: x[0],
+                               reverse=True)
+        self.meas_seqs += new_meas_seqs
         self.meas_seqs = sorted(self.meas_seqs,
                                key=lambda x: x[0],
                                reverse=True)
@@ -298,4 +379,4 @@ class DynaPPO_explorer(Base_explorer):
         total_loss, _ = self.agent.train(experience=trajectories)
         replay_buffer.clear()
             
-        return new_seqs
+        return [s[1] for s in new_meas_seqs[:batch_size]]

@@ -22,7 +22,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
                  starting_seq,
                  landscape,
                  max_num_steps,
-                 oracle,
+                 ensemble_fitness,
                  oracle_reward=False):
         """Args:
             alphabet: Usually UCGA.
@@ -44,7 +44,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
         # landscape/model/measurements
         self.landscape = landscape
         self.previous_fitness = -float("inf")
-        self.oracle = oracle
+        self.ensemble_fitness = ensemble_fitness
         self.oracle_reward = oracle_reward
         
         # sequence
@@ -137,9 +137,9 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
                 self.episode_seqs[state_string] = 1
                 
                 if self.oracle_reward:
-                    reward = self.oracle.get_fitness(state_string)
-                else:
                     reward = self.landscape.get_fitness(state_string)
+                else:
+                    reward = self.ensemble_fitness(state_string)
                 
                 # if my reward is not increasing, then terminate
                 if reward < self.previous_fitness:

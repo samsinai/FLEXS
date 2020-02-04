@@ -121,7 +121,7 @@ class PPO_explorer(Base_explorer):
         self.initialize_agent()
         
         batch_size = self.batch_size
-        max_env_steps = self.batch_size * self.virtual_screen
+        max_new_evals = self.batch_size * self.virtual_screen / 2
         
         all_seqs = set(self.model.measured_sequences)
         proposed_seqs = set()
@@ -149,13 +149,16 @@ class PPO_explorer(Base_explorer):
                                new_seqs=proposed_seqs)] + step_metrics,
             num_episodes=1
         )
-        while env_steps_metric.result() < max_env_steps:
-            print(f"Episodes: {env_steps_metric.result().numpy()}/{max_env_steps}")
+        
+        print(f"Evaluating {max_new_evals} new sequences for pretraining...")
+        previous_evals = self.model.evals
+        while (self.model.evals - previous_evals) < max_new_evals:
+            print(f"Total evals: {self.model.evals - previous_evals}")
 
             # generate new sequences
             for _ in range(batch_size):
                 collect_driver.run()
-                if env_steps_metric.result() >= max_env_steps:
+                if (self.model.evals - previous_evals) >= max_new_evals:
                     break
 
             # get proposed sequences which have not already been measured
@@ -223,16 +226,28 @@ class PPO_explorer(Base_explorer):
         )
         
         # reset counter?
+        self.meas_seqs_it = 0
         
-        while len(new_seqs.difference(all_seqs)) < self.batch_size:
+        # since we used part of the total budget for pretraining, amortize this cost
+        effective_budget = (self.horizon*self.batch_size*self.virtual_screen-(self.batch_size*self.virtual_screen/2))/self.horizon
+        
+        previous_evals = self.model.evals
+        while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
+            # we've looped over, found nothing new
+            if self.meas_seqs_it == 0:
+                break
             
         new_seqs = new_seqs.difference(all_seqs)
         
         # add new sequences to measured_sequences and sort
-        self.meas_seqs += [(self.model.get_fitness(seq),
+        new_meas_seqs = [(self.model.get_fitness(seq),
                            seq, self.model.cost)
                            for seq in new_seqs]
+        new_meas_seqs = sorted(new_meas_seqs,
+                               key=lambda x: x[0],
+                               reverse=True)
+        self.meas_seqs += new_meas_seqs
         self.meas_seqs = sorted(self.meas_seqs,
                                key=lambda x: x[0],
                                reverse=True)
@@ -241,4 +256,4 @@ class PPO_explorer(Base_explorer):
         total_loss, _ = self.agent.train(experience=trajectories)
         replay_buffer.clear()
             
-        return new_seqs
+        return [s[1] for s in new_meas_seqs[:batch_size]]
