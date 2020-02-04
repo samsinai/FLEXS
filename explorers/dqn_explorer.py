@@ -143,13 +143,13 @@ class DQN_Explorer(Base_explorer):
         state_tensor = torch.FloatTensor([self.state.ravel()])
         prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
         prediction = prediction.reshape((len(self.alphabet), self.seq_len))
+        moves = renormalize_moves(self.state, prediction)
         # make action
-        if prediction.sum() > 0:
-            moves = renormalize_moves(self.state, prediction)
+        if moves.sum() > 0:
             p = random.random()
             action = sample_random(moves) if p < epsilon else sample_greedy(moves)
         else:
-            # sometimes initialization of network causes prediction of all zeros 
+            # sometimes initialization of network causes prediction of all zeros, causing moves of all zeros  
             action = make_random_action(self.state.shape)
         # get next state (mutant)
         mutant = construct_mutant_from_sample(action, self.state)
