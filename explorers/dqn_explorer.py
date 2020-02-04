@@ -87,6 +87,7 @@ class DQN_Explorer(Base_explorer):
                                                 self.memory_size, self.batch_size, 0.6)  
 
     def reset(self):
+        self.best_fitness = 0
         self.batches = {-1:""}
         self.num_actions = 0
     
@@ -143,9 +144,13 @@ class DQN_Explorer(Base_explorer):
         prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
         prediction = prediction.reshape((len(self.alphabet), self.seq_len))
         # make action
-        moves = renormalize_moves(self.state, prediction)
-        p = random.random()
-        action = sample_random(moves) if p < epsilon else sample_greedy(moves)
+        if prediction.sum() > 0:
+            moves = renormalize_moves(self.state, prediction)
+            p = random.random()
+            action = sample_random(moves) if p < epsilon else sample_greedy(moves)
+        else:
+            # sometimes initialization of network causes prediction of all zeros 
+            action = make_random_action(self.state.shape)
         # get next state (mutant)
         mutant = construct_mutant_from_sample(action, self.state)
         mutant_string = translate_one_hot_to_string(mutant, self.alphabet)

@@ -46,11 +46,9 @@ class BO_Explorer(Base_explorer):
                  virtual_screen=10, path="./simulations/", debug=False, 
                  method = 'EI'):
         super(BO_Explorer, self).__init__(batch_size=batch_size, alphabet=alphabet, virtual_screen=virtual_screen, path=path, debug=debug)
-        self.explorer_type='BO_Ensemble'
+        self.explorer_type='BO_Explorer'
         self.alphabet_len = len(alphabet)
         self.method = method
-        self.batch_size = batch_size 
-        self.virtual_screen = virtual_screen
         self.best_fitness = 0
         self.top_sequence = []
         self.num_actions = 0
@@ -65,6 +63,7 @@ class BO_Explorer(Base_explorer):
                                               100000, self.batch_size, 0.6) 
 
     def reset(self):
+        self.best_fitness = 0
         self.batches = {-1:""}
         self.num_actions = 0
     

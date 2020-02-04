@@ -10,8 +10,13 @@ BA="01" #  binary alphabet
 
 def renormalize_moves(one_hot_input,rewards_output):
     """ensures that staying in place gives no reward"""
-    zero_current_state=(one_hot_input-1)*-1
+    zero_current_state=(one_hot_input-1) * (-1)
     return np.multiply(rewards_output,zero_current_state)
+
+def make_random_action(shape):
+    action = np.zeros(shape)
+    action[np.random.randint(shape[0]), np.random.randint(shape[1])] = 1
+    return action
     
 def sample_greedy(matrix):
     i,j=matrix.shape
