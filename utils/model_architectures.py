@@ -238,7 +238,7 @@ class VAE(Architecture):
 
         # generate random seqs around the input seq if the sample size is too small
         if len(samples) < self.min_training_size:
-            print('Input batch for the VAE too small, generating more sequences...')
+            #print('Input batch for the VAE too small, generating more sequences...')
             random_mutants = []
             for sample in samples:
                 random_mutants.extend(list(set([generate_random_mutant(sample,
@@ -256,7 +256,7 @@ class VAE(Architecture):
             weights = np.ones(compatible_len)
         else:
             weights = weights[:compatible_len]
-        print('Training the VAE...')
+        #print('Training the VAE...')
         x_train = np.array([translate_string_to_one_hot(sample, self.KEY_LIST) for sample in samples])
         x_train = x_train.astype('float32')
         x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
@@ -284,17 +284,9 @@ class VAE(Architecture):
 
         if np.isnan(x_reconstructed_matrix).any() or np.isinf(x_reconstructed_matrix).any():
             raise GenerateError('NaN and/or inf in the reconstruction matrix')
-            # print('GOT A RECONSTRUCTION MATRIX WITH NANS OR INFS')
-            # print('RETRAINING THE VAE FROM SCRATCH (EXCLUDING LAST PROPOSED BATCH)...')
-            # self.get_model(self.seq_size)
-            # self.train_model(existing_samples[:-n_samples], existing_weights[:-n_samples])
-            # z = np.random.randn(1, self.latent_dim)
-            # x_reconstructed = self.decoder.predict(z)
-            # x_reconstructed_matrix = np.reshape(x_reconstructed, (len(self.KEY_LIST), self.seq_size))
 
         # sample from the reconstructed pwm with Boltzmann weights
         # reject repeated sequences and ones that are in existing_samples
-        #temp_list = [0.001, 0.01, 0.05, 0.1, 0.2]
         proposals = []
         temperature = 0.001
         weights = pwm_to_boltzmann_weights(x_reconstructed_matrix, temperature)
@@ -306,15 +298,9 @@ class VAE(Architecture):
                 new_seq.extend(random.choices(self.KEY_LIST, weights[:, pos]))
             new_seq = ''.join(new_seq)
             if (new_seq not in proposals) and (new_seq not in existing_samples):
-                #print('new seq, tot:', len(proposals))
                 proposals.append(new_seq)
             else:
-                #print('repetition, tot:', len(proposals))
-                #print('temp:', temperature)
                 repetitions += 1
-                # if repetitions > 100:
-                    #print('seq', x_reconstructed_matrix)
-                    #print('weights', weights)
                 temperature = 1.3*temperature
                 weights = pwm_to_boltzmann_weights(x_reconstructed_matrix, temperature)
 
@@ -327,16 +313,12 @@ class VAE(Architecture):
         probabilities = []
         for sequence in proposals:
             sequence_one_hot = np.array(translate_string_to_one_hot(sequence, self.KEY_LIST))
-            #print('input seq', sequence_one_hot)
             sequence_one_hot_flattened = sequence_one_hot.flatten()
             sequence_one_hot_flattened_batch = np.array([sequence_one_hot_flattened for i in range(self.batch_size)])
             sequence_decoded_flattened = vae.predict(sequence_one_hot_flattened_batch, batch_size=self.batch_size)
             sequence_decoded = np.reshape(sequence_decoded_flattened, (self.batch_size, len(self.KEY_LIST), self.seq_size))[0]
             sequence_decoded = normalize(sequence_decoded, axis=0, norm='l1')
-            #print('reconstructed', sequence_decoded)
-            #log_prob = np.trace(np.log(np.matmul(sequence_one_hot.T,sequence_decoded)))
             log_prob = np.sum(np.log(10e-10 + np.sum(sequence_one_hot*sequence_decoded,axis=0)))
-            #print('log_prob', log_prob)
             probabilities.append(log_prob)
         probabilities = np.nan_to_num(probabilities)
         return probabilities
