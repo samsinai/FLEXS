@@ -94,7 +94,7 @@ class CMAES_explorer(Base_explorer):
             s += self.weights[i-1]*samples[i][0]
             
         # THIS NORMALIZATION IS NON-STANDARD
-        self.mean /= np.linalg.norm(self.mean)
+        self.mean = s/np.linalg.norm(s)
         
     def expectation(self):
         return np.sqrt(self.N)*(1-1/(4*self.N)+1/(21*self.N**2))
