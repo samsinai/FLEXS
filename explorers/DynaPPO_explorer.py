@@ -275,9 +275,14 @@ class DynaPPO_explorer(Base_explorer):
         effective_budget = (self.horizon*self.batch_size*self.virtual_screen/2)/(self.num_experiment_rounds)
         print("EXPERIMENT EFFECTIVE BUDGET", effective_budget)
 
+        self.meas_seqs_it = 0
+        
         previous_evals = self.model.evals
         while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
+            # we've looped over, found nothing new
+            if self.meas_seqs_it == 0:
+                break
             
         new_seqs = new_seqs.difference(all_seqs)
         
