@@ -256,4 +256,4 @@ class PPO_explorer(Base_explorer):
         total_loss, _ = self.agent.train(experience=trajectories)
         replay_buffer.clear()
             
-        return [s[1] for s in new_meas_seqs[:batch_size]]
+        return [s[1] for s in new_meas_seqs[:self.batch_size]]
