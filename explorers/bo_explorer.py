@@ -120,12 +120,9 @@ class BO_Explorer(Base_explorer):
         if self.num_actions == 0:
             # indicates model was reset 
             self.initialize_data_structures()
-        samples = []
-        for _ in range(self.batch_size):
+        samples = set()
+        prev_cost, prev_evals = copy.deepcopy(self.model.cost), copy.deepcopy(self.model.evals)
+        while (self.model.cost - prev_cost < self.batch_size) and (self.model.evals - prev_evals < self.batch_size * self.virtual_screen):
             new_state_string, reward = self.pick_action()
-            samples.append(new_state_string)
-        for _ in range(self.batch_size - len(samples)):
-            # if we still do not have enough 
-            new_state_string, reward = self.pick_action()
-            samples.append(new_state_string) 
-        return samples 
+            samples.add(new_state_string)            
+        return list(samples) 
