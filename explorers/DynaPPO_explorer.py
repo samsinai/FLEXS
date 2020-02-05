@@ -185,21 +185,25 @@ class DynaPPO_explorer(Base_explorer):
         internal_r2s = []
         
         for i, (model, arch) in enumerate(zip(self.internal_ensemble, self.internal_ensemble_archs)):
-            if type(arch) in [Linear, NLNN, CNNa]:
-                model.fit(X, Y,
-                          epochs=arch.epochs,
-                          validation_split=arch.validation_split,
-                          batch_size=arch.batch_size,
-                          verbose=0)
-                y_pred = model.predict(X)
-                internal_r2s.append(r2_score(Y, y_pred))
-            elif type(arch) in [SKLinear, SKLasso, SKRF, SKGB, SKNeighbors]:
-                X = X.reshape(X.shape[0], np.prod(X.shape[1:]))
-                model.fit(X, Y)
-                y_pred = model.predict(X)
-                internal_r2s.append(r2_score(Y, y_pred))
-            else:
-                raise ValueError(type(arch))
+            try:
+                if type(arch) in [Linear, NLNN, CNNa]:
+                    model.fit(X, Y,
+                              epochs=arch.epochs,
+                              validation_split=arch.validation_split,
+                              batch_size=arch.batch_size,
+                              verbose=0)
+                    y_pred = model.predict(X)
+                    internal_r2s.append(r2_score(Y, y_pred))
+                elif type(arch) in [SKLinear, SKLasso, SKRF, SKGB, SKNeighbors]:
+                    X = X.reshape(X.shape[0], np.prod(X.shape[1:]))
+                    model.fit(X, Y)
+                    y_pred = model.predict(X)
+                    internal_r2s.append(r2_score(Y, y_pred))
+                else:
+                    raise ValueError(type(arch))
+            except:
+                # for example KNN failed to fit
+                internal_r2s.append(-1)
                 
         self.filter_models(np.array(internal_r2s))
             
