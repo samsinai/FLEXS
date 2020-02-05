@@ -95,7 +95,10 @@ class Noisy_abstract_model(Model):
                     self.fitnesses.append(fitness)
         if results:
            # self.r2 =r2_score(results,predictions)
-             self.r2=pearsonr(results,predictions)[0]**2
+             try:
+                self.r2=pearsonr(results,predictions)[0]**2
+             except:
+                pass
         self.model_sequences = {} #empty cache
 
     def update_model(self,new_sequences):
