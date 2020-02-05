@@ -289,7 +289,7 @@ class DynaPPO_explorer(Base_explorer):
             collect_driver.run()
             iterations += 1
             # we've looped over, found nothing new
-            if iterations >= effective_budget and self.meas_seqs_it == 0:
+            if iterations >= 2 * effective_budget and self.meas_seqs_it == 0:
                 break
         print("TOTAL EVALS", self.model.evals)
             
