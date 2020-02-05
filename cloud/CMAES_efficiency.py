@@ -20,6 +20,6 @@ cmaes_explorer.debug = False
 os.makedirs("../simulations/eval/RNA/CMAES/", exist_ok=True)
 os.makedirs("../simulations/eval/TF/CMAES/", exist_ok=True)
 evaluator_cmaes = Evaluator(cmaes_explorer, landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval/RNA/CMAES/")
-evaluator_cmaes.evaluate_for_landscapes(evaluator_cmaes.consistency_robustness_independence, num_starts=3)
+evaluator_cmaes.evaluate_for_landscapes(evaluator_cmaes.efficiency, num_starts=3)
 evaluator_cmaes = Evaluator(cmaes_explorer, landscape_types=LANDSCAPE_TYPES_TF, path="../simulations/eval/TF/CMAES/")
-evaluator_cmaes.evaluate_for_landscapes(evaluator_cmaes.consistency_robustness_independence, num_starts=5)
+evaluator_cmaes.evaluate_for_landscapes(evaluator_cmaes.efficiency, num_starts=5)
