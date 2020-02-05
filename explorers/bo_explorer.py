@@ -121,11 +121,9 @@ class BO_Explorer(Base_explorer):
             # indicates model was reset 
             self.initialize_data_structures()
         samples = []
-        for _ in range(self.batch_size * self.virtual_screen):
+        for _ in range(self.batch_size):
             new_state_string, reward = self.pick_action()
-            samples.append((reward, new_state_string))
-        samples = sorted(set(samples))[-self.batch_size:]
-        samples = [sample[1] for sample in samples]
+            samples.append(new_state_string)
         for _ in range(self.batch_size - len(samples)):
             # if we still do not have enough 
             new_state_string, reward = self.pick_action()
