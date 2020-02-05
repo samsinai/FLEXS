@@ -82,7 +82,7 @@ class DynaPPO_explorer(Base_explorer):
                          ensemble_fitness=self.get_internal_ensemble_fitness,
                          oracle_reward=False)
         
-        validate_py_environment(env, episodes=1)
+#         validate_py_environment(env, episodes=1)
 
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
     
@@ -96,6 +96,7 @@ class DynaPPO_explorer(Base_explorer):
         self.internal_ensemble = ens
         self.internal_ensemble_archs = ens_archs
         self.internal_ensemble_calls = 0
+        self.internal_ensemble_fitnesses = {}
         
     def set_tf_env_reward(self, is_oracle):
         self.tf_env.pyenv.envs[0].oracle_reward = is_oracle
@@ -163,6 +164,7 @@ class DynaPPO_explorer(Base_explorer):
     def get_internal_ensemble_fitness(self, sequence):
         reward = 0
         working_models = 0
+        
         for i, (model, arch) in enumerate(zip(self.internal_ensemble, self.internal_ensemble_archs)):
             x = np.array(translate_string_to_one_hot(sequence, self.alphabet))
             if type(arch) in [Linear, NLNN, CNNa]:
