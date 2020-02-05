@@ -284,11 +284,14 @@ class DynaPPO_explorer(Base_explorer):
         self.meas_seqs_it = 0
         
         previous_evals = self.model.evals
+        iterations = 0
         while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
+            iterations += 1
             # we've looped over, found nothing new
-            if self.meas_seqs_it == 0:
+            if iterations >= effective_budget and self.meas_seqs_it == 0:
                 break
+        print("TOTAL EVALS", self.model.evals)
             
         new_seqs = new_seqs.difference(all_seqs)
         
