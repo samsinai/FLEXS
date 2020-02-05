@@ -257,7 +257,7 @@ class Evaluator():
                                   "start_id":start_seq_id,\
                                   "signal_strength": 1 , \
                                    }
-        with open(self.explorer.path+f'times{landscape_id}.csv', 'a') as outfile:
+        with open(self.explorer.path+f'times{landscape_id}_{self.explorer.run_id}.csv', 'a') as outfile:
             out_string = "landscape_id,batch_size,virtual_screen,time_3xrounds\n"
             outfile.write(out_string)
             for batch_size in [100, 1000]:
