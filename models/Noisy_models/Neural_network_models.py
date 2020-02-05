@@ -5,7 +5,7 @@ import random
 from utils.sequence_utils import translate_string_to_one_hot
 from sklearn.metrics import explained_variance_score, r2_score
 from scipy.stats import pearsonr
-import keras
+from tensorflow import keras
 import sklearn 
 
 #These names need to get fixed to reflect that it supports SKlearn models as well
