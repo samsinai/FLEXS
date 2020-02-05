@@ -231,9 +231,12 @@ class PPO_explorer(Base_explorer):
         # since we used part of the total budget for pretraining, amortize this cost
         effective_budget = (self.horizon*self.batch_size*self.virtual_screen-(self.batch_size*self.virtual_screen/2))/self.horizon
         
+        print("EFFECTIVE BUDGET:", effective_budget)
         previous_evals = self.model.evals
         while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
+            if (self.model.evals - previous_evals) % 500 == 0:
+                print(self.model.evals - previous_evals)
             # we've looped over, found nothing new
             if self.meas_seqs_it == 0:
                 break
