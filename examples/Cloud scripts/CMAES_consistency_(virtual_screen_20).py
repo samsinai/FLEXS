@@ -1,5 +1,6 @@
+import os
 import sys
-sys.path.append('../')
+sys.path.append('../../')
 import RNA 
 from utils.sequence_utils import generate_random_mutant
 from utils.model_architectures import Linear, NLNN, CNNa
@@ -17,9 +18,9 @@ LANDSCAPE_TYPES_TF = {"RNA": [], "TF": ['POU3F4_REF_R1','PAX3_G48R_R1','SIX6_REF
 cmaes_explorer = CMAES_explorer(batch_size=100, virtual_screen=20)
 cmaes_explorer.debug = False
 
-os.makedirs("../simulations/eval/RNA/CMAES/", exist_ok=True)
-os.makedirs("../simulations/eval/TF/CMAES/", exist_ok=True)
-evaluator_cmaes = Evaluator(cmaes_explorer, landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval/RNA/CMAES/")
+os.makedirs("../../simulations/eval/RNA/CMAES/", exist_ok=True)
+os.makedirs("../../simulations/eval/TF/CMAES/", exist_ok=True)
+evaluator_cmaes = Evaluator(cmaes_explorer, landscape_types=LANDSCAPE_TYPES_RNA, path="../../simulations/eval/RNA/CMAES/")
 evaluator_cmaes.evaluate_for_landscapes(evaluator_cmaes.consistency_robustness_independence, num_starts=3)
-evaluator_cmaes = Evaluator(cmaes_explorer, landscape_types=LANDSCAPE_TYPES_TF, path="../simulations/eval/TF/CMAES/")
+evaluator_cmaes = Evaluator(cmaes_explorer, landscape_types=LANDSCAPE_TYPES_TF, path="../../simulations/eval/TF/CMAES/")
 evaluator_cmaes.evaluate_for_landscapes(evaluator_cmaes.consistency_robustness_independence, num_starts=5)
