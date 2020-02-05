@@ -3,10 +3,11 @@ from sklearn.linear_model import LinearRegression,Lasso, LogisticRegression
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation,Flatten
-from keras.layers import Embedding
-from keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
+import tensorflow
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Activation,Flatten
+from tensorflow.keras.layers import Embedding
+from tensorflow.keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
 
 class Architecture():
     def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA"):

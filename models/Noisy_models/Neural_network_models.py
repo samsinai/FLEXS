@@ -1,4 +1,4 @@
-
+import tensorflow
 import numpy as np
 from meta.model import Model
 import random
@@ -41,7 +41,7 @@ class NN_model(Model):
         self.cost = 0
         self.r2 = 0
         if self.model_flavor == "Keras":
-            self.neuralmodel = keras.models.clone_model(self.neuralmodel)
+            self.neuralmodel = tensorflow.keras.models.clone_model(self.neuralmodel)
             self.neuralmodel.compile(loss='mean_squared_error',  optimizer="adam", metrics=['mse'])
         else:
             self.neuralmodel = sklearn.base.clone(self.neuralmodel)
