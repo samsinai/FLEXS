@@ -256,7 +256,7 @@ class Evaluator():
         landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id}
         self.ML_ensemble = self.load_ensemble(["Linear","RF","CNNa"])
-        for num_batches in [100, 1000]:
+        for num_batches in [1, 10, 100, 1000]:
             print(f"Evaluating for num_batches: {num_batches}")
             self.explorer.batch_size = int(1000/num_batches)
             self.explorer.virtual_screen = 20
