@@ -104,7 +104,7 @@ class BO_Explorer(Base_explorer):
         return uncertainty, new_state_string, reward 
 
     def Thompson_sample(self,measured_batch):
-        fitnesses = np.cumsum([x[0] for x in measured_batch])
+        fitnesses = np.cumsum([np.exp(10 * x[0]) for x in measured_batch])
         fitnesses = fitnesses/fitnesses[-1]
         x = np.random.uniform()
         index = bisect_left(fitnesses,x)
@@ -135,7 +135,7 @@ class BO_Explorer(Base_explorer):
                 # reset sequence to starting sequence if we're in territory that's too uncharted
                 sampled_seq = self.Thompson_sample(measured_batch)
                 self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
-                
+
         if len(samples) < self.batch_size:
             random_sequences = generate_random_sequences(self.seq_len, self.batch_size - len(samples), self.alphabet)   
             samples.update(random_sequences)      
