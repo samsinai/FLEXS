@@ -183,9 +183,11 @@ class DQN_Explorer(Base_explorer):
             self.initialize_data_structures()
         samples = set()
         prev_cost, prev_evals = copy.deepcopy(self.model.cost), copy.deepcopy(self.model.evals)
-        while (self.model.cost - prev_cost < self.batch_size) and (self.model.evals - prev_evals < self.batch_size * self.virtual_screen):
+        total_evals = 0
+        while (self.model.cost - prev_cost < self.batch_size) and (total_evals < self.batch_size * self.virtual_screen):
             new_state_string, reward = self.pick_action()
             samples.add(new_state_string)   
+            total_evals += 1
         if len(samples) < self.batch_size:
             random_sequences = generate_random_sequences(self.seq_len, self.batch_size - len(samples), self.alphabet)    
             samples.update(random_sequences)          
