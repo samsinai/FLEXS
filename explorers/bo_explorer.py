@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 
 from explorers.base_explorer import Base_explorer 
 from utils.sequence_utils import *
-from utils.replay_buffers import PrioritizedReplayBuffer 
+from utils.replay_buffers import PrioritizedReplayBuffer
+
+import numpy as np
+from bisect import bisect_left 
 
 class BO_Explorer(Base_explorer):
     def __init__(self, batch_size=100, alphabet='UCGA',
@@ -100,6 +103,14 @@ class BO_Explorer(Base_explorer):
         self.num_actions += 1
         return uncertainty, new_state_string, reward 
 
+    def Thompson_sample(self,measured_batch):
+        fitnesses = np.cumsum([x[0] for x in measured_batch])
+        fitnesses = fitnesses/fitnesses[-1]
+        x = np.random.uniform()
+        index = bisect_left(fitnesses,x)
+        sequences = [x[1] for x in measured_batch]
+        return sequences[index]
+
     def propose_samples(self):
         if self.num_actions == 0:
             # indicates model was reset 
@@ -108,8 +119,8 @@ class BO_Explorer(Base_explorer):
             # set state to best measured sequence from prior batch 
             last_batch = self.batches[self.get_last_batch()]
             measured_batch = sorted([(self.model.get_fitness(seq), seq) for seq in last_batch])
-            _, best_seq = measured_batch[-1]
-            self.state = translate_string_to_one_hot(best_seq, self.alphabet)
+            sampled_seq = self.Thompson_sample(measured_batch)
+            self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
             initial_seq = self.state.copy()
         # generate next batch by picking actions 
         self.initial_uncertainty = None 
@@ -122,7 +133,9 @@ class BO_Explorer(Base_explorer):
                 self.initial_uncertainty = uncertainty 
             if uncertainty > 2 * self.initial_uncertainty:
                 # reset sequence to starting sequence if we're in territory that's too uncharted
-                self.state = initial_seq.copy()
+                sampled_seq = self.Thompson_sample(measured_batch)
+                self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
+                
         if len(samples) < self.batch_size:
             random_sequences = generate_random_sequences(self.seq_len, self.batch_size - len(samples), self.alphabet)   
             samples.update(random_sequences)      
