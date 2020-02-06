@@ -45,7 +45,7 @@ def get_peaks_subset(start_subset, model, alphabet):
 
 def get_all_peaks(landscape, alphabet='AGTC'):
     # we will be running 4^3 = 64 processes, so each individual function will be running on sequences that start with the same XYZ
-    pool = multiprocessing.Pool(64)
+    pool = multiprocessing.Pool(16)
     start_subset_seqs = itertools.product(alphabet, repeat=3)
     args = [(subset_seq, landscape, alphabet) for subset_seq in start_subset_seqs]
     all_found_peaks = pool.starmap(get_peaks_subset, args)
