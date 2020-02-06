@@ -10,6 +10,7 @@ sys.path.append("../")
 from models.Ground_truth_oracles.RNA_landscape_models import RNA_landscape_constructor
 from models.Ground_truth_oracles.TF_binding_landscape_models import *
 import multiprocessing 
+from pathos.multiprocessing import ProcessingPool as Pool
 print('Number of CPUs', multiprocessing.cpu_count())
 
 def is_sequence_a_peak(model, sequence, peak_dict, alphabet="AGTC"):
@@ -45,7 +46,7 @@ def get_peaks_subset(start_subset, model, alphabet):
 
 def get_all_peaks(landscape, alphabet='AGTC'):
     # we will be running 4^3 = 64 processes, so each individual function will be running on sequences that start with the same XYZ
-    pool = multiprocessing.Pool(64)
+    pool = multiprocessing.Pool(16)
     start_subset_seqs = itertools.product(alphabet, repeat=3)
     args = [(subset_seq, landscape, alphabet) for subset_seq in start_subset_seqs]
     all_found_peaks = pool.starmap(get_peaks_subset, args)
@@ -67,5 +68,5 @@ rna_landscape_constructor_2.load_landscapes("../data/RNA_landscapes/RNA_landscap
                                       landscapes_to_test = [12])
 landscape2 = next(rna_landscape_constructor_2.generate_from_loaded_landscapes())
 
-peaks_2 = get_all_peaks(landscape2["landscape_oracle"], 'UGTC')
-pickle.dump(peaks_2, open('../peaks/peaks_B2L14RNA1+2.pkl', 'wb'))
+peaks_1 = get_all_peaks(landscape1["landscape_oracle"], 'AUCG')
+pickle.dump(peaks_1, open('../peaks/peaks_B1L14RNA1.pkl', 'wb'))
