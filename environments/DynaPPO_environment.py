@@ -1,6 +1,7 @@
 """Environment for DyNA-PPO agent."""
 
 import copy
+import editdistance
 import numpy as np
 import os
 import sys
@@ -52,7 +53,9 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
         self.seq_len = len(self.seq)
         self._state = translate_string_to_one_hot(
             self.seq, self.alphabet)
-        self.episode_seqs = {} # the sequences seen this episode
+        self.all_seqs = {}
+        self.episode_seqs = {}
+        self.lam = 0.1
         
         # tf_agents environment
         self._action_spec = array_spec.BoundedArraySpec(
@@ -76,8 +79,8 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
     def _reset(self):
         self.previous_fitness = -float("inf")
         self._state = translate_string_to_one_hot(self.seq, self.alphabet)
-        self.episode_seqs = {}
         self.num_steps = 0
+        self.episode_seqs = {}
         return ts.restart(np.array(self._state, dtype=np.float32))
         
     def time_step_spec(self):
@@ -91,6 +94,12 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
     
     def get_state_string(self):
         return translate_one_hot_to_string(self._state, self.alphabet)
+    
+    def sequence_density(self, seq):
+        dens = 0
+        for s in self.all_seqs:
+            dens += int(editdistance.eval(s, seq))*self.all_seqs[s]
+        return dens
     
     def _step(self, action):
         """
@@ -141,8 +150,13 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
                 else:
                     reward = self.ensemble_fitness(state_string)
                 
+                reward = reward - self.lam * self.sequence_density(state_string)
+                
                 # if my reward is not increasing, then terminate
                 if reward < self.previous_fitness:
+                    if state_string not in self.all_seqs:
+                        self.all_seqs[state_string] = 0
+                    self.all_seqs[state_string] += 1
                     return ts.termination(
                         np.array(self._state, dtype=np.float32),
                         reward=reward)
