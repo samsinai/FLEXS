@@ -13,5 +13,5 @@ from explorers.dqn_explorer import DQN_Explorer
 LANDSCAPE_TYPES_RNA = {"RNA" : [0], "TF": []}
 dqn_explorer_prod = DQN_Explorer(virtual_screen=20)
 dqn_explorer_prod.debug = False
-evaluator_dqn=Evaluator(dqn_explorer_prod,landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval/")
+evaluator_dqn=Evaluator(dqn_explorer_prod,landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/RNA/eval_DQN/")
 evaluator_dqn.evaluate_for_landscapes(evaluator_dqn.efficiency, num_starts=3)

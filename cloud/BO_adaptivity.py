@@ -13,5 +13,5 @@ from explorers.bo_explorer import BO_Explorer
 LANDSCAPE_TYPES_RNA = {"RNA" : [0], "TF": []}
 bo_explorer_prod = BO_Explorer(virtual_screen=20)
 bo_explorer_prod.debug = False
-evaluator_bo=Evaluator(bo_explorer_prod,landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval/")
+evaluator_bo=Evaluator(bo_explorer_prod,landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval_BO/")
 evaluator_bo.evaluate_for_landscapes(evaluator_bo.adaptivity, num_starts=3)

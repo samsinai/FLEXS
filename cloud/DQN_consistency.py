@@ -16,7 +16,7 @@ LANDSCAPE_TYPES_TF = {"RNA": [],
                       "TF": ['POU3F4_REF_R1','PAX3_G48R_R1','SIX6_REF_R1', 'VAX2_REF_R1', 'VSX1_REF_R1']}
 dqn_explorer_prod = DQN_Explorer(virtual_screen=20)
 dqn_explorer_prod.debug = False
-evaluator_dqn=Evaluator(dqn_explorer_prod,landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval/")
+evaluator_dqn=Evaluator(dqn_explorer_prod,landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval_DQN_consistency/")
 evaluator_dqn.evaluate_for_landscapes(evaluator_dqn.consistency_robustness_independence, num_starts=3)
-evaluator_dqn=Evaluator(dqn_explorer_prod,landscape_types=LANDSCAPE_TYPES_TF, path="../simulations/eval/")
+evaluator_dqn=Evaluator(dqn_explorer_prod,landscape_types=LANDSCAPE_TYPES_TF, path="../simulations/eval_DQN_consistency/")
 evaluator_dqn.evaluate_for_landscapes(evaluator_dqn.consistency_robustness_independence, num_starts=5)

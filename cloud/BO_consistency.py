@@ -16,7 +16,7 @@ LANDSCAPE_TYPES_TF = {"RNA": [],
                       "TF": ['POU3F4_REF_R1','PAX3_G48R_R1','SIX6_REF_R1', 'VAX2_REF_R1', 'VSX1_REF_R1']}
 bo_explorer_prod = BO_Explorer(virtual_screen=20)
 bo_explorer_prod.debug = False
-evaluator_bo=Evaluator(bo_explorer_prod,landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval/")
+evaluator_bo=Evaluator(bo_explorer_prod,landscape_types=LANDSCAPE_TYPES_RNA, path="../simulations/eval_BO_consistency/")
 evaluator_bo.evaluate_for_landscapes(evaluator_bo.consistency_robustness_independence, num_starts=3)
-evaluator_bo=Evaluator(bo_explorer_prod,landscape_types=LANDSCAPE_TYPES_TF, path="../simulations/eval/")
+evaluator_bo=Evaluator(bo_explorer_prod,landscape_types=LANDSCAPE_TYPES_TF, path="../simulations/eval_BO_consistency/")
 evaluator_bo.evaluate_for_landscapes(evaluator_bo.consistency_robustness_independence, num_starts=5)
