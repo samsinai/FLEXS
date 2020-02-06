@@ -67,5 +67,5 @@ rna_landscape_constructor_2.load_landscapes("../data/RNA_landscapes/RNA_landscap
                                       landscapes_to_test = [12])
 landscape2 = next(rna_landscape_constructor_2.generate_from_loaded_landscapes())
 
-peaks_2 = get_all_peaks(rna_landscape_constructor_2["landscape_oracle"], 'UGTC')
+peaks_2 = get_all_peaks(landscape2["landscape_oracle"], 'UGTC')
 pickle.dump(peaks_2, open('../peaks/peaks_B2L14RNA1+2.pkl', 'wb'))
