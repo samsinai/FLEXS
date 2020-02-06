@@ -63,8 +63,8 @@ class PPO_explorer(Base_explorer):
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
         
     def initialize_agent(self):
-        actor_fc_layers = (128)
-        value_fc_layers = (128)
+        actor_fc_layers = [128]
+        value_fc_layers = [128]
         
         actor_net = actor_distribution_network.ActorDistributionNetwork(
             self.tf_env.observation_spec(),
