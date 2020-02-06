@@ -135,6 +135,7 @@ class BO_Explorer(Base_explorer):
                 # reset sequence to starting sequence if we're in territory that's too uncharted
                 sampled_seq = self.Thompson_sample(measured_batch)
                 self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
+                self.initial_uncertainty = None
 
         if len(samples) < self.batch_size:
             random_sequences = generate_random_sequences(self.seq_len, self.batch_size - len(samples), self.alphabet)   
