@@ -98,7 +98,9 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
     def sequence_density(self, seq):
         dens = 0
         for s in self.all_seqs:
-            dens += self.all_seqs[s]/int(editdistance.eval(s, seq))
+            dist = int(editdistance.eval(s, seq))
+            if dist != 0 and dist <= 2:
+                dens += self.all_seqs[s]/dist
         return dens
     
     def _step(self, action):
