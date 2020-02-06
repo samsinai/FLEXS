@@ -10,6 +10,7 @@ sys.path.append("../")
 from models.Ground_truth_oracles.RNA_landscape_models import RNA_landscape_constructor
 from models.Ground_truth_oracles.TF_binding_landscape_models import *
 import multiprocessing 
+from pathos.multiprocessing import ProcessingPool as Pool
 print('Number of CPUs', multiprocessing.cpu_count())
 
 def is_sequence_a_peak(model, sequence, peak_dict, alphabet="AGTC"):
@@ -67,5 +68,5 @@ rna_landscape_constructor_2.load_landscapes("../data/RNA_landscapes/RNA_landscap
                                       landscapes_to_test = [12])
 landscape2 = next(rna_landscape_constructor_2.generate_from_loaded_landscapes())
 
-peaks_1 = get_all_peaks(landscape1["landscape_oracle"], 'UGTC')
+peaks_1 = get_all_peaks(landscape1["landscape_oracle"], 'AUCG')
 pickle.dump(peaks_1, open('../peaks/peaks_B1L14RNA1.pkl', 'wb'))
