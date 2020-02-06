@@ -81,7 +81,19 @@ class Evaluator():
             
             elif key == "NE":
                from utils.model_architectures import SKNeighbors
-               ensemble.append(SKNeighbors)  
+               ensemble.append(SKNeighbors)
+               
+            elif key == "BR":
+               from utils.model_architectures import SKBR
+               ensemble.append(SKBR)
+               
+            elif key == "ExtraTrees":
+               from utils.model_architectures import SKExtraTrees
+               ensemble.append(SKExtraTrees)
+               
+            elif key == "GP":
+               from utils.model_architectures import SKGP
+               ensemble.append(SKGP)
 
         return ensemble
 

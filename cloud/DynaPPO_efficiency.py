@@ -11,21 +11,14 @@ from evaluators.Evaluator import Evaluator
 from models.Ground_truth_oracles.TF_binding_landscape_models import *
 from explorers.DynaPPO_explorer import DynaPPO_explorer
 
-LANDSCAPE_TYPES_RNA = {"RNA" : [0,1,12,20,25,31], "TF": []}
-LANDSCAPE_TYPES_TF = {"RNA": [], "TF": ['POU3F4_REF_R1','PAX3_G48R_R1','SIX6_REF_R1', 'VAX2_REF_R1', 'VSX1_REF_R1']}
+LANDSCAPE_TYPES_RNA = {"RNA" : [0], "TF": []}
 
 dynappo_explorer = DynaPPO_explorer(batch_size=100, virtual_screen=20)
 dynappo_explorer.debug = False
 
 os.makedirs("../simulations/eval/RNA/DynaPPO/", exist_ok=True)
-os.makedirs("../simulations/eval/TF/DynaPPO/", exist_ok=True)
 evaluator_dynappo = Evaluator(dynappo_explorer,
                               landscape_types=LANDSCAPE_TYPES_RNA,
                               path="../simulations/eval/RNA/DynaPPO/",
                               adaptive_ensemble=False)
 evaluator_dynappo.evaluate_for_landscapes(evaluator_dynappo.efficiency, num_starts=3)
-evaluator_dynappo = Evaluator(dynappo_explorer,
-                              landscape_types=LANDSCAPE_TYPES_TF,
-                              path="../simulations/eval/TF/DynaPPO/",
-                              adaptive_ensemble=False)
-evaluator_dynappo.evaluate_for_landscapes(evaluator_dynappo.efficiency, num_starts=5)
