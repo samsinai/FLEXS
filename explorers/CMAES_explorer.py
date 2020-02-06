@@ -27,6 +27,7 @@ class CMAES_explorer(Base_explorer):
         self.has_been_initialized = False
         
         self.seen_sequences = {}
+        self.batches = {-1:""}
         
     def initialize_params(self):
         # to be called after set_model

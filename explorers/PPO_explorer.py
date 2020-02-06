@@ -37,6 +37,9 @@ class PPO_explorer(Base_explorer):
         self.top_seqs_it = 0
         
         self.has_pretrained_agent = False
+        self.batches = {-1:""}
+        
+        self.original_horizon = None
         
     def reset_measured_seqs(self):
         measured_seqs = [(self.model.get_fitness(seq),
@@ -60,8 +63,8 @@ class PPO_explorer(Base_explorer):
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
         
     def initialize_agent(self):
-        actor_fc_layers = (200, 100)
-        value_fc_layers = (200, 100)
+        actor_fc_layers = [128]
+        value_fc_layers = [128]
         
         actor_net = actor_distribution_network.ActorDistributionNetwork(
             self.tf_env.observation_spec(),
@@ -196,6 +199,9 @@ class PPO_explorer(Base_explorer):
         self.has_pretrained_agent = True
     
     def propose_samples(self):
+        if self.original_horizon is None:
+            self.original_horizon = self.horizon
+        
         if not self.has_pretrained_agent:
             self.pretrain_agent()
             
@@ -229,9 +235,8 @@ class PPO_explorer(Base_explorer):
         self.meas_seqs_it = 0
         
         # since we used part of the total budget for pretraining, amortize this cost
-        effective_budget = (self.horizon*self.batch_size*self.virtual_screen-(self.batch_size*self.virtual_screen/2))/self.horizon
+        effective_budget = (self.original_horizon*self.batch_size*self.virtual_screen-(self.batch_size*self.virtual_screen/2))/self.original_horizon
         
-        print("EFFECTIVE BUDGET:", effective_budget)
         previous_evals = self.model.evals
         while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()

@@ -1,6 +1,7 @@
 import sys
-from sklearn.linear_model import LinearRegression,Lasso, LogisticRegression
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.linear_model import BayesianRidge, LinearRegression, Lasso, LogisticRegression
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.ensemble import ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
 import tensorflow
@@ -25,6 +26,14 @@ class Architecture():
     def get_model(self):
         raise NotImplementedError( "You need to define an Architecture")
 
+class SKBR(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKBR, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKBR'
+
+    def get_model(self):
+        return BayesianRidge()
+        
 class SKLinear(Architecture):
     def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
         super(SKLinear, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
@@ -65,6 +74,21 @@ class SKGB(Architecture):
     def get_model(self):
         return GradientBoostingRegressor()
 
+class SKExtraTrees(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKExtraTrees, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKExtraTrees'
+
+    def get_model(self):
+        return ExtraTreesRegressor()
+    
+class SKGP(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKGP, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKGP'
+
+    def get_model(self):
+        return GaussianProcessRegressor()
 
 class Linear(Architecture):
 
