@@ -1,19 +1,9 @@
 import sys
-from sklearn.linear_model import LinearRegression,Lasso, LogisticRegression
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.linear_model import BayesianRidge, LinearRegression, Lasso, LogisticRegression
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.ensemble import ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation,Flatten
-from keras import optimizers
-from keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
-
-import keras.backend as K
-from keras import objectives
-from keras.models import Model
-from keras.callbacks import EarlyStopping
-from keras.layers import Input, Dense, Dropout, Lambda
-from keras.layers.normalization import BatchNormalization
 from utils.sequence_utils import translate_string_to_one_hot, translate_one_hot_to_string
 import numpy as np
 from scipy.special import logsumexp
@@ -22,6 +12,15 @@ from utils.sequence_utils import generate_random_mutant
 from sklearn.preprocessing import normalize
 from utils.exceptions import GenerateError
 
+import tensorflow
+import tensorflow.keras.backend as K
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.losses import categorical_crossentropy
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import Input, Dense, Dropout, Activation, Flatten, Lambda
+from tensorflow.keras.layers import Embedding
+from tensorflow.keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D, BatchNormalization
 
 class Architecture():
     def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA"):
@@ -39,6 +38,14 @@ class Architecture():
     def get_model(self):
         raise NotImplementedError( "You need to define an Architecture")
 
+class SKBR(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKBR, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKBR'
+
+    def get_model(self):
+        return BayesianRidge()
+        
 class SKLinear(Architecture):
     def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
         super(SKLinear, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
@@ -79,6 +86,21 @@ class SKGB(Architecture):
     def get_model(self):
         return GradientBoostingRegressor()
 
+class SKExtraTrees(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKExtraTrees, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKExtraTrees'
+
+    def get_model(self):
+        return ExtraTreesRegressor()
+    
+class SKGP(Architecture):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+        super(SKGP, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
+        self.architecture_name=f'SKGP'
+
+    def get_model(self):
+        return GaussianProcessRegressor()
 
 class Linear(Architecture):
 
@@ -89,7 +111,7 @@ class Linear(Architecture):
         lin_model.add(Dense(1,input_shape=(self.seq_len* self.alphabet_len,),use_bias=False))
         lin_model.add(Activation('linear')) 
         lin_model.compile(loss='mean_squared_error', optimizer="adam",metrics=['mse'])  
-        return lin_model 
+        return lin_model
 
 class NLNN(Architecture):
     """Global epistasis model"""
@@ -112,9 +134,7 @@ class NLNN(Architecture):
         non_lin_model.add(Dense(1))
         non_lin_model.add(Activation("linear"))
         non_lin_model.compile(loss='mean_squared_error', optimizer="adam",metrics=['mse'])  
-        return non_lin_model 
-
-
+        return non_lin_model
 
 class CNNa(Architecture):
 
@@ -123,7 +143,6 @@ class CNNa(Architecture):
         self.filters = filters
         self.hidden_dims = hidden_dims
         self.architecture_name=f'CNNa_hd{self.hidden_dims}_f{self.filters}'
-
 
     def get_model(self):
         filters = self.filters 
@@ -159,7 +178,6 @@ class CNNa(Architecture):
         model.compile(loss='mean_squared_error',  optimizer="adam", metrics=['mse'])
         return model
 
-
 class VAE(Architecture):
 
     def __init__(self, batch_size=100, latent_dim=2, intermediate_dim=250, epochs=10,\
@@ -187,7 +205,7 @@ class VAE(Architecture):
 
 
     def _vae_loss(self, x, x_decoded_mean):
-        xent_loss = self.original_dim * objectives.categorical_crossentropy(x, x_decoded_mean)
+        xent_loss = self.original_dim * categorical_crossentropy(x, x_decoded_mean)
         kl_loss = -0.5 * K.sum(1 + self.z_log_var - K.square(self.z_mean) - K.exp(self.z_log_var), axis=-1)
         return xent_loss + self.beta * kl_loss
 
@@ -223,7 +241,7 @@ class VAE(Architecture):
 
         self.vae = Model(x, x_decoded_mean)
 
-        opt = optimizers.Adam(lr=0.0001, clipvalue=0.5)
+        opt = Adam(lr=0.0001, clipvalue=0.5)
 
         self.vae.compile(optimizer=opt, loss=self._vae_loss)
 
@@ -338,12 +356,11 @@ def pwm_to_boltzmann_weights(prob_weight_matrix, temp):
 
     return weights
 
-
-
-
-
-  
-
-
-
-
+class Logistic(Architecture):
+    def get_model(self):
+        model = Sequential()
+        model.add(Flatten())
+        model.add(Dense(1, input_shape=(self.seq_len * self.alphabet_len,)))
+        model.add(Activation('softmax'))
+        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mse'])
+        return model

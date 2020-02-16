@@ -1,11 +1,11 @@
-
+import tensorflow
 import numpy as np
 from meta.model import Model
 import random
 from utils.sequence_utils import translate_string_to_one_hot
 from sklearn.metrics import explained_variance_score, r2_score
 from scipy.stats import pearsonr
-import keras
+from tensorflow import keras
 import sklearn 
 
 #These names need to get fixed to reflect that it supports SKlearn models as well
@@ -41,7 +41,7 @@ class NN_model(Model):
         self.cost = 0
         self.r2 = 0
         if self.model_flavor == "Keras":
-            self.neuralmodel = keras.models.clone_model(self.neuralmodel)
+            self.neuralmodel = tensorflow.keras.models.clone_model(self.neuralmodel)
             self.neuralmodel.compile(loss='mean_squared_error',  optimizer="adam", metrics=['mse'])
         else:
             self.neuralmodel = sklearn.base.clone(self.neuralmodel)

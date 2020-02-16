@@ -18,6 +18,7 @@ class Evaluator():
       adaptive_ensemble=True):
         self.explorer = explorer
         self.path =  path
+        self.verbose = False
         Path(self.path).mkdir(exist_ok=True)   
 
         self.landscape_types = landscape_types
@@ -80,7 +81,19 @@ class Evaluator():
             
             elif key == "NE":
                from utils.model_architectures import SKNeighbors
-               ensemble.append(SKNeighbors)  
+               ensemble.append(SKNeighbors)
+               
+            elif key == "BR":
+               from utils.model_architectures import SKBR
+               ensemble.append(SKBR)
+               
+            elif key == "ExtraTrees":
+               from utils.model_architectures import SKExtraTrees
+               ensemble.append(SKExtraTrees)
+               
+            elif key == "GP":
+               from utils.model_architectures import SKGP
+               ensemble.append(SKGP)
 
         return ensemble
 
@@ -206,6 +219,7 @@ class Evaluator():
               print (f'start seq {start_seq_id}')
 
               for ss in [0,0.5,0.9,1]:
+                  print(f"Evaluating for signal_strength: {ss}")
                   landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id,\
                                       "signal_strength": ss , \
@@ -229,6 +243,7 @@ class Evaluator():
                                    }
         self.explorer.batch_size = 100
         for virtual_screen in [1, 10, 100, 1000]:
+            print(f"Evaluating for virtual_screen: {virtual_screen}")
             self.explorer.virtual_screen = virtual_screen
             self.run_on_NAM(oracle,landscape_idents, start_seq)
 
@@ -241,11 +256,11 @@ class Evaluator():
         landscape_idents={"landscape_id":landscape_id,\
                                       "start_id":start_seq_id}
         self.ML_ensemble = self.load_ensemble(["Linear","RF","CNNa"])
-        #for num_batches in [1, 10, 100, 1000]:
-        for num_batches in [100, 1000]
+        for num_batches in [1, 10, 100, 1000]:
+            print(f"Evaluating for num_batches: {num_batches}")
             self.explorer.batch_size = int(1000/num_batches)
             self.explorer.virtual_screen = 20
-            self.run_on_NNmodel(oracle,landscape_idents, start_seq, num_batches=num_batches, verbose=True)
+            self.run_on_NNmodel(oracle,landscape_idents, start_seq, num_batches=num_batches,  verbose=True)
 
     def scalability(self, oracle, start_seq, landscape_id, start_seq_id):
         import time
@@ -263,6 +278,7 @@ class Evaluator():
             outfile.write(out_string)
             for batch_size in [100, 1000]:
                 for virtual_screen in [1, 10, 100]:
+                    print(f"Evaluating for virtual_screen: {virtual_screen}, batch_size: {batch_size}")
                     self.explorer.batch_size = batch_size
                     self.explorer.virtual_screen = virtual_screen
                     start = time.time()
