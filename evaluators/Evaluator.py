@@ -159,7 +159,7 @@ class Evaluator():
 
 
     def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
-        
+
         print ("Running NN", NNM_args)
 
         if not self.ML_ensemble:
