@@ -366,6 +366,8 @@ class DynaPPO_explorer(Base_explorer):
         if len(self.meas_seqs) == 0:
             self.reset_measured_seqs()
         
+        # need to switch back to using the model
+        self.set_tf_env_reward(is_oracle=True)
         all_seqs = set(self.model.measured_sequences)
         new_seqs = set()
         last_batch = self.get_last_batch()
@@ -394,12 +396,14 @@ class DynaPPO_explorer(Base_explorer):
         # since we used part of the total budget for pretraining, amortize this cost
         effective_budget = (self.original_horizon*self.batch_size*self.virtual_screen/2)/self.original_horizon
         
+        print("Effective budget:", effective_budget)
         previous_evals = self.model.evals
         while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
             # we've looped over, found nothing new
             if self.meas_seqs_it == 0:
                 break
+        print("Total evals:", self.model.evals - previous_evals)
             
         new_seqs = new_seqs.difference(all_seqs)
         

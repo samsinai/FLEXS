@@ -159,7 +159,7 @@ class Evaluator():
 
 
     def run_on_NNmodel(self, landscape_oracle, NNM_args, start_seq , num_batches = 10, hot_start = False, verbose = False, overwrite = False, ):
-        
+
         print ("Running NN", NNM_args)
 
         if not self.ML_ensemble:
@@ -260,7 +260,7 @@ class Evaluator():
             print(f"Evaluating for num_batches: {num_batches}")
             self.explorer.batch_size = int(1000/num_batches)
             self.explorer.virtual_screen = 20
-            self.run_on_NNmodel(oracle,landscape_idents, start_seq, verbose=True)
+            self.run_on_NNmodel(oracle,landscape_idents, start_seq, num_batches=num_batches,  verbose=True)
 
     def scalability(self, oracle, start_seq, landscape_id, start_seq_id):
         import time

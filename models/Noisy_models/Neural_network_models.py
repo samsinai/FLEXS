@@ -102,6 +102,7 @@ class NN_model(Model):
 
         except:
             pass
+
         if self.model_flavor == "Keras":
             self.neuralmodel.fit(X,Y,epochs=self.epochs,validation_split=self.validation_split,batch_size=self.batch_size,verbose=0)
         else: 
@@ -120,6 +121,7 @@ class NN_model(Model):
 
         X=np.array(X)
         Y=np.array(Y)
+
         if self.model_flavor == "Keras":
             self.neuralmodel.fit(X,Y,epochs=self.epochs,validation_split=self.validation_split,batch_size=self.batch_size,verbose=0)
         else: 
