@@ -3,17 +3,17 @@ from sklearn.linear_model import LinearRegression,Lasso, LogisticRegression
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Activation,Flatten
-from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras import optimizers
+from keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
 
-import tensorflow.keras.backend as K
-from tensorflow.keras import losses
-from tensorflow.keras.models import Model
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.layers import Input, Dense, Dropout, Lambda
-from tensorflow.keras.layers import BatchNormalization
+import keras.backend as K
+from keras import objectives
+from keras.models import Model
+from keras.callbacks import EarlyStopping
+from keras.layers import Input, Dense, Dropout, Lambda
+from keras.layers.normalization import BatchNormalization
 from utils.sequence_utils import translate_string_to_one_hot
 import numpy as np
 from scipy.special import logsumexp
@@ -187,7 +187,7 @@ class VAE(Architecture):
 
 
     def _vae_loss(self, x, x_decoded_mean):
-        xent_loss = self.original_dim * losses.categorical_crossentropy(x, x_decoded_mean)
+        xent_loss = self.original_dim * objectives.categorical_crossentropy(x, x_decoded_mean)
         kl_loss = -0.5 * K.sum(1 + self.z_log_var - K.square(self.z_mean) - K.exp(self.z_log_var), axis=-1)
         return xent_loss + self.beta * kl_loss
 
