@@ -3,18 +3,18 @@ from sklearn.linear_model import LinearRegression,Lasso, LogisticRegression
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation,Flatten
-from keras import optimizers
-from keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Activation,Flatten
+from tensorflow.keras import optimizers
+from tensorflow.keras.layers import Conv1D, GlobalMaxPooling1D, MaxPooling1D
 
-import keras.backend as K
-from keras import objectives
-from keras.models import Model
-from keras.callbacks import EarlyStopping
-from keras.layers import Input, Dense, Dropout, Lambda
-from keras.layers.normalization import BatchNormalization
-from utils.sequence_utils import translate_string_to_one_hot, translate_one_hot_to_string
+import tensorflow.keras.backend as K
+from tensorflow.keras import losses
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Input, Dense, Dropout, Lambda
+from tensorflow.keras.layers import BatchNormalization
+from utils.sequence_utils import translate_string_to_one_hot
 import numpy as np
 from scipy.special import logsumexp
 import random
@@ -118,7 +118,7 @@ class NLNN(Architecture):
 
 class CNNa(Architecture):
 
-    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=20, alphabet="UCGA", filters=50, hidden_dims=100):
+    def __init__(self, seq_len, batch_size=10, validation_split=0.0, epochs=10, alphabet="UCGA", filters=50, hidden_dims=100):
         super(CNNa, self).__init__(seq_len, batch_size, validation_split, epochs, alphabet)
         self.filters = filters
         self.hidden_dims = hidden_dims
@@ -163,8 +163,8 @@ class CNNa(Architecture):
 class VAE(Architecture):
 
     def __init__(self, batch_size=100, latent_dim=2, intermediate_dim=250, epochs=10,\
-                 epsilon_std=1.0, beta=1, validation_split=0.05, min_training_size=100, mutation_rate=0.1,
-                 verbose=True):
+                 epsilon_std=1.0, beta=1, validation_split=0.05, min_training_size=100,
+                 avg_mutations_per_sequence=2, verbose=True):
         self.batch_size = batch_size
         self.latent_dim = latent_dim
         self.intermediate_dim = intermediate_dim
@@ -173,7 +173,7 @@ class VAE(Architecture):
         self.beta = beta
         self.validation_split = validation_split
         self.min_training_size = min_training_size
-        self.mutation_rate = mutation_rate
+        self.avg_mutations_per_sequence = avg_mutations_per_sequence
         self.vae = Model()
         self.decoder = Model()
         self.verbose = verbose
@@ -187,7 +187,7 @@ class VAE(Architecture):
 
 
     def _vae_loss(self, x, x_decoded_mean):
-        xent_loss = self.original_dim * objectives.categorical_crossentropy(x, x_decoded_mean)
+        xent_loss = self.original_dim * losses.categorical_crossentropy(x, x_decoded_mean)
         kl_loss = -0.5 * K.sum(1 + self.z_log_var - K.square(self.z_mean) - K.exp(self.z_log_var), axis=-1)
         return xent_loss + self.beta * kl_loss
 
@@ -199,6 +199,7 @@ class VAE(Architecture):
         self.seq_size = seq_size
         self.original_dim = len(self.KEY_LIST) * self.seq_size
         self.output_dim = len(self.KEY_LIST) * self.seq_size
+        self.mutation_rate = self.avg_mutations_per_sequence/self.seq_size
 
         # encoding layers
         x = Input(batch_shape=(self.batch_size, self.original_dim))
@@ -231,7 +232,9 @@ class VAE(Architecture):
         _x_decoded_mean = decoder_out(decoder_3(decoder_2d(decoder_2(decoder_1(decoder_input)))))
         self.decoder = Model(decoder_input, _x_decoded_mean)
 
-        return
+        self.encoder = Model(x, self.z_mean)
+
+
 
 
     def train_model(self, samples, weights=[]):
@@ -240,14 +243,44 @@ class VAE(Architecture):
         if len(samples) < self.min_training_size:
             #print('Input batch for the VAE too small, generating more sequences...')
             random_mutants = []
+            while len(random_mutants) < self.min_training_size - len(samples):
+                #print('in the random mutants cycle')
+                for sample in samples:
+                    random_mutants.extend(list(set([generate_random_mutant(sample,
+                                                                    self.mutation_rate,
+                                                                    alphabet=self.alphabet)
+                                                    for i in range(self.min_training_size*10)])))
             for sample in samples:
-                random_mutants.extend(list(set([generate_random_mutant(sample,
-                                                                  self.mutation_rate,
-                                                                  alphabet=self.alphabet)
-                                                for i in range(self.min_training_size*100)])))
+                if sample in random_mutants:
+                    random_mutants.remove(sample)
+            #print('randomly generated unique mutants:', len(random_mutants))
             new_samples = random.sample(random_mutants, (self.min_training_size - len(samples)))
             samples.extend(new_samples)
-            weights.extend(np.ones(len(new_samples)))
+            weights.extend(0.5*np.ones(len(new_samples)))
+
+        # if len(samples) < self.min_training_size:
+        #     print('Input batch for the VAE too small, generating more sequences...')
+        #     random_mutants = []
+        #     for sample in samples:
+        #         random_mutants.extend(generate_all_single_subs(sample, self.alphabet))
+        #     for sample in samples:
+        #         if sample in random_mutants:
+        #             random_mutants.remove(sample)
+        #     new_samples = random.sample(random_mutants, (self.min_training_size - len(samples)))
+        #     print('randomly generated unique mutants:', len(random_mutants))
+        #     samples.extend(new_samples)
+        #     weights.extend(np.ones(len(new_samples)))
+
+        # if len(samples) < self.min_training_size:
+        #     print('Input batch for the VAE too small, generating more sequences...')
+        #     random_mutants = generate_random_sequences(self.seq_size, self.min_training_size*100, self.alphabet)
+        #     for sample in samples:
+        #         if sample in random_mutants:
+        #             random_mutants.remove(sample)
+        #     new_samples = random.sample(random_mutants, (self.min_training_size - len(samples)))
+        #     print('randomly generated unique mutants:', len(random_mutants))
+        #     samples.extend(new_samples)
+        #     weights.extend(np.ones(len(new_samples)))
 
 
         compatible_len = (len(samples)//self.batch_size)*self.batch_size
@@ -271,14 +304,22 @@ class VAE(Architecture):
                      batch_size=self.batch_size,
                      validation_split=self.validation_split, callbacks=[early_stop])
 
-        return
 
 
-    def generate(self, n_samples, existing_samples, existing_weights):
+    def generate(self, n_samples, existing_samples, top_sequence):
         """
         generate n_samples new samples such that none of them are in existing_samples
         """
-        z = np.random.randn(1, self.latent_dim)  # sampling from the latent space (normal distr in this case)
+        # encode the best known sequence in the latent space and sample from around its mean
+        top_seq_one_hot = translate_string_to_one_hot(top_sequence, self.KEY_LIST)
+        top_seq_one_hot_flattened = top_seq_one_hot.flatten()
+        top_seq_batch = []
+        for i in range(self.batch_size):
+            top_seq_batch.append(top_seq_one_hot_flattened)
+        top_seq_batch = np.array(top_seq_batch)
+        z_top = self.encoder.predict(top_seq_batch)[0]
+
+        z = np.random.randn(1, self.latent_dim) + z_top  # sampling from the latent space (normal distr in this case)
         x_reconstructed = self.decoder.predict(z)  # decoding
         x_reconstructed_matrix = np.reshape(x_reconstructed, (len(self.KEY_LIST), self.seq_size))
 
@@ -323,6 +364,9 @@ class VAE(Architecture):
         probabilities = np.nan_to_num(probabilities)
         return probabilities
 
+    def generate_fake(self):
+        return blah
+
 
 
 def pwm_to_boltzmann_weights(prob_weight_matrix, temp):
@@ -337,13 +381,3 @@ def pwm_to_boltzmann_weights(prob_weight_matrix, temp):
             weights[i, j] = np.exp(weights[i, j] / temp - cols_logsumexp[j])
 
     return weights
-
-
-
-
-
-  
-
-
-
-

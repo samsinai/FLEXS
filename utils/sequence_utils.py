@@ -138,3 +138,16 @@ def get_set_column_entropy(sequences,alphabet):
     return entropy(count_matrix,base=2)
 
 
+def generate_all_single_subs(sequence, alphabet=RNAA):
+    """generates all single subs for sequence (including sequence itself)
+    and returns a list of unique subs"""
+
+    sequences = []
+    for pos in range(len(sequence)):
+        for nt in list(alphabet):
+            new_seq = sequence[:pos] + nt + sequence[pos + 1:]
+            sequences.append(new_seq)
+
+    return list(set(sequences))
+
+
