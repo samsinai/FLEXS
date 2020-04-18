@@ -4,6 +4,13 @@ from meta.model import Model
 
 
 class Ensemble_models(Model):
+    """
+    Ensembles a list of models.
+
+    If `adaptive=True`, it will reweight the outputs of each model based on each
+    fitness returned. Otherwise, it will take the average of all outputs.
+    """
+
     def __init__(self, list_of_models=None, adaptive=True):
         if list_of_models:
             self.models = list_of_models
@@ -63,17 +70,12 @@ class Ensemble_models(Model):
             else:
                 model.reset()
 
-    def update_model(self, sequences):  # , bootstrap= True):
+    def update_model(self, sequences):
         for model in self.models:
-            # if bootstrap and len(sequences)>20:
-            #    sub_sequences = random.sample(sequences, int(len(sequences)*1))
-            #    model.update_model(sub_sequences)
-            # else:
             model.update_model(sequences)
         try:
             self.r2s = self.get_r2s()
             self.weighted_r2s = self.get_weighted_r2s()
-            # print (self.r2s)
             print(self.weighted_r2s)
         except Exception as e:
             print(e)

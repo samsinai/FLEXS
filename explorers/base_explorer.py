@@ -72,7 +72,10 @@ class Base_explorer(Explorer):
             self.batches[last_batch + 1][seq].append(self.model.get_fitness(seq))
 
     def reset(self):
-        """Resets the explorer, overwrite if you are working with a stateful explorer"""
+        """
+        Resets the explorer; overwrite if you are working with a stateful
+        explorer.
+        """
         self.batches = {-1: ""}
 
     def run(self, rounds, overwrite=False, verbose=True):

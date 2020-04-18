@@ -7,8 +7,12 @@ from scipy.stats import pearsonr
 
 
 class Noisy_abstract_model(Model):
-    """Behaves like a ground truth model however corrupts a ground truth model with noise,
-    which is modulated by distance to already measured sequences"""
+    """
+    Behaves like a ground truth model.
+
+    It corrupts a ground truth model with noise, which is modulated by distance
+    to already measured sequences.
+    """
 
     def __init__(
         self,
@@ -54,7 +58,6 @@ class Noisy_abstract_model(Model):
                 if dist < new_dist:
                     new_dist = dist
                     closest = seq
-        # print (new_dist, closest)
         return new_dist, closest
 
     def add_noise(self, sequence, distance, neighbor_seq):

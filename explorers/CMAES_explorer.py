@@ -5,7 +5,12 @@ from utils.sequence_utils import translate_one_hot_to_string
 
 
 class CMAES_explorer(Base_explorer):
-    # http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ this is helpful
+    """
+    An explorer which implements the covariance matrix adaptation evolution strategy.
+
+    http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful
+    link to read.
+    """
 
     def __init__(
         self,
@@ -151,7 +156,7 @@ class CMAES_explorer(Base_explorer):
         if not self.has_been_initialized:
             self.initialize_params()
 
-        # in CMAES we _minimize_ an objective, so I'll conveniently reverse
+        # in CMAES we _minimize_ an objective, so we'll conveniently reverse
         samples = sorted(self._sample(), key=lambda s: s[1], reverse=True)[
             : self.batch_size
         ]

@@ -9,7 +9,7 @@ BA = "01"  #  binary alphabet
 
 
 def renormalize_moves(one_hot_input, rewards_output):
-    """ensures that staying in place gives no reward"""
+    """Ensures that staying in place gives no reward."""
     zero_current_state = (one_hot_input - 1) * (-1)
     return np.multiply(rewards_output, zero_current_state)
 
@@ -33,7 +33,6 @@ def sample_greedy(matrix):
 def sample_random(matrix):
     i, j = matrix.shape
     non_zero_moves = np.nonzero(matrix)
-    # print (non_zero_moves)
     k = len(non_zero_moves)
     l = len(non_zero_moves[0])
     if k != 0 and l != 0:
@@ -42,7 +41,6 @@ def sample_random(matrix):
         )
     else:
         rand_arg = [random.randint(0, i - 1), random.randint(0, j - 1)]
-    # print (rand_arg)
     y = rand_arg[1]
     x = rand_arg[0]
     output = np.zeros((i, j))
@@ -83,7 +81,7 @@ def translate_index_to_aa(i):
 
 
 def break_down_sequence_to_singles(sequence_mask):
-    """Currently only handles substitutions, can handle full sequences(not just masks)"""
+    """Currently only handles substitutions; can handle full sequences (not just masks)."""
     singles = []
     tmp = ["_"] * len(sequence_mask)
     for i in range(len(sequence_mask)):
@@ -129,7 +127,7 @@ def generate_single_mutants(wt, alphabet):
 
 
 def generate_singles(length, function, wt=None, alphabet=AAS):
-    """generate a library of random single mutant fitnesses to use for hypothetical models"""
+    """Generate a library of random single mutant fitnesses to use for hypothetical models."""
     singles = {}
     for i in range(length):
         tmp = ["_"] * length
@@ -145,7 +143,7 @@ def generate_singles(length, function, wt=None, alphabet=AAS):
 
 
 def generate_random_sequences(length, number, alphabet=AAS):
-    """generates random sequences of particular lenght"""
+    """Generates random sequences of particular length."""
     sequences = []
     for i in range(number):
         tmp = []

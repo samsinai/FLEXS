@@ -21,7 +21,7 @@ from torch.nn.utils import clip_grad_norm_
 
 class SegmentTree:
     """ Create SegmentTree.
-    Taken from OpenAI baselines github repository:
+    Taken from OpenAI baselines Github repository:
     https://github.com/openai/baselines/blob/master/baselines/common/segment_tree.py
     Attributes:
         capacity (int)
@@ -124,8 +124,8 @@ class SumSegmentTree(SegmentTree):
 
 
 class MinSegmentTree(SegmentTree):
-    """ Create SegmentTree.
-    Taken from OpenAI baselines github repository:
+    """Create SegmentTree.
+    Taken from OpenAI baselines Github repository:
     https://github.com/openai/baselines/blob/master/baselines/common/segment_tree.py
     """
 

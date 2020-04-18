@@ -1,6 +1,7 @@
 import sys
 
 sys.path.append("usr/local/ViennaRNA/lib/python3.6/site-packages/")
+# TODO: ANONYMIZE
 sys.path.append("/n/home01/ssinaei/sw/lib/python3.4/site-packages/")
 sys.path.append("/n/home01/ssinaei/sw/lib/python3.6/site-packages/")
 
@@ -38,7 +39,12 @@ class RNA_landscape_constructor:
         landscapes = []
         if (
             landscape_params["self_fold_max"] != False
-        ):  # This is currently not used for any landscape, the idea would be to pass a upper bound on self-folding, beyond which the sequence is considered unviable.
+        ): 
+        """
+        This is currently not used for any landscape, the idea would be to pass
+        an upper bound on self-folding, beyond which the sequence is considered
+        unviable.
+        """
             l = RNA_landscape_folding(
                 threshold=landscape_params["self_fold_max"], reverse=True
             )
@@ -189,7 +195,10 @@ class Conserved_RNA_landscape_cont(Ground_truth_oracle):
 
 
 class Conserved_RNA_landscape_random(Ground_truth_oracle):
-    """Conserve n random positions along the sequence, mutating them results in a dead sequence"""
+    """
+    Conserve `n` random positions along the sequence;
+    mutating them results in a dead sequence.
+    """
 
     def __init__(self, RNAlandscape, wt, num_conserved):
         self.sequences = {}

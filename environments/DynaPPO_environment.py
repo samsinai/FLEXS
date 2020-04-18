@@ -1,5 +1,3 @@
-"""Environment for DyNA-PPO agent."""
-
 import copy
 import editdistance
 import numpy as np
@@ -21,7 +19,12 @@ from utils.sequence_utils import (
 
 
 class DynaPPOEnvironment(py_environment.PyEnvironment):
-    # Based on this: https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent/
+    """
+    Environment for DyNA-PPO agent.
+
+    Based on this: https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent/
+    """
+
     def __init__(
         self,
         alphabet,
@@ -31,7 +34,8 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):
         ensemble_fitness,
         oracle_reward=False,
     ):
-        """Args:
+        """
+        Args:
             alphabet: Usually UCGA.
             starting_seq: When initializing the environment,
                 the sequence which is initially mutated.

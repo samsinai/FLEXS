@@ -56,7 +56,9 @@ class Architecture:
         return len(self.alphabet)
 
     def get_model(self):
-        raise NotImplementedError("You need to define an Architecture")
+        raise NotImplementedError(
+            "You must define an Architecture first before you can call get_model."
+        )
 
 
 class SKBR(Architecture):
@@ -221,7 +223,6 @@ class SKGP(Architecture):
 
 class Linear(Architecture):
     def get_model(self):
-
         lin_model = Sequential()
         lin_model.add(Flatten())
         lin_model.add(
@@ -233,7 +234,7 @@ class Linear(Architecture):
 
 
 class NLNN(Architecture):
-    """Global epistasis model"""
+    """Global epistasis model."""
 
     def __init__(
         self,
@@ -251,7 +252,6 @@ class NLNN(Architecture):
         self.architecture_name = f"NLNN_hd{self.hidden_dims}"
 
     def get_model(self):
-
         non_lin_model = Sequential()
         non_lin_model.add(Flatten())
         non_lin_model.add(
@@ -370,7 +370,6 @@ class VAE(Architecture):
         return xent_loss + self.beta * kl_loss
 
     def get_model(self, seq_size=0, alphabet=None):
-
         self.alphabet = alphabet
         self.KEY_LIST = list(self.alphabet)
         self.seq_size = seq_size
@@ -419,10 +418,8 @@ class VAE(Architecture):
         return
 
     def train_model(self, samples, weights=[]):
-
         # generate random seqs around the input seq if the sample size is too small
         if len(samples) < self.min_training_size:
-            # print('Input batch for the VAE too small, generating more sequences...')
             random_mutants = []
             for sample in samples:
                 random_mutants.extend(
@@ -449,7 +446,7 @@ class VAE(Architecture):
             weights = np.ones(compatible_len)
         else:
             weights = weights[:compatible_len]
-        # print('Training the VAE...')
+
         x_train = np.array(
             [translate_string_to_one_hot(sample, self.KEY_LIST) for sample in samples]
         )
@@ -474,11 +471,11 @@ class VAE(Architecture):
 
     def generate(self, n_samples, existing_samples, existing_weights):
         """
-        generate n_samples new samples such that none of them are in existing_samples
+        Generate `n_samples` new samples such that none of them are in existing_samples.
         """
         z = np.random.randn(
             1, self.latent_dim
-        )  # sampling from the latent space (normal distr in this case)
+        )  # sampling from the latent space (normal distribution in this case)
         x_reconstructed = self.decoder.predict(z)  # decoding
         x_reconstructed_matrix = np.reshape(
             x_reconstructed, (len(self.KEY_LIST), self.seq_size)

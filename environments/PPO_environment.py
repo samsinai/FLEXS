@@ -1,5 +1,3 @@
-"""Environment for PPO agent."""
-
 import copy
 import numpy as np
 import os
@@ -20,9 +18,14 @@ from utils.sequence_utils import (
 
 
 class PPOEnvironment(py_environment.PyEnvironment):
-    # Based on this: https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent/
+    """
+    Environment for PPO agent.
+    
+    Based on this: https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent/
+    """
     def __init__(self, alphabet, starting_seq, landscape, max_num_steps):
-        """Args:
+        """
+        Args:
             alphabet: Usually UCGA.
             starting_seq: When initializing the environment,
                 the sequence which is initially mutated.

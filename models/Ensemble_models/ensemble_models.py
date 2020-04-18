@@ -5,8 +5,8 @@ import random
 from utils.sequence_utils import translate_string_to_one_hot
 from utils.model_architectures import keras_architectures, sklearn_architectures
 from sklearn.metrics import explained_variance_score, r2_score
-import keras
-
+import tensorflow
+from tensorflow import keras
 
 class EnsembleModel(Model):
     def __init__(
@@ -16,9 +16,9 @@ class EnsembleModel(Model):
         Ensemble Model used for model-based policy training.
         
         Args:
-            ground_truth_oracle: landscape
-            architectures: array of Architecture objects (from utils.model_architectures)
-            model_score_threshold: float value for filtering out poorly scoring models
+            ground_truth_oracle: Landscape.
+            architectures: Array of Architecture objects (from utils.model_architectures).
+            model_score_threshold: float value for filtering out poorly scoring models.
         """
         self.measured_sequences = {}  # save the measured sequences for the model
         self.model_sequences = {}  # cache the sequences for later queries

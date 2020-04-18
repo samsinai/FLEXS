@@ -8,7 +8,7 @@ from scipy.stats import pearsonr
 from tensorflow import keras
 import sklearn
 
-# These names need to get fixed to reflect that it supports SKlearn models as well
+# TODO: These names need to get fixed to reflect that it supports SKlearn models as well
 class NN_model(Model):
     def __init__(
         self,
@@ -96,7 +96,7 @@ class NN_model(Model):
                 if self.model_flavor == "Keras":
                     x = translate_string_to_one_hot(
                         sequence, self.alphabet
-                    )  # .flatten()
+                    )
                 else:
                     x = translate_string_to_one_hot(sequence, self.alphabet).flatten()
                 y = self.measured_sequences[sequence]
@@ -112,11 +112,8 @@ class NN_model(Model):
 
         try:
             y_pred = self.neuralmodel.predict(X)
-            # self.r2=r2_score(Y,y_pred)
             if self.model_flavor == "Keras":
                 y_pred = y_pred.flatten()
-            # print (y_pred)
-            # print (Y)
 
             self.r2 = pearsonr(Y, y_pred)[0] ** 2
 

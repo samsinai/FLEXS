@@ -106,32 +106,8 @@ class Moran(Evolution):
     def propose_samples(self):
 
         raise NotImplementedError(
-            "propose_samples must be implemented by your explorer"
+            "`propose_samples` must be implemented by your explorer."
         )
-
-        # last_batch=self.get_last_batch()
-        # current_population = [seq for seq in self.batches[last_batch]]
-
-        # new_sequences = []
-        # fitnesses = compute_fitnesses(current_population)
-        # probabilities_from_fitness=np.cumsum(fitnesses)
-
-        # #pick sequences to be added proportional to their fitness
-        # for i in range(2):
-
-        #     sample = np.random.uniform()
-        #     picked_sequence_index = np.searchsorted(probabilities_from_fitness,sample)
-        #     new_sequence = self.replicate(self.sequences[picked_sequence_index])
-        #     replicated_sequences.append(new_sequence)
-
-        # if self.recomb_rate > 0:
-        #     rec_seq1,rec_seq2 = self.recombine(replicated_sequences[0],replicated_sequences[1])
-        #     recombined_replicated_sequences_half = [random.choice([rec_seq1,rec_seq2])]
-        # else:
-        #     recombined_replicated_sequences_half = [replicated_sequences[0]]
-
-        # return recombined_replicated_sequences_half
-
 
 class WF(Evolution):
     def __init__(

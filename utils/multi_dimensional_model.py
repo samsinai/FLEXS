@@ -2,7 +2,7 @@ from meta.model import Model
 
 
 class Multi_dimensional_model(Model):
-    """Build a composite of ground truth models to make more complicated landscapes"""
+    """Build a composite of ground truth models to make more complicated landscapes."""
 
     def __init__(self, models, combined_func=sum):
         self.sequences = {}
@@ -20,7 +20,6 @@ class Multi_dimensional_model(Model):
             )
 
     def _fitness_function(self, sequence):
-        # return tuple([model.get_fitness(sequence) for model in self.models])
         return self.combined_func(
             [model.get_fitness(sequence) for model in self.models]
         )

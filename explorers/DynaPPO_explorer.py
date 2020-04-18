@@ -1,16 +1,3 @@
-"""
-DynaPPO implementation.
-for N experiment rounds
-    collect samples with policy
-    train policy on samples
-    fit candidate models on samples and compute R^2
-    select models which pass threshold
-    if model subset is not empty then
-        for M model-based training rounds
-            sample batch of sequences from policy and observe ensemble reward
-            update policy on observed data
-"""
-
 import collections
 import numpy as np
 import tensorflow as tf
@@ -59,6 +46,20 @@ class DynaPPO_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
+    """
+    DynaPPO implementation.
+
+    The algorithm is:
+        for N experiment rounds
+            collect samples with policy
+            train policy on samples
+            fit candidate models on samples and compute R^2
+            select models which pass threshold
+            if model subset is not empty then
+                for M model-based training rounds
+                    sample batch of sequences from policy and observe ensemble reward
+                    update policy on observed data
+    """
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)
 
         self.explorer_type = (
