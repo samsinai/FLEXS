@@ -1,9 +1,8 @@
-class Explorer():
-
+class Explorer:
     def __init__(self):
         pass
 
-    def set_model(self,model):
+    def set_model(self, model):
         pass
 
     def propose_samples(self):
