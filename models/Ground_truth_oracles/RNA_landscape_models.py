@@ -40,11 +40,11 @@ class RNA_landscape_constructor:
         if (
             landscape_params["self_fold_max"] != False
         ): 
-        """
-        This is currently not used for any landscape, the idea would be to pass
-        an upper bound on self-folding, beyond which the sequence is considered
-        unviable.
-        """
+            """
+            This is currently not used for any landscape, the idea would be to pass
+            an upper bound on self-folding, beyond which the sequence is considered
+            unviable.
+            """
             l = RNA_landscape_folding(
                 threshold=landscape_params["self_fold_max"], reverse=True
             )
