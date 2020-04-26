@@ -1,6 +1,7 @@
 import numpy as np
-#taken from https://nolanbconaway.github.io/blog/2017/softmax-numpy
-def softmax(X, theta = 1.0, axis = None):
+
+# taken from https://nolanbconaway.github.io/blog/2017/softmax-numpy
+def softmax(X, theta=1.0, axis=None):
     """
     Compute the softmax of each element along an axis of X.
 
@@ -27,18 +28,19 @@ def softmax(X, theta = 1.0, axis = None):
     y = y * float(theta)
 
     # subtract the max for numerical stability
-    y = y - np.expand_dims(np.max(y, axis = axis), axis)
+    y = y - np.expand_dims(np.max(y, axis=axis), axis)
 
     # exponentiate y
     y = np.exp(y)
 
     # take the sum along the specified axis
-    ax_sum = np.expand_dims(np.sum(y, axis = axis), axis)
+    ax_sum = np.expand_dims(np.sum(y, axis=axis), axis)
 
     # finally: divide elementwise
     p = y / ax_sum
 
     # flatten if X was 1D
-    if len(X.shape) == 1: p = p.flatten()
+    if len(X.shape) == 1:
+        p = p.flatten()
 
-    return p   
+    return p
