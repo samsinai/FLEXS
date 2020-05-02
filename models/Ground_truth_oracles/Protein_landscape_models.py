@@ -107,7 +107,25 @@ class Protein_landscape_binding(Ground_truth_oracle):
         self.target = target
         self.sequences = {}
         self.noise = noise
-        self.norm_value = self.compute_maximum_binding_possible(self.target)
+        self.norm_value = norm_value
+
+    def _fitness_function(self, sequence):
+        pose = prs.pose_from_sequence(sequence)
+        score = -prs.rosetta.protocols.stepwise.modeler.align.superimpose_with_stepwise_aligner(pose, self.target_pose)
+        return score / self.norm_value
+
+    def get_fitness(self, sequence):
+        if self.noise == 0:
+            if sequence in self.sequences:
+                return self.sequences[sequence]
+            else:
+                self.sequences[sequence] = self._fitness_function(sequence)
+                return self.sequences[sequence]
+        else:
+            self.sequences[sequence] = self._fitness_function(
+                sequence
+            ) + np.random.normal(scale=self.noise)
+        return self.sequences[sequence]
 
 
 
