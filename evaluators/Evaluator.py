@@ -5,8 +5,8 @@ from models.Noisy_models.Ensemble import Ensemble_models
 from pathlib import Path
 import uuid
 
-LANDSCAPE_TYPES = {"RNA": [2], "TF": [], "Protein": [2]}  # ["RNA","TF","GFP","ADDITIVE"]
-LANDSCAPE_ALPHABET = {"RNA": "UCGA", "TF": "TCGA", "Protein": "ARNDCQEGHILKMFPSTWYVXZJU"}
+LANDSCAPE_TYPES = {"RNA": [2], "TF": [], "Protein": [2], "GFP": []}  # ["RNA","TF","GFP","ADDITIVE"]
+LANDSCAPE_ALPHABET = {"RNA": "UCGA", "TF": "TCGA", "Protein": "ILVAGMFYWEDQNHCRKSTP", "GFP": "ILVAGMFYWEDQNHCRKSTP"}
 
 
 class Evaluator:
@@ -33,7 +33,8 @@ class Evaluator:
 
     def load_landscapes(self):
         print(
-            f'loading landscapes RNA: {self.landscape_types["RNA"]}, TF:{self.landscape_types["TF"]}, Protein:{self.landscape_types["Protein"]}'
+            f'loading landscapes RNA: {self.landscape_types["RNA"]}, TF: {self.landscape_types["TF"]}, '
+            f'Protein: {self.landscape_types["Protein"]}, GFP: {self.landscape_types["GFP"]}'
         )
         if "RNA" in self.landscape_types:
             from models.Ground_truth_oracles.RNA_landscape_models import (
@@ -69,7 +70,18 @@ class Evaluator:
             Protein_constructor.load_landscapes(landscapes_to_test=self.landscape_types["Protein"])
             self.landscape_generator[
                 "Protein"
-            ] = Protein_constructor.generate_from_loaded_landscapes()         
+            ] = Protein_constructor.generate_from_loaded_landscapes()   
+
+        if "GFP" in self.landscape_types:
+            from models.Ground_truth_oracles.GFP_landscape_models import (
+                GFP_landscape_constructor,
+            )   
+
+            GFP_constructor = GFP_landscape_constructor()
+            GFP_constructor.load_landscapes(landscapes_to_test=self.landscape_types["GFP"])
+            self.landscape_generator[
+                "GFP"
+            ] = GFP_constructor.generate_from_loaded_landscapes()                     
 
         self.explorer.run_id = str(uuid.uuid1())
         print(f"loading complete")
