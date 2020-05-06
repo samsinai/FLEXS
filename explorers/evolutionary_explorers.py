@@ -1,8 +1,10 @@
-from explorers.base_explorer import Base_explorer
 import random
-import numpy as np
-from utils.sequence_utils import generate_random_mutant
 from collections import Counter
+
+import numpy as np
+
+from explorers.base_explorer import Base_explorer
+from utils.sequence_utils import generate_random_mutant
 
 
 class Evolution(Base_explorer):
@@ -108,6 +110,7 @@ class Moran(Evolution):
         raise NotImplementedError(
             "`propose_samples` must be implemented by your explorer."
         )
+
 
 class WF(Evolution):
     def __init__(

@@ -1,14 +1,14 @@
-import numpy as np
-import random
-import editdistance
 import bisect
-from utils.softmax import softmax
+import random
+
+import editdistance
+import numpy as np
+
 from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import (
-    translate_string_to_one_hot,
-    translate_one_hot_to_string,
-    generate_random_mutant,
-)
+from utils.sequence_utils import (generate_random_mutant,
+                                  translate_one_hot_to_string,
+                                  translate_string_to_one_hot)
+from utils.softmax import softmax
 
 
 class XE_IS(Base_explorer):

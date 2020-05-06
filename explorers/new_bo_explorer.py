@@ -8,13 +8,22 @@ from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import ConstantKernel, Matern
 
 from explorers.base_explorer import Base_explorer
 from utils.replay_buffers import PrioritizedReplayBuffer
 from utils.sequence_utils import *
 
 
-class BO_Explorer(Base_explorer):
+class New_BO_Explorer(Base_explorer):
+    """
+    Bayesian optimization explorer. Uses Gaussian process with Matern kernel
+    on black box function.
+
+    Reference: http://krasserm.github.io/2018/03/21/bayesian-optimization/
+    """
+
     def __init__(
         self,
         batch_size=100,
@@ -24,45 +33,33 @@ class BO_Explorer(Base_explorer):
         debug=False,
         method="EI",
     ):
-        super(BO_Explorer, self).__init__(
+        super(New_BO_Explorer, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
             virtual_screen=virtual_screen,
             path=path,
             debug=debug,
         )
-        self.explorer_type = "BO_Explorer"
+        self.explorer_type = "New_BO_Explorer"
         self.alphabet_len = len(alphabet)
         self.method = method
         self.best_fitness = 0
         self.top_sequence = []
-        self.num_actions = 0
-        # use PER buffer, same as in DQN
-        self.model_type = "blank"
+
+        # Gaussian Process with Matern kernel
+        matern = Matern(length_scale=1.0, nu=2.5)
+        noise = 0.02
+        self.gpr = GaussianProcessRegressor(kernel=matern, alpha=noise ** 2)
 
     def initialize_data_structures(self):
         start_sequence = list(self.model.measured_sequences)[0]
         self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
         self.seq_len = len(start_sequence)
-        self.memory = PrioritizedReplayBuffer(
-            self.alphabet_len * self.seq_len, 100000, self.batch_size, 0.6
-        )
 
     def reset(self):
         self.best_fitness = 0
         self.batches = {-1: ""}
         self.num_actions = 0
-
-    def train_models(self):
-        batch = self.memory.sample_batch()
-        states = batch["next_obs"]
-        state_seqs = [
-            translate_one_hot_to_string(
-                state.reshape((-1, self.seq_len)), self.alphabet
-            )
-            for state in states
-        ]
-        self.model.update_model(state_seqs)
 
     def EI(self, vals):
         return np.mean([max(val - self.best_fitness, 0) for val in vals])

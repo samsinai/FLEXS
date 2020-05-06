@@ -1,13 +1,13 @@
 import collections
-import tensorflow as tf
 from functools import partial
-from tf_agents.agents.ppo import ppo_policy, ppo_agent, ppo_utils
+
+import tensorflow as tf
+from tf_agents.agents.ppo import ppo_agent, ppo_policy, ppo_utils
 from tf_agents.drivers import dynamic_episode_driver
 from tf_agents.environments import tf_py_environment
 from tf_agents.environments.utils import validate_py_environment
 from tf_agents.metrics import tf_metrics
-from tf_agents.networks import actor_distribution_network
-from tf_agents.networks import value_network
+from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 from environments.PPO_environment import PPOEnvironment as PPOEnv

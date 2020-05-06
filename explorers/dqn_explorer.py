@@ -1,27 +1,27 @@
 import copy
-import os
-from collections import deque, Counter
-import random
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import editdistance
-import sys
-import RNA
 import operator
-from typing import Dict, List, Tuple, Callable
+import os
+import random
+import sys
+from collections import Counter, deque
+from typing import Callable, Dict, List, Tuple
 
+import editdistance
+import matplotlib.pyplot as plt
+import numpy as np
+import RNA
+import seaborn as sns
 import torch
-from torch import nn
-from tqdm import tqdm_notebook as tqdm
-import torch.nn.functional as F
 import torch.multiprocessing as mp
+import torch.nn.functional as F
 import torch.optim as optim
+from torch import nn
 from torch.nn.utils import clip_grad_norm_
+from tqdm import tqdm_notebook as tqdm
 
 from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import *
 from utils.replay_buffers import PrioritizedReplayBuffer
+from utils.sequence_utils import *
 
 
 class Q_Network(nn.Module):

@@ -1,7 +1,8 @@
-from meta.explorer import Explorer
 import os.path
-from utils.sequence_utils import generate_random_mutant
 import uuid
+
+from meta.explorer import Explorer
+from utils.sequence_utils import generate_random_mutant
 
 
 class Base_explorer(Explorer):

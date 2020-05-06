@@ -1,20 +1,19 @@
 import copy
-import numpy as np
 import os
 import sys
+
+import numpy as np
 from tf_agents.environments import py_environment
-from tf_agents.trajectories import time_step as ts
 from tf_agents.specs import array_spec
+from tf_agents.trajectories import time_step as ts
+
+from utils.sequence_utils import (construct_mutant_from_sample,
+                                  translate_one_hot_to_string,
+                                  translate_string_to_one_hot)
 
 module_path = os.path.abspath(os.path.join(".."))
 if module_path not in sys.path:
     sys.path.append(module_path)
-
-from utils.sequence_utils import (
-    construct_mutant_from_sample,
-    translate_one_hot_to_string,
-    translate_string_to_one_hot,
-)
 
 
 class PPOEnvironment(py_environment.PyEnvironment):
@@ -23,6 +22,7 @@ class PPOEnvironment(py_environment.PyEnvironment):
     
     Based on this: https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent/
     """
+
     def __init__(self, alphabet, starting_seq, landscape, max_num_steps):
         """
         Args:

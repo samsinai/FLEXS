@@ -1,7 +1,10 @@
-from explorers.base_explorer import Base_explorer
+import logging
+
 import numpy as np
-from utils.model_architectures import VAE
+
+from explorers.base_explorer import Base_explorer
 from utils.exceptions import GenerateError
+from utils.model_architectures import VAE
 
 
 class CbAS_explorer(Base_explorer):
@@ -18,6 +21,23 @@ class CbAS_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
+        """
+        Explorer which implements Conditioning by Adaptive Sampling.
+
+        Paper: https://arxiv.org/pdf/1901.10060.pdf
+
+        @TODO (Elina)
+        Attributes:
+            generator:
+            Q:
+            n_new_proposals:
+            backfill:
+            mutation_rate:
+            all_proposals_ranked:
+            n_convergence: Assume convergence if max fitness doesn't change for
+                n_convergence cycles.
+            explorer_type:
+        """
         super().__init__(
             batch_size, alphabet, virtual_screen, path, debug
         )  # for Python 3
@@ -27,11 +47,10 @@ class CbAS_explorer(Base_explorer):
         self.backfill = backfill
         self.mutation_rate = mutation_rate
         self.all_proposals_ranked = []
-        self.n_convergence = n_convergence  # assume convergence if max fitness doesn't change for n_convergence cycles
+        self.n_convergence = n_convergence
         self.explorer_type = f"CbAS_Q{self.Q}_generator{self.generator.name}"
 
     def propose_samples(self):
-
         gamma = np.percentile(
             list(self.model.measured_sequences.values()), 100 * self.Q
         )  # Qth percentile of current measured sequences
@@ -43,15 +62,16 @@ class CbAS_explorer(Base_explorer):
         initial_weights = [1] * len(initial_batch)
         all_samples_and_weights = tuple((initial_batch, initial_weights))
 
-        # print('Starting a CbAS cycle...')
-        # print('Initial training set size: ', len(initial_batch))
+        logging.info("Starting a CbAS cycle...")
+        logging.info(f"Initial training set size: {len(initial_batch)}")
 
         # this will be the current state of the generator
         self.generator.get_model(seq_size=len(initial_batch[0]), alphabet=self.alphabet)
         self.generator.train_model(initial_batch, initial_weights)
 
         # save the weights of the initial vae and save it as vae_0:
-        # there are issues with keras model saving and loading, so we have to recompile it
+        # there are issues with keras model saving and loading,
+        # so we have to recompile it
         self.generator.vae.save("vae_initial_weights.h5")
         generator_0 = VAE(
             batch_size=self.generator.batch_size,
@@ -77,7 +97,8 @@ class CbAS_explorer(Base_explorer):
 
         while (not_converged) and (count < self.batch_size * self.virtual_screen):
 
-            # generate new samples using the generator (second argument is a list of all existing measured and proposed seqs)
+            # generate new samples using the generator (second argument is a list of all
+            # existing measured and proposed seqs)
             proposals = []
             while len(proposals) == 0:
                 try:
@@ -99,7 +120,8 @@ class CbAS_explorer(Base_explorer):
                 scores.append(self.model.get_fitness(proposal))
             # print('Top score in proposed samples: ', np.max(scores))
 
-            # set a new fitness threshold if the new percentile is higher than the current
+            # set a new fitness threshold if the new percentile is
+            # higher than the current
             gamma_new = np.percentile(scores, self.Q * 100)
             if gamma_new > gamma:
                 gamma = gamma_new
@@ -135,7 +157,8 @@ class CbAS_explorer(Base_explorer):
                     )
                 ]
             )
-            # all_proposals_ranked are in an increasing order or fitness, starting with the first batch
+            # all_proposals_ranked are in an increasing order or fitness,
+            # starting with the first batch
 
             # check if converged
             max_fitnesses.append(np.max(scores))
@@ -148,10 +171,8 @@ class CbAS_explorer(Base_explorer):
 
         if self.backfill:
             return self.all_proposals_ranked[: self.n_new_proposals]
-        else:
-            return [
-                proposal for proposal in proposals if scores_dict[proposal] >= gamma
-            ]
+
+        return [proposal for proposal in proposals if scores_dict[proposal] >= gamma]
 
 
 class DbAS_explorer(Base_explorer):
@@ -168,6 +189,22 @@ class DbAS_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
+        """
+        Explorer which implements Design by Adaptive Sampling.
+
+        Paper: https://arxiv.org/pdf/1810.03714.pdf
+
+        Attributes:
+            generator:
+            Q:
+            n_new_proposals:
+            backfill:
+            mutation_rate:
+            all_proposals_ranked:
+            n_convergence: Assume convergence if max fitness doesn't change for
+                n_convergence cycles.
+            explorer_type:
+        """
         super().__init__(
             batch_size, alphabet, virtual_screen, path, debug
         )  # for Python 3
@@ -177,7 +214,7 @@ class DbAS_explorer(Base_explorer):
         self.backfill = backfill
         self.mutation_rate = mutation_rate
         self.all_proposals_ranked = []
-        self.n_convergence = n_convergence  # assume convergence if max fitness doesn't change for n_convergence cycles
+        self.n_convergence = n_convergence
         self.explorer_type = f"DbAS_Q{self.Q}_generator{self.generator.name}"
 
     def propose_samples(self):
@@ -193,8 +230,8 @@ class DbAS_explorer(Base_explorer):
         initial_weights = [1] * len(initial_batch)
         all_samples_and_weights = tuple((initial_batch, initial_weights))
 
-        # print('Starting a DbAS cycle...')
-        # print('Initial training set size: ', len(initial_batch))
+        logging.info("Starting a DbAS cycle...")
+        logging.info(f"Initial training set size: {len(initial_batch)}")
 
         # this will be the current state of the generator
         self.generator.get_model(seq_size=len(initial_batch[0]), alphabet=self.alphabet)
@@ -208,7 +245,8 @@ class DbAS_explorer(Base_explorer):
 
         while (not_converged) and (count < self.batch_size * self.virtual_screen):
 
-            # generate new samples using the generator (second argument is a list of all existing measured and proposed seqs)
+            # generate new samples using the generator
+            # (second argument is a list of all existing measured and proposed seqs)
             proposals = []
             while len(proposals) == 0:
                 try:
@@ -230,7 +268,8 @@ class DbAS_explorer(Base_explorer):
                 scores.append(self.model.get_fitness(proposal))
             # print('Top score in proposed samples: ', np.max(scores))
 
-            # set a new fitness threshold if the new percentile is higher than the current
+            # set a new fitness threshold if the new percentile is
+            # higher than the current
             gamma_new = np.percentile(scores, self.Q * 100)
             if gamma_new > gamma:
                 gamma = gamma_new
@@ -258,7 +297,8 @@ class DbAS_explorer(Base_explorer):
                     )
                 ]
             )
-            # all_proposals_ranked are in an increasing order or fitness, starting with the first batch
+            # all_proposals_ranked are in an increasing order or fitness,
+            # starting with the first batch
 
             # check if converged
             max_fitnesses.append(np.max(scores))
@@ -271,7 +311,5 @@ class DbAS_explorer(Base_explorer):
 
         if self.backfill:
             return self.all_proposals_ranked[: self.n_new_proposals]
-        else:
-            return [
-                proposal for proposal in proposals if scores_dict[proposal] >= gamma
-            ]
+
+        return [proposal for proposal in proposals if scores_dict[proposal] >= gamma]

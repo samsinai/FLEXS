@@ -1,12 +1,25 @@
-import yaml
-from models.Noisy_models.Noisy_abstract_model import Noisy_abstract_model, Null_model
-from models.Noisy_models.Neural_network_models import NN_model
-from models.Noisy_models.Ensemble import Ensemble_models
-from pathlib import Path
 import uuid
+from pathlib import Path
 
-LANDSCAPE_TYPES = {"RNA": [2], "TF": [], "Protein": [2], "GFP": []}  # ["RNA","TF","GFP","ADDITIVE"]
-LANDSCAPE_ALPHABET = {"RNA": "UCGA", "TF": "TCGA", "Protein": "ILVAGMFYWEDQNHCRKSTP", "GFP": "ILVAGMFYWEDQNHCRKSTP"}
+import yaml
+
+from models.Noisy_models.Ensemble import Ensemble_models
+from models.Noisy_models.Neural_network_models import NN_model
+from models.Noisy_models.Noisy_abstract_model import (Noisy_abstract_model,
+                                                      Null_model)
+
+LANDSCAPE_TYPES = {
+    "RNA": [2],
+    "TF": [],
+    "Protein": [2],
+    "GFP": [],
+}  # ["RNA","TF","GFP","ADDITIVE"]
+LANDSCAPE_ALPHABET = {
+    "RNA": "UCGA",
+    "TF": "TCGA",
+    "Protein": "ILVAGMFYWEDQNHCRKSTP",
+    "GFP": "ILVAGMFYWEDQNHCRKSTP",
+}
 
 
 class Evaluator:
@@ -64,24 +77,28 @@ class Evaluator:
         if "Protein" in self.landscape_types:
             from models.Ground_truth_oracles.Protein_landscape_models import (
                 Protein_landscape_constructor,
-            )   
+            )
 
             Protein_constructor = Protein_landscape_constructor()
-            Protein_constructor.load_landscapes(landscapes_to_test=self.landscape_types["Protein"])
+            Protein_constructor.load_landscapes(
+                landscapes_to_test=self.landscape_types["Protein"]
+            )
             self.landscape_generator[
                 "Protein"
-            ] = Protein_constructor.generate_from_loaded_landscapes()   
+            ] = Protein_constructor.generate_from_loaded_landscapes()
 
         if "GFP" in self.landscape_types:
             from models.Ground_truth_oracles.GFP_landscape_models import (
                 GFP_landscape_constructor,
-            )   
+            )
 
             GFP_constructor = GFP_landscape_constructor()
-            GFP_constructor.load_landscapes(landscapes_to_test=self.landscape_types["GFP"])
+            GFP_constructor.load_landscapes(
+                landscapes_to_test=self.landscape_types["GFP"]
+            )
             self.landscape_generator[
                 "GFP"
-            ] = GFP_constructor.generate_from_loaded_landscapes()                     
+            ] = GFP_constructor.generate_from_loaded_landscapes()
 
         self.explorer.run_id = str(uuid.uuid1())
         print(f"loading complete")
