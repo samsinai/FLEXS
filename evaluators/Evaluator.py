@@ -33,8 +33,8 @@ class Evaluator:
 
     def load_landscapes(self):
         print(
-            f'loading landscapes RNA: {self.landscape_types["RNA"]}, TF: {self.landscape_types["TF"]}, '
-            f'Protein: {self.landscape_types["Protein"]}, GFP: {self.landscape_types["GFP"]}'
+            f'loading landscapes RNA: {self.landscape_types.get("RNA")}, TF: {self.landscape_types.get("TF")}, '
+            f'Protein: {self.landscape_types.get("Protein")}, GFP: {self.landscape_types.get("GFP")}'
         )
         if "RNA" in self.landscape_types:
             from models.Ground_truth_oracles.RNA_landscape_models import (
