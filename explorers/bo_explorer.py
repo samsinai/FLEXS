@@ -23,6 +23,7 @@ class BO_Explorer(Base_explorer):
         path="./simulations/",
         debug=False,
         method="EI",
+        recomb_rate=0
     ):
         super(BO_Explorer, self).__init__(
             batch_size=batch_size,
@@ -34,6 +35,7 @@ class BO_Explorer(Base_explorer):
         self.explorer_type = "BO_Explorer"
         self.alphabet_len = len(alphabet)
         self.method = method
+        self.recomb_rate = recomb_rate 
         self.best_fitness = 0
         self.top_sequence = []
         self.num_actions = 0
@@ -63,6 +65,29 @@ class BO_Explorer(Base_explorer):
             for state in states
         ]
         self.model.update_model(state_seqs)
+
+    def _recombine_population(self, gen):
+        random.shuffle(gen)
+        ret = []
+        for i in range(0, len(gen) - 1, 2):
+            strA = []
+            strB = []
+            switch = False
+            for ind in range(len(gen[i])):
+                if random.random() < self.recomb_rate:
+                    switch = not switch
+
+                # putting together recombinants
+                if switch:
+                    strA.append(gen[i][ind])
+                    strB.append(gen[i + 1][ind])
+                else:
+                    strB.append(gen[i][ind])
+                    strA.append(gen[i + 1][ind])
+
+            ret.append("".join(strA))
+            ret.append("".join(strB))
+        return ret
 
     def EI(self, vals):
         return np.mean([max(val - self.best_fitness, 0) for val in vals])
@@ -143,8 +168,10 @@ class BO_Explorer(Base_explorer):
         else:
             # set state to best measured sequence from prior batch
             last_batch = self.batches[self.get_last_batch()]
+            if self.recomb_rate > 0 and len(last_batch) > 1:
+                last_batch_recomb = self._recombine_population(list(last_batch))
             measured_batch = sorted(
-                [(self.model.get_fitness(seq), seq) for seq in last_batch]
+                [(self.model.get_fitness(seq), seq) for seq in last_batch_recomb]
             )
             sampled_seq = self.Thompson_sample(measured_batch)
             self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
