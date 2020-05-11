@@ -169,9 +169,9 @@ class BO_Explorer(Base_explorer):
             # set state to best measured sequence from prior batch
             last_batch = self.batches[self.get_last_batch()]
             if self.recomb_rate > 0 and len(last_batch) > 1:
-                last_batch_recomb = self._recombine_population(list(last_batch))
+                last_batch = self._recombine_population(list(last_batch))
             measured_batch = sorted(
-                [(self.model.get_fitness(seq), seq) for seq in last_batch_recomb]
+                [(self.model.get_fitness(seq), seq) for seq in last_batch]
             )
             sampled_seq = self.Thompson_sample(measured_batch)
             self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
