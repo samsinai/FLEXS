@@ -5,4 +5,5 @@ format:
 	python -m isort -rc $(directories)
 
 lint:
-	python -m pylint --reports=n --rcfile=pylintrc ./explorers/DynaPPO_explorer.py
+	python -m pylint --reports=n --rcfile=pylintrc $(directories)
+	python -m pydocstyle
