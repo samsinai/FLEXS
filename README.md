@@ -1,2 +1,2 @@
-# FLSD-Sandbox
-Fitness landscape sequence design sandbox
+# Fitness Landscape Sequence Design
+This is a sandbox for fitness landscape sequence design.

@@ -1,4 +1,4 @@
-import os 
+import os
 from collections import deque, Counter
 import random
 import numpy as np
@@ -8,7 +8,7 @@ import editdistance
 import sys
 import RNA
 import operator
-from typing import Dict, List, Tuple, Callable 
+from typing import Dict, List, Tuple, Callable
 
 import torch
 from torch import nn
@@ -21,7 +21,7 @@ from torch.nn.utils import clip_grad_norm_
 
 class SegmentTree:
     """ Create SegmentTree.
-    Taken from OpenAI baselines github repository:
+    Taken from OpenAI baselines Github repository:
     https://github.com/openai/baselines/blob/master/baselines/common/segment_tree.py
     Attributes:
         capacity (int)
@@ -124,8 +124,8 @@ class SumSegmentTree(SegmentTree):
 
 
 class MinSegmentTree(SegmentTree):
-    """ Create SegmentTree.
-    Taken from OpenAI baselines github repository:
+    """Create SegmentTree.
+    Taken from OpenAI baselines Github repository:
     https://github.com/openai/baselines/blob/master/baselines/common/segment_tree.py
     """
 
@@ -154,13 +154,7 @@ class ReplayBuffer:
         self.max_size, self.batch_size = size, batch_size
         self.ptr, self.size, = 0, 0
 
-    def store(
-        self,
-        obs: np.ndarray,
-        act: np.ndarray, 
-        rew: float, 
-        next_obs: np.ndarray
-    ):
+    def store(self, obs: np.ndarray, act: np.ndarray, rew: float, next_obs: np.ndarray):
         self.obs_buf[self.ptr] = obs
         self.next_obs_buf[self.ptr] = next_obs
         self.acts_buf[self.ptr] = act
@@ -170,14 +164,17 @@ class ReplayBuffer:
 
     def sample_batch(self) -> Dict[str, np.ndarray]:
         idxs = np.random.choice(self.size, size=self.batch_size, replace=False)
-        return dict(obs=self.obs_buf[idxs],
-                    next_obs=self.next_obs_buf[idxs],
-                    acts=self.acts_buf[idxs],
-                    rews=self.rews_buf[idxs])
+        return dict(
+            obs=self.obs_buf[idxs],
+            next_obs=self.next_obs_buf[idxs],
+            acts=self.acts_buf[idxs],
+            rews=self.rews_buf[idxs],
+        )
 
     def __len__(self) -> int:
         return self.size
-    
+
+
 class PrioritizedReplayBuffer(ReplayBuffer):
     """Prioritized Replay buffer.
     
@@ -189,21 +186,17 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         min_tree (MinSegmentTree): min tree for min prior to get max weight
         
     """
-    
+
     def __init__(
-        self, 
-        obs_dim: int,
-        size: int, 
-        batch_size: int = 32, 
-        alpha: float = 0.6
+        self, obs_dim: int, size: int, batch_size: int = 32, alpha: float = 0.6
     ):
         """Initialization."""
         assert alpha >= 0
-        
+
         super(PrioritizedReplayBuffer, self).__init__(obs_dim, size, batch_size)
         self.max_priority, self.tree_ptr = 1.0, 0
         self.alpha = alpha
-        
+
         # capacity must be positive and a power of 2.
         tree_capacity = 1
         while tree_capacity < self.max_size:
@@ -211,17 +204,11 @@ class PrioritizedReplayBuffer(ReplayBuffer):
 
         self.sum_tree = SumSegmentTree(tree_capacity)
         self.min_tree = MinSegmentTree(tree_capacity)
-        
-    def store(
-        self, 
-        obs: np.ndarray, 
-        act: int, 
-        rew: float, 
-        next_obs: np.ndarray
-    ):
+
+    def store(self, obs: np.ndarray, act: int, rew: float, next_obs: np.ndarray):
         """Store experience and priority."""
         super().store(obs, act, rew, next_obs)
-        
+
         self.sum_tree[self.tree_ptr] = self.max_priority ** self.alpha
         self.min_tree[self.tree_ptr] = self.max_priority ** self.alpha
         self.tree_ptr = (self.tree_ptr + 1) % self.max_size
@@ -230,25 +217,24 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         """Sample a batch of experiences."""
         assert len(self) >= self.batch_size
         assert beta > 0
-        
+
         indices = self._sample_proportional()
-        
+
         obs = self.obs_buf[indices]
         next_obs = self.next_obs_buf[indices]
         acts = self.acts_buf[indices]
         rews = self.rews_buf[indices]
         weights = np.array([self._calculate_weight(i, beta) for i in indices])
-        
+
         return dict(
             obs=obs,
             next_obs=next_obs,
             acts=acts,
             rews=rews,
-
             weights=weights,
             indices=indices,
         )
-        
+
     def update_priorities(self, indices: List[int], priorities: np.ndarray):
         """Update priorities of sampled transitions."""
         assert len(indices) == len(priorities)
@@ -261,31 +247,31 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             self.min_tree[idx] = priority ** self.alpha
 
             self.max_priority = max(self.max_priority, priority)
-            
+
     def _sample_proportional(self) -> List[int]:
         """Sample indices based on proportions."""
         indices = []
         p_total = self.sum_tree.sum(0, len(self) - 1)
         segment = p_total / self.batch_size
-        
+
         for i in range(self.batch_size):
             a = segment * i
             b = segment * (i + 1)
             upperbound = random.uniform(a, b)
             idx = self.sum_tree.retrieve(upperbound)
             indices.append(idx)
-            
+
         return indices
-    
+
     def _calculate_weight(self, idx: int, beta: float):
         """Calculate the weight of the experience at idx."""
         # get max weight
         p_min = self.min_tree.min() / self.sum_tree.sum()
         max_weight = (p_min * len(self)) ** (-beta)
-        
+
         # calculate weights
         p_sample = self.sum_tree[idx] / self.sum_tree.sum()
         weight = (p_sample * len(self)) ** (-beta)
         weight = weight / max_weight
-        
+
         return weight
