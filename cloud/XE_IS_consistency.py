@@ -2,7 +2,6 @@ import sys
 
 sys.path.append("../")
 import RNA
-from utils.sequence_utils import generate_xeis_mutant
 from utils.model_architectures import Linear, NLNN, CNNa
 from models.Noisy_models.Neural_network_models import NN_model
 from models.Ground_truth_oracles.RNA_landscape_models import RNA_landscape_constructor
