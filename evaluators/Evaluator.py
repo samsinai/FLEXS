@@ -2,14 +2,6 @@ import time
 import uuid
 from pathlib import Path
 
-from models.Ground_truth_oracles.GFP_landscape_models import \
-    GFP_landscape_constructor
-from models.Ground_truth_oracles.Protein_landscape_models import \
-    Protein_landscape_constructor
-from models.Ground_truth_oracles.RNA_landscape_models import \
-    RNA_landscape_constructor
-from models.Ground_truth_oracles.TF_binding_landscape_models import \
-    TF_binding_landscape_constructor
 from models.Noisy_models.Ensemble import Ensemble_models
 from models.Noisy_models.Neural_network_models import NN_model
 from models.Noisy_models.Noisy_abstract_model import (Noisy_abstract_model,
@@ -66,6 +58,8 @@ class Evaluator:
             f'Protein: {self.landscape_types.get("Protein")}, GFP: {self.landscape_types.get("GFP")}'
         )
         if "RNA" in self.landscape_types:
+            from models.Ground_truth_oracles.RNA_landscape_models import \
+                RNA_landscape_constructor
             RNALconstructor = RNA_landscape_constructor()
             RNALconstructor.load_landscapes(
                 "../data/RNA_landscapes/RNA_landscape_config.yaml",
@@ -76,6 +70,8 @@ class Evaluator:
             ] = RNALconstructor.generate_from_loaded_landscapes()
 
         if "TF" in self.landscape_types:
+            from models.Ground_truth_oracles.TF_binding_landscape_models import \
+                TF_binding_landscape_constructor
             TFconstructor = TF_binding_landscape_constructor()
             TFconstructor.load_landscapes(landscapes_to_test=self.landscape_types["TF"])
             self.landscape_generator[
@@ -83,6 +79,8 @@ class Evaluator:
             ] = TFconstructor.generate_from_loaded_landscapes()
 
         if "Protein" in self.landscape_types:
+            from models.Ground_truth_oracles.Protein_landscape_models import \
+                Protein_landscape_constructor
             Protein_constructor = Protein_landscape_constructor()
             Protein_constructor.load_landscapes(
                 landscapes_to_test=self.landscape_types["Protein"]
@@ -92,6 +90,8 @@ class Evaluator:
             ] = Protein_constructor.generate_from_loaded_landscapes()
 
         if "GFP" in self.landscape_types:
+            from models.Ground_truth_oracles.GFP_landscape_models import \
+                GFP_landscape_constructor
             GFP_constructor = GFP_landscape_constructor()
             GFP_constructor.load_landscapes(
                 landscapes_to_test=self.landscape_types["GFP"]
