@@ -1,8 +1,9 @@
-from explorers.base_explorer import Base_explorer
 import random
+
 import numpy as np
+
+from explorers.base_explorer import Base_explorer
 from utils.sequence_utils import generate_random_mutant
-from collections import Counter
 
 
 class Evolution(Base_explorer):
@@ -96,7 +97,7 @@ class Moran(Evolution):
         virtual_screen=0,
     ):
 
-        super(WF, self).__init__(
+        super(Moran, self).__init__(
             mu, rho, recomb_rate, beta, batch_size, alphabet, virtual_screen
         )
         self.explorer_type = (
@@ -108,6 +109,7 @@ class Moran(Evolution):
         raise NotImplementedError(
             "`propose_samples` must be implemented by your explorer."
         )
+
 
 class WF(Evolution):
     def __init__(
@@ -131,14 +133,14 @@ class WF(Evolution):
     def propose_samples(self):
 
         last_batch = self.get_last_batch()
-        current_population = [seq for seq in self.batches[last_batch]]
+        current_population = self.batches[last_batch]
         while len(current_population) < self.batch_size:
             current_population.append(current_population[0])
 
         fitnesses = self.compute_fitnesses(current_population)
         probabilities_from_fitness = np.cumsum(fitnesses)
         replicated_sequences = []
-        for i in range(self.batch_size):
+        for _ in range(self.batch_size):
             sample = np.random.uniform()
             picked_sequence_index = np.searchsorted(probabilities_from_fitness, sample)
             seq = current_population[picked_sequence_index]
@@ -148,7 +150,7 @@ class WF(Evolution):
             replicated_sequences.append(new_sequence)
 
         if self.recomb_rate > 0:
-            for i in range(self.rho):
+            for _ in range(self.rho):
                 recombined_replicated_sequences_half = self.recombine_population(
                     replicated_sequences
                 )[: self.batch_size]
@@ -188,7 +190,7 @@ class ML_WF(Evolution):
     def propose_samples(self):
 
         last_batch = self.get_last_batch()
-        current_population = [seq for seq in self.batches[last_batch]]
+        current_population = self.batches[last_batch]
         while len(current_population) < self.batch_size:
             current_population.append(current_population[0])
 
@@ -205,7 +207,7 @@ class ML_WF(Evolution):
             replicated_sequences.append(new_sequence)
 
         if self.recomb_rate > 0:
-            for i in range(self.rho):
+            for _ in range(self.rho):
                 recombined_replicated_sequences_half = self.recombine_population(
                     replicated_sequences
                 )

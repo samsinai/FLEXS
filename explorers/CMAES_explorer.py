@@ -21,7 +21,28 @@ class CMAES_explorer(Base_explorer):
         debug=False,
     ):
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)
-        self.explorer_type = f"CMAES"
+        self.explorer_type = "CMAES"
+
+        self.has_been_initialized = False
+        self.seq_len = None
+        self.alphabet_len = None
+        self.N = None
+        self.mu = None
+        self.weights = None
+        self.mueff = None
+        self.c1 = None
+        self.cc = None
+        self.cs = None
+        self.cmu = None
+        self.damp = None
+        self.mean = None
+        self.sigma = None
+        self.cov = None
+        self.ps = None
+        self.pc = None
+        self.chiN = None
+        self.old_mean = None
+
         self.reset()
 
     def reset(self):

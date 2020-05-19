@@ -1,13 +1,13 @@
 import collections
-import tensorflow as tf
 from functools import partial
-from tf_agents.agents.ppo import ppo_policy, ppo_agent, ppo_utils
+
+import tensorflow as tf
+from tf_agents.agents.ppo import ppo_agent
 from tf_agents.drivers import dynamic_episode_driver
 from tf_agents.environments import tf_py_environment
 from tf_agents.environments.utils import validate_py_environment
 from tf_agents.metrics import tf_metrics
-from tf_agents.networks import actor_distribution_network
-from tf_agents.networks import value_network
+from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 from environments.PPO_environment import PPOEnvironment as PPOEnv
@@ -33,6 +33,15 @@ class PPO_explorer(Base_explorer):
         debug=False,
     ):
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)
+
+        self.meas_seqs = None
+        self.meas_seqs_it = None
+        self.top_seqs = None
+        self.top_seqs_it = None
+        self.has_pretrained_agent = None
+        self.original_horizon = None
+        self.tf_env = None
+        self.agent = None
 
         self.explorer_type = "PPO_Agent"
 
@@ -200,7 +209,7 @@ class PPO_explorer(Base_explorer):
 
             # train from the agent's trajectories
             trajectories = replay_buffer.gather_all()
-            total_loss, _ = self.agent.train(experience=trajectories)
+            self.agent.train(experience=trajectories)
             replay_buffer.clear()
 
         self.has_pretrained_agent = True
@@ -268,7 +277,7 @@ class PPO_explorer(Base_explorer):
         self.meas_seqs = sorted(self.meas_seqs, key=lambda x: x[0], reverse=True)
 
         trajectories = replay_buffer.gather_all()
-        total_loss, _ = self.agent.train(experience=trajectories)
+        self.agent.train(experience=trajectories)
         replay_buffer.clear()
 
         return [s[1] for s in new_meas_seqs[: self.batch_size]]

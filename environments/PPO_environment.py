@@ -1,29 +1,31 @@
-import copy
-import numpy as np
 import os
 import sys
+
+import numpy as np
 from tf_agents.environments import py_environment
-from tf_agents.trajectories import time_step as ts
 from tf_agents.specs import array_spec
+from tf_agents.trajectories import time_step as ts
+
+from utils.sequence_utils import (construct_mutant_from_sample,
+                                  translate_one_hot_to_string,
+                                  translate_string_to_one_hot)
 
 module_path = os.path.abspath(os.path.join(".."))
 if module_path not in sys.path:
     sys.path.append(module_path)
 
-from utils.sequence_utils import (
-    construct_mutant_from_sample,
-    translate_one_hot_to_string,
-    translate_string_to_one_hot,
-)
 
-
-class PPOEnvironment(py_environment.PyEnvironment):
+class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """
     Environment for PPO agent.
-    
-    Based on this: https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent/
+
+    Based on this:
+    https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
     """
-    def __init__(self, alphabet, starting_seq, landscape, max_num_steps):
+
+    def __init__(
+        self, alphabet, starting_seq, landscape, max_num_steps
+    ):  # pylint: disable=W0231
         """
         Args:
             alphabet: Usually UCGA.
@@ -114,31 +116,28 @@ class PPOEnvironment(py_environment.PyEnvironment):
                 # if the next best move is to stay at the current state,
                 # then give it a small reward
                 return ts.termination(np.array(self._state, dtype=np.float32), 1)
-            else:
-                self._state = construct_mutant_from_sample(action_one_hot, self._state)
-                state_string = translate_one_hot_to_string(self._state, self.alphabet)
 
-                # if we have seen the sequence this episode,
-                # terminate episode and punish
-                # (to prevent going in loops)
-                if state_string in self.episode_seqs:
-                    return ts.termination(np.array(self._state, dtype=np.float32), -1)
-                self.episode_seqs[state_string] = 1
+            self._state = construct_mutant_from_sample(action_one_hot, self._state)
+            state_string = translate_one_hot_to_string(self._state, self.alphabet)
 
-                reward = self.landscape.get_fitness(state_string)
+            # if we have seen the sequence this episode,
+            # terminate episode and punish
+            # (to prevent going in loops)
+            if state_string in self.episode_seqs:
+                return ts.termination(np.array(self._state, dtype=np.float32), -1)
+            self.episode_seqs[state_string] = 1
 
-                # if my reward is not increasing, then terminate
-                if reward < self.previous_fitness:
-                    return ts.termination(
-                        np.array(self._state, dtype=np.float32), reward=reward
-                    )
+            reward = self.landscape.get_fitness(state_string)
 
-                self.previous_fitness = reward
-                return ts.transition(
+            # if my reward is not increasing, then terminate
+            if reward < self.previous_fitness:
+                return ts.termination(
                     np.array(self._state, dtype=np.float32), reward=reward
                 )
 
+            self.previous_fitness = reward
+            return ts.transition(np.array(self._state, dtype=np.float32), reward=reward)
+
         # if we've exceeded the maximum number of steps, terminate
-        else:
-            self._episode_ended = True
-            return ts.termination(np.array(self._state, dtype=np.float32), 0)
+        self._episode_ended = True
+        return ts.termination(np.array(self._state, dtype=np.float32), 0)

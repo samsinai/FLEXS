@@ -1,54 +1,26 @@
 import collections
+from functools import partial
+
 import numpy as np
 import tensorflow as tf
-from functools import partial
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
-from tf_agents.agents.ppo import ppo_policy, ppo_agent, ppo_utils
+from tf_agents.agents.ppo import ppo_agent
 from tf_agents.drivers import dynamic_episode_driver
 from tf_agents.environments import tf_py_environment
-from tf_agents.environments.utils import validate_py_environment
-from tf_agents.metrics import tf_metrics
-from tf_agents.networks import actor_distribution_network
-from tf_agents.networks import value_network
+from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 from environments.DynaPPO_environment import DynaPPOEnvironment as DynaPPOEnv
 from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import (
-    translate_one_hot_to_string,
-    translate_string_to_one_hot,
-)
-from utils.model_architectures import (
-    Linear,
-    NLNN,
-    CNNa,
-    SKLinear,
-    SKLasso,
-    SKRF,
-    SKGB,
-    SKNeighbors,
-    SKBR,
-    SKGP,
-    SKExtraTrees,
-)
+from utils.model_architectures import (NLNN, SKBR, SKGB, SKGP, SKRF, CNNa,
+                                       Linear, SKExtraTrees, SKLasso, SKLinear,
+                                       SKNeighbors)
+from utils.sequence_utils import (translate_one_hot_to_string,
+                                  translate_string_to_one_hot)
 
 
 class DynaPPO_explorer(Base_explorer):
-    """
-    DynaPPO implementation.
-
-    The algorithm is:
-        for N experiment rounds
-            collect samples with policy
-            train policy on samples
-            fit candidate models on samples and compute R^2
-            select models which pass threshold
-            if model subset is not empty then
-                for M model-based training rounds
-                    sample batch of sequences from policy and observe ensemble reward
-                    update policy on observed data
-    """
     def __init__(
         self,
         batch_size=100,
@@ -60,6 +32,35 @@ class DynaPPO_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
+        """
+        Explorer which implements DynaPPO.
+
+        Paper: https://openreview.net/pdf?id=HklxbgBKvr
+
+        Attributes:
+            explorer_type: Name for data collected by this explorer.
+            threshold: Threshold of R2 scores with which to filter out models in
+                the ensemble (default: 0.5).
+            num_experiment_rounds: Number of experiment-based policy training rounds.
+            num_model_rounds: Number of model-based policy training rounds.
+            internal_ensemble: All models currently included in the ensemble.
+            internal_ensemble_archs: Corresponding architectures of `internal_ensemble`.
+            internal_ensemble_uncertainty: Uncertainty of ensemble predictions.
+            internal_ensemble_calls: Number of calls made to the ensemble.
+            model_exit_early: Whether or not we should stop model-based training, in
+                the event that the model uncertainty is too high.
+            ens: All possible models to include in the ensemble.
+            ens_archs: Corresponding architectures of `ens`.
+            original_horizon:
+            has_learned_policy: Whether or not we have learned a good policy (we need
+                to do so before we can propose samples).
+            meas_seqs: All measured sequences.
+            meas_seqs_it: Iterator through `meas_seqs`.
+            top_seqs: Top measured sequences by fitness score.
+            top_seqs_it: Iterator through `top_seqs`.
+            agent: PPO TF Agent.
+            tf_env: Environment in which `agent` operates.
+        """
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)
 
         self.explorer_type = (
@@ -68,26 +69,29 @@ class DynaPPO_explorer(Base_explorer):
         self.threshold = threshold
         self.num_experiment_rounds = num_experiment_rounds
         self.num_model_rounds = num_model_rounds
-        self.reset()
 
-    def reset(self):
-        self.agent = None
-        self.tf_env = None
+        self.model_exit_early = None
+
         self.internal_ensemble = None
         self.internal_ensemble_archs = None
+        self.internal_ensemble_uncertainty = None
+        self.internal_ensemble_calls = None
+
+        self.ens = None
+        self.ens_archs = None
+        self.original_horizon = None
+        self.has_learned_policy = None
 
         self.meas_seqs = []
         self.meas_seqs_it = 0
-
         self.top_seqs = collections.deque(maxlen=self.batch_size)
         self.top_seqs_it = 0
 
-        self.has_learned_policy = False
-        self.batches = {-1: ""}
+        self.agent = None
+        self.tf_env = None
 
-        self.model_uncertainty_low = None
-        self.original_model_uncertainty = None
-        self.original_horizon = None
+    def reset(self):
+        self.batches = {-1: ""}
 
     def reset_measured_seqs(self):
         self.meas_seqs = [
@@ -146,7 +150,6 @@ class DynaPPO_explorer(Base_explorer):
         self.internal_ensemble_archs = ens_archs
         self.internal_ensemble_calls = 0
         self.internal_ensemble_uncertainty = None
-        self.model_exit_early = None
 
     def set_tf_env_reward(self, is_oracle):
         self.tf_env.pyenv.envs[0].oracle_reward = is_oracle
@@ -185,6 +188,7 @@ class DynaPPO_explorer(Base_explorer):
         then adds the sequence corresponding
         to the state to batch.
 
+        TODO: Update docstring
         If the episode is ending, it changes the
         "current sequence" of the environment
         to the next one in `last_batch`,
@@ -217,9 +221,7 @@ class DynaPPO_explorer(Base_explorer):
     def get_internal_ensemble_fitness(self, sequence):
         reward = []
 
-        for i, (model, arch) in enumerate(
-            zip(self.internal_ensemble, self.internal_ensemble_archs)
-        ):
+        for (model, arch) in zip(self.internal_ensemble, self.internal_ensemble_archs):
             x = np.array(translate_string_to_one_hot(sequence, self.alphabet))
             if type(arch) in [Linear, NLNN, CNNa]:
                 reward.append(max(min(200, model.predict(x[np.newaxis])[0]), -200))
@@ -253,7 +255,7 @@ class DynaPPO_explorer(Base_explorer):
 
         internal_r2s = []
 
-        for i, (model, arch) in enumerate(zip(self.ens, self.ens_archs)):
+        for (model, arch) in zip(self.ens, self.ens_archs):
             try:
                 if type(arch) in [Linear, NLNN, CNNa]:
                     model.fit(
@@ -283,22 +285,21 @@ class DynaPPO_explorer(Base_explorer):
                     internal_r2s.append(r2_score(Y_test, y_pred))
                 else:
                     raise ValueError(type(arch))
-            except:
-                # for example KNN failed to fit
+            except:  # pylint: disable=bare-except
+                # Catch-all for errors; for example, if a KNN fails to fit.
                 internal_r2s.append(-1)
 
         self.filter_models(np.array(internal_r2s))
 
     def filter_models(self, r2s):
-        print(r2s)
-        # filter out models by threshold
+        # Filter out models by threshold.
         good = r2s > self.threshold
         print(f"Allowing {np.sum(good)}/{len(good)} models.")
         self.internal_ensemble_archs = np.array(self.ens_archs)[good]
         self.internal_ensemble = np.array(self.ens)[good]
 
     def perform_model_based_training_step(self):
-        # change reward to ensemble based
+        # Change reward to ensemble based.
         self.set_tf_env_reward(is_oracle=False)
 
         all_seqs = set(self.model.measured_sequences)
@@ -332,20 +333,19 @@ class DynaPPO_explorer(Base_explorer):
 
         new_seqs = new_seqs.difference(all_seqs)
 
-        # train policy on samples collected
+        # Train policy on samples collected.
         trajectories = replay_buffer.gather_all()
-        total_loss, _ = self.agent.train(experience=trajectories)
+        self.agent.train(experience=trajectories)
         replay_buffer.clear()
 
         return 1
 
     def perform_experiment_based_training_step(self):
-        # change reward to oracle based
+        # Change reward to oracle-based function.
         self.set_tf_env_reward(is_oracle=True)
 
         all_seqs = set(self.model.measured_sequences)
         new_seqs = set()
-        last_batch = self.get_last_batch()
 
         num_parallel_environments = 1
 
@@ -377,15 +377,15 @@ class DynaPPO_explorer(Base_explorer):
         while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
             iterations += 1
-            # we've looped over, found nothing new
+            # We've looped over, found nothing new.
             if iterations >= effective_budget and self.meas_seqs_it == 0:
                 break
 
         new_seqs = new_seqs.difference(all_seqs)
 
-        # train policy on samples collected
+        # Train policy on samples collected.
         trajectories = replay_buffer.gather_all()
-        total_loss, _ = self.agent.train(experience=trajectories)
+        self.agent.train(experience=trajectories)
         replay_buffer.clear()
 
         self.meas_seqs += [
@@ -403,7 +403,7 @@ class DynaPPO_explorer(Base_explorer):
         for m in range(self.num_model_rounds):
             print(f"Model based round {m}/{self.num_model_rounds}.")
             v = self.perform_model_based_training_step()
-            # early exit because of model uncertainty
+            # Early exit because of model uncertainty.
             if v == -1:
                 print(
                     f"Exiting early at round {m}/{self.num_model_rounds} due to uncertainty."
@@ -440,11 +440,10 @@ class DynaPPO_explorer(Base_explorer):
         if len(self.meas_seqs) == 0:
             self.reset_measured_seqs()
 
-        # need to switch back to using the model
+        # Need to switch back to using the model.
         self.set_tf_env_reward(is_oracle=True)
         all_seqs = set(self.model.measured_sequences)
         new_seqs = set()
-        last_batch = self.get_last_batch()
 
         num_parallel_environments = 1
 
@@ -465,10 +464,10 @@ class DynaPPO_explorer(Base_explorer):
             num_episodes=1,
         )
 
-        # reset counter?
+        # Reset counter.
         self.meas_seqs_it = 0
 
-        # since we used part of the total budget for pretraining, amortize this cost
+        # Since we used part of the total budget for pretraining, amortize this cost.
         effective_budget = (
             self.original_horizon * self.batch_size * self.virtual_screen / 2
         ) / self.original_horizon
@@ -477,14 +476,14 @@ class DynaPPO_explorer(Base_explorer):
         previous_evals = self.model.evals
         while (self.model.evals - previous_evals) < effective_budget:
             collect_driver.run()
-            # we've looped over, found nothing new
+            # We've looped over, found nothing new.
             if self.meas_seqs_it == 0:
                 break
         print("Total evals:", self.model.evals - previous_evals)
 
         new_seqs = new_seqs.difference(all_seqs)
 
-        # add new sequences to measured_sequences and sort
+        # Add new sequences to `measured_sequences` and sort.
         new_meas_seqs = [
             (self.model.get_fitness(seq), seq, self.model.cost) for seq in new_seqs
         ]
@@ -493,7 +492,7 @@ class DynaPPO_explorer(Base_explorer):
         self.meas_seqs = sorted(self.meas_seqs, key=lambda x: x[0], reverse=True)
 
         trajectories = replay_buffer.gather_all()
-        total_loss, _ = self.agent.train(experience=trajectories)
+        self.agent.train(experience=trajectories)
         replay_buffer.clear()
 
         return [s[1] for s in new_meas_seqs[: self.batch_size]]
