@@ -9,7 +9,6 @@ from utils.softmax import softmax
 
 
 class XE_IS(Base_explorer):
-    """X-entropy indepedent-sites explorer"""
 
     def __init__(
         self,
@@ -22,7 +21,7 @@ class XE_IS(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
-
+        """X-entropy indepedent-sites explorer"""
         super(XE_IS, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
@@ -149,7 +148,7 @@ class Greedy(XE_IS):
         path="./simulations/",
         debug=False,
     ):
-
+        """Greedy algorithm implementation"""
         super(Greedy, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,

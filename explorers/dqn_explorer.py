@@ -47,13 +47,6 @@ def build_q_network(sequence_len, alphabet_len, device):
 
 class DQN_Explorer(Base_explorer):
     """
-    DQN Explorer implementation, based off https://colab.research.google.com/drive/1NsbSPn6jOcaJB_mp9TmkgQX7UrRIrTi0. 
-
-    Algorithm works as follows:
-    for N experiment rounds
-        collect samples with policy
-        policy updates using Q network:
-            Q(s, a) <- Q(s, a) + alpha * (R(s, a) + gamma * max Q(s, a) - Q(s, a)) 
     """
 
     def __init__(
@@ -71,7 +64,15 @@ class DQN_Explorer(Base_explorer):
         noise_alpha=1,
     ):
         """
-        Unintuitive variables:
+        DQN Explorer implementation, based off https://colab.research.google.com/drive/1NsbSPn6jOcaJB_mp9TmkgQX7UrRIrTi0. 
+
+        Algorithm works as follows:
+        for N experiment rounds
+            collect samples with policy
+            policy updates using Q network:
+                Q(s, a) <- Q(s, a) + alpha * (R(s, a) + gamma * max Q(s, a) - Q(s, a)) 
+                
+        Attributes:
         memory_size: size of agent memory
         batch_size: batch size to train the PER buffer with
         experiment_batch_size: the batch size of the experiment.

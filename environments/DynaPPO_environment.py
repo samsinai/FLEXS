@@ -17,13 +17,6 @@ if module_path not in sys.path:
 
 
 class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
-    """
-    Environment for DyNA-PPO agent.
-
-    Based on this:
-    https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
-    """
-
     def __init__(  # pylint: disable=W0231
         self,
         alphabet,
@@ -34,6 +27,11 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         oracle_reward=False,
     ):
         """
+        Environment for DyNA-PPO agent.
+
+        Based on this:
+        https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
+
         Args:
             alphabet: Usually UCGA.
             starting_seq: When initializing the environment,
@@ -43,6 +41,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             max_num_steps: Maximum number of steps before
                 episode is forced to terminate. Usually the
                 virtual screening ratio.
+            ensemble_fitness: fitness function used for model ensemble
             oracle_reward: Whether or not to give reward based
                 on oracle or on ensemble model.
         """

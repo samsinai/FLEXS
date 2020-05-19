@@ -12,24 +12,6 @@ from utils.sequence_utils import (construct_mutant_from_sample,
 
 
 class BO_Explorer(Base_explorer):
-    """
-    Bayesian Optimization (BO) Explorer. 
-
-    Parameters:
-        method (str, equal to EI or UCB): The improvement method used in BO, 
-            default EI.  
-        recomb_rate (float): The recombination rate on the previous batch before 
-            BO proposes samples, default 0.
-    
-    Algorithm works as follows:
-    for N experiment rounds
-        recombine samples from previous batch if it exists and measure them, otherwise skip 
-        Thompson sample starting sequence for new batch 
-        while less than B samples in batch
-            Generate VS virtual screened samples 
-            If variance of ensemble models is above twice that of the starting sequence
-            Thompson sample another starting sequence    
-    """
     def __init__(
         self,
         batch_size=100,
@@ -40,6 +22,24 @@ class BO_Explorer(Base_explorer):
         method="EI",
         recomb_rate=0
     ):
+        """
+        Bayesian Optimization (BO) Explorer. 
+
+        Parameters:
+            method (str, equal to EI or UCB): The improvement method used in BO, 
+                default EI.  
+            recomb_rate (float): The recombination rate on the previous batch before 
+                BO proposes samples, default 0.
+        
+        Algorithm works as follows:
+        for N experiment rounds
+            recombine samples from previous batch if it exists and measure them, otherwise skip 
+            Thompson sample starting sequence for new batch 
+            while less than B samples in batch
+                Generate VS virtual screened samples 
+                If variance of ensemble models is above twice that of the starting sequence
+                Thompson sample another starting sequence    
+        """
         super(BO_Explorer, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,

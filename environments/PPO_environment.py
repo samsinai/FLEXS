@@ -17,16 +17,17 @@ if module_path not in sys.path:
 
 class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """
-    Environment for PPO agent.
-
-    Based on this:
-    https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
     """
 
     def __init__(
         self, alphabet, starting_seq, landscape, max_num_steps
     ):  # pylint: disable=W0231
         """
+        Environment for PPO agent.
+
+        Based on this tutorial:
+        https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
+
         Args:
             alphabet: Usually UCGA.
             starting_seq: When initializing the environment,

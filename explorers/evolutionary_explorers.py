@@ -19,6 +19,7 @@ class Evolution(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
+        """Genetic algorithm"""
         super(Evolution, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
@@ -123,6 +124,7 @@ class WF(Evolution):
         virtual_screen=0,
         path="./simulations/",
     ):
+        """Wright Fisher process"""
         super(WF, self).__init__(
             mu, rho, recomb_rate, beta, batch_size, alphabet, virtual_screen, path
         )
@@ -172,6 +174,7 @@ class ML_WF(Evolution):
         virtual_screen=20,
         path="./simulations/",
     ):
+        """Machine Learning/Wright Fisher algorithm"""
         super(ML_WF, self).__init__(
             mu, rho, recomb_rate, beta, batch_size, alphabet, virtual_screen, path
         )
