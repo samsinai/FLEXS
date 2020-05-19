@@ -1,4 +1,5 @@
-directories = ./explorers ./evaluators ./environments
+# directories = ./explorers ./evaluators ./environments
+directories = ./environments
 
 format:
 	python -m black $(directories)

@@ -72,6 +72,7 @@ disable=
     locally-disabled,
     missing-docstring,
     fixme,
+    duplicate-code,
     # disabled by default,
     import-star-module-level,
     old-octal-literal,
