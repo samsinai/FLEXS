@@ -1,27 +1,20 @@
 import copy
-import operator
-import os
 import random
-import sys
-from collections import Counter, deque
-from typing import Callable, Dict, List, Tuple
+from collections import Counter
 
-import editdistance
-import matplotlib.pyplot as plt
 import numpy as np
-import RNA
-import seaborn as sns
 import torch
-import torch.multiprocessing as mp
 import torch.nn.functional as F
 import torch.optim as optim
 from torch import nn
 from torch.nn.utils import clip_grad_norm_
-from tqdm import tqdm_notebook as tqdm
 
 from explorers.base_explorer import Base_explorer
 from utils.replay_buffers import PrioritizedReplayBuffer
-from utils.sequence_utils import *
+from utils.sequence_utils import (construct_mutant_from_sample,
+                                  generate_random_sequences,
+                                  translate_one_hot_to_string,
+                                  translate_string_to_one_hot)
 
 
 class Q_Network(nn.Module):
@@ -37,7 +30,7 @@ class Q_Network(nn.Module):
         self.bn2 = nn.BatchNorm1d(sequence_len)
         self.linear3 = nn.Linear(sequence_len, 1)
 
-    def forward(self, x):
+    def forward(self, x):  # pylint: disable=W0221
         x = self.bn1(F.relu(self.linear1(x)))
         x = self.bn2(F.relu(self.linear2(x)))
         x = F.relu(self.linear3(x))
@@ -96,6 +89,11 @@ class DQN_Explorer(Base_explorer):
         self.times_seen = Counter()
         self.num_actions = 0
         self.model_type = "blank"
+
+        self.state = None
+        self.seq_len = None
+        self.q_network = None
+        self.memory = None
 
     def initialize_data_structures(self):
         start_sequence = list(self.model.measured_sequences)[0]
@@ -181,7 +179,8 @@ class DQN_Explorer(Base_explorer):
             p = random.random()
             action = sample_random(moves) if p < epsilon else sample_greedy(moves)
         else:
-            # sometimes initialization of network causes prediction of all zeros, causing moves of all zeros
+            # sometimes initialization of network causes prediction of all zeros,
+            # causing moves of all zeros
             action = make_random_action(self.state.shape)
         # get next state (mutant)
         mutant = construct_mutant_from_sample(action, self.state)

@@ -1,19 +1,15 @@
 import copy
-import os
-import random
-import sys
 from bisect import bisect_left
-from collections import defaultdict
-from typing import Dict, List, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import ConstantKernel, Matern
+from sklearn.gaussian_process.kernels import Matern
 
 from explorers.base_explorer import Base_explorer
-from utils.replay_buffers import PrioritizedReplayBuffer
-from utils.sequence_utils import *
+from utils.sequence_utils import (construct_mutant_from_sample,
+                                  generate_random_sequences,
+                                  translate_one_hot_to_string,
+                                  translate_string_to_one_hot)
 
 
 class New_BO_Explorer(Base_explorer):
@@ -45,6 +41,10 @@ class New_BO_Explorer(Base_explorer):
         self.method = method
         self.best_fitness = 0
         self.top_sequence = []
+        self.state = None
+        self.seq_len = None
+        self.num_actions = None
+        self.initial_uncertainty = None
 
         # Gaussian Process with Matern kernel
         matern = Matern(length_scale=1.0, nu=2.5)
@@ -64,7 +64,8 @@ class New_BO_Explorer(Base_explorer):
     def EI(self, vals):
         return np.mean([max(val - self.best_fitness, 0) for val in vals])
 
-    def UCB(self, vals):
+    @staticmethod
+    def UCB(vals):
         discount = 0.01
         return np.mean(vals) - discount * np.std(vals)
 
@@ -80,7 +81,8 @@ class New_BO_Explorer(Base_explorer):
         while len(actions_set) < self.virtual_screen:
             action = []
             for i in range(self.seq_len):
-                if np.random.random() < 1 / self.seq_len:
+                # Note: even adding generated-members to config is buggy for pylint
+                if np.random.random() < 1 / self.seq_len:  # pylint: disable=E1101
                     pos_tuple = pos_changes[i][np.random.randint(self.alphabet_len - 1)]
                     action.append(pos_tuple)
             if len(action) > 0 and tuple(action) not in actions_set:
@@ -121,11 +123,11 @@ class New_BO_Explorer(Base_explorer):
             if reward >= self.best_fitness:
                 self.top_sequence.append((reward, new_state, self.model.cost))
             self.best_fitness = max(self.best_fitness, reward)
-            self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
         self.num_actions += 1
         return uncertainty, new_state_string, reward
 
-    def Thompson_sample(self, measured_batch):
+    @staticmethod
+    def Thompson_sample(measured_batch):
         fitnesses = np.cumsum([np.exp(10 * x[0]) for x in measured_batch])
         fitnesses = fitnesses / fitnesses[-1]
         x = np.random.uniform()
@@ -145,7 +147,6 @@ class New_BO_Explorer(Base_explorer):
             )
             sampled_seq = self.Thompson_sample(measured_batch)
             self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
-            initial_seq = self.state.copy()
         # generate next batch by picking actions
         self.initial_uncertainty = None
         samples = set()
@@ -156,7 +157,7 @@ class New_BO_Explorer(Base_explorer):
         while (self.model.cost - prev_cost < self.batch_size) and (
             self.model.evals - prev_evals < self.batch_size * self.virtual_screen
         ):
-            uncertainty, new_state_string, reward = self.pick_action()
+            uncertainty, new_state_string, _ = self.pick_action()
             samples.add(new_state_string)
             if self.initial_uncertainty is None:
                 self.initial_uncertainty = uncertainty
@@ -171,7 +172,5 @@ class New_BO_Explorer(Base_explorer):
                 self.seq_len, self.batch_size - len(samples), self.alphabet
             )
             samples.update(random_sequences)
-        # train ensemble model before returning samples
-        self.train_models()
 
         return list(samples)

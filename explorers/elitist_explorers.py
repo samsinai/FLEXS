@@ -1,13 +1,10 @@
 import bisect
 import random
 
-import editdistance
 import numpy as np
 
 from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import (generate_random_mutant,
-                                  translate_one_hot_to_string,
-                                  translate_string_to_one_hot)
+from utils.sequence_utils import generate_random_mutant
 from utils.softmax import softmax
 
 
@@ -40,7 +37,8 @@ class XE_IS(Base_explorer):
             f"XS_IS_tr{self.threshold}_beta{self.beta}_r{self.recomb_rate}"
         )
 
-    def recombine(self, sequence1, sequence2, rate):
+    @staticmethod
+    def recombine(sequence1, sequence2, rate):
         recomb_1 = []
         recomb_2 = []
         flipped = 1
@@ -77,13 +75,10 @@ class XE_IS(Base_explorer):
         return out_seq
 
     def generate_sequences(self):
-        ret = []
-        num_mutants_per = self.virtual_screen
-
         offspring = []
         seq_and_fitness = []
         last_batch = self.get_last_batch()
-        current_population = [seq for seq in self.batches[last_batch]]
+        current_population = self.batches[last_batch]
 
         for seq in set(current_population):
             seq_and_fitness.append((self.model.get_fitness(seq), seq))
@@ -135,7 +130,7 @@ class XE_IS(Base_explorer):
         new_batch = new_seqs_and_fitnesses[: self.batch_size]
         batch_seq = []
 
-        for fit, seq in new_batch:
+        for _, seq in new_batch:
             batch_seq.append(seq)
 
         return batch_seq
@@ -200,12 +195,10 @@ class Greedy(XE_IS):
 
     def generate_sequences(self):
         ret = []
-        num_mutants_per = self.virtual_screen
 
-        offspring = []
         seq_and_fitness = []
         last_batch = self.get_last_batch()
-        current_population = [seq for seq in self.batches[last_batch]]
+        current_population = self.batches[last_batch]
 
         for seq in set(current_population):
             seq_and_fitness.append((self.model.get_fitness(seq), seq))
@@ -226,7 +219,7 @@ class Greedy(XE_IS):
             parents = top_seqs_expanded
             # generate recombinant mutants
             if self.recomb_rate > 0 and len(parents) > 1:
-                for j in range(self.rho):
+                for _ in range(self.rho):
                     parents = self._recombine_population(parents)
 
             for seq in parents:
