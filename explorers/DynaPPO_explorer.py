@@ -35,17 +35,6 @@ from utils.model_architectures import (
 
 
 class DynaPPO_explorer(Base_explorer):
-    def __init__(
-        self,
-        batch_size=100,
-        alphabet="UCGA",
-        virtual_screen=10,
-        threshold=0.5,
-        num_experiment_rounds=10,
-        num_model_rounds=20,
-        path="./simulations/",
-        debug=False,
-    ):
     """
     DynaPPO implementation.
 
@@ -60,6 +49,17 @@ class DynaPPO_explorer(Base_explorer):
                     sample batch of sequences from policy and observe ensemble reward
                     update policy on observed data
     """
+    def __init__(
+        self,
+        batch_size=100,
+        alphabet="UCGA",
+        virtual_screen=10,
+        threshold=0.5,
+        num_experiment_rounds=10,
+        num_model_rounds=20,
+        path="./simulations/",
+        debug=False,
+    ):
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)
 
         self.explorer_type = (

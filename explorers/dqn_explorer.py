@@ -25,6 +25,9 @@ from utils.replay_buffers import PrioritizedReplayBuffer
 
 
 class Q_Network(nn.Module):
+    '''
+    Q Network implementation, used in DQN Explorer. 
+    '''
     def __init__(self, sequence_len, alphabet_len):
         super(Q_Network, self).__init__()
         self.sequence_len = sequence_len
@@ -51,7 +54,13 @@ def build_q_network(sequence_len, alphabet_len, device):
 
 class DQN_Explorer(Base_explorer):
     """
-    Based off https://colab.research.google.com/drive/1NsbSPn6jOcaJB_mp9TmkgQX7UrRIrTi0
+    DQN Explorer implementation, based off https://colab.research.google.com/drive/1NsbSPn6jOcaJB_mp9TmkgQX7UrRIrTi0. 
+
+    Algorithm works as follows:
+    for N experiment rounds
+        collect samples with policy
+        policy updates using Q network:
+            Q(s, a) <- Q(s, a) + alpha * (R(s, a) + gamma * max Q(s, a) - Q(s, a)) 
     """
 
     def __init__(

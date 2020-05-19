@@ -10,6 +10,12 @@ LANDSCAPE_ALPHABET = {"RNA": "UCGA", "TF": "TCGA", "Protein": "ILVAGMFYWEDQNHCRK
 
 
 class Evaluator:
+    '''
+    Evaluator for explorers 
+
+    Currently, the evaluator supports transcription factor (TF), RNA, Protein, 
+    and Green Fluorescent Protein (GFP) landscapes. 
+    '''
     def __init__(
         self,
         explorer,
@@ -294,6 +300,9 @@ class Evaluator:
     def consistency_robustness_independence(
         self, oracle, start_seq, landscape_id, start_seq_id
     ):
+        '''
+        Evaluate explorer on NAM model using a variety of noise levels. 
+        '''
         Path(self.path + "consistency_robustness_independence/").mkdir(exist_ok=True)
         self.explorer.path = self.path + "consistency_robustness_independence/"
 
