@@ -11,6 +11,9 @@ from utils.sequence_utils import (construct_mutant_from_sample,
                                   translate_one_hot_to_string,
                                   translate_string_to_one_hot)
 
+# new BO stuff
+from scipy.stats import norm
+from scipy.optimize import minimize
 
 class New_BO_Explorer(Base_explorer):
     """
@@ -19,7 +22,6 @@ class New_BO_Explorer(Base_explorer):
 
     Reference: http://krasserm.github.io/2018/03/21/bayesian-optimization/
     """
-
     def __init__(
         self,
         batch_size=100,
@@ -41,93 +43,101 @@ class New_BO_Explorer(Base_explorer):
         self.method = method
         self.best_fitness = 0
         self.top_sequence = []
-        self.state = None
-        self.seq_len = None
-        self.num_actions = None
-        self.initial_uncertainty = None
 
         # Gaussian Process with Matern kernel
         matern = Matern(length_scale=1.0, nu=2.5)
         noise = 0.02
-        self.gpr = GaussianProcessRegressor(kernel=matern, alpha=noise ** 2)
+        self.gpr = GaussianProcessRegressor(kernel=matern, alpha=noise**2)
+        
+        # Sampled sequences X and the values y gained from querying the black-box
+        self.X_sample = []
+        self.y_sample = []
+        
+    def _one_hot_to_num(self, one_hot):
+        return np.argmax(np.transpose(one_hot), axis=1)
 
-    def initialize_data_structures(self):
+    def _initialize(self):
         start_sequence = list(self.model.measured_sequences)[0]
         self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
         self.seq_len = len(start_sequence)
+        self._seed_gaussian_process()
+        
+    def _seed_gaussian_process(self):
+        num_samples = 1
+        print(f"Seeding GP with {num_samples} samples.")
+        random_sequences = generate_random_sequences(
+            self.seq_len, num_samples, self.alphabet
+        )
+        random_states = [translate_string_to_one_hot(seq, self.alphabet) for seq in random_sequences]
+        random_states_num = [self._one_hot_to_num(state) for state in random_states]
+        fitnesses = [self.model.get_fitness(seq) for seq in random_sequences]
+        
+        self.X_sample = random_states_num
+        self.y_sample = fitnesses
 
     def reset(self):
+        self.X_sample = []
+        self.y_sample = []
+        
         self.best_fitness = 0
         self.batches = {-1: ""}
-        self.num_actions = 0
+        self._reset = True
+        
+    def EI(self, X, xi=0.01):
+        """
+        Computes Expected Improvement at X from GP posterior.
+        
+        Args:
+            X: Points to calculate EI at.
+            xi: Exploration-exploitation trade-off.
+        """
+        
+        X = self._one_hot_to_num(X)
+        mu, sigma = self.gpr.predict(X.reshape(1, -1), return_std=True)
+        mu_sample = self.gpr.predict(self.X_sample)
 
-    def EI(self, vals):
-        return np.mean([max(val - self.best_fitness, 0) for val in vals])
+        sigma = sigma.reshape(-1, 1)
 
-    @staticmethod
-    def UCB(vals):
-        discount = 0.01
-        return np.mean(vals) - discount * np.std(vals)
+        # Needed for noise-based model,
+        # otherwise use np.max(Y_sample).
+        # See also section 2.4 in [...]
+        mu_sample_opt = np.max(mu_sample)
 
-    def sample_actions(self):
-        actions, actions_set = [], set()
-        pos_changes = []
-        for i in range(self.seq_len):
-            pos_changes.append([])
-            for j in range(self.alphabet_len):
-                if self.state[j, i] == 0:
-                    pos_changes[i].append((j, i))
+        with np.errstate(divide='warn'):
+            imp = mu - mu_sample_opt - xi
+            Z = imp / sigma
+            ei = imp * norm.cdf(Z) + sigma * norm.pdf(Z)
+            ei[sigma == 0.0] = 0.0
 
-        while len(actions_set) < self.virtual_screen:
-            action = []
-            for i in range(self.seq_len):
-                # Note: even adding generated-members to config is buggy for pylint
-                if np.random.random() < 1 / self.seq_len:  # pylint: disable=E1101
-                    pos_tuple = pos_changes[i][np.random.randint(self.alphabet_len - 1)]
-                    action.append(pos_tuple)
-            if len(action) > 0 and tuple(action) not in actions_set:
-                actions_set.add(tuple(action))
-                actions.append(tuple(action))
-        return actions
+        return ei
+    
+    def propose_new_sequence(self, acq_fn):
+        """
+        Proposes a new sequence by maximizing the acquisition function.
+        
+        Args:
+            acq_fn: Acquisition function (for example, EI).
+        """
+        
+        print("Enumerating all sequences in the space.")
+        
+        self.maxima = []
+        
+        def enum_and_eval(curr_seq):
+            # if we have a full sequence, then let's evaluate
+            if len(curr_seq) == self.seq_len:
+                curr_state = translate_string_to_one_hot(curr_seq, self.alphabet)
+                v = acq_fn(curr_state)
+                self.maxima.append([v, curr_seq, curr_state])
+            else:
+                for char in list(self.alphabet):
+                    enum_and_eval(curr_seq + char)
+        enum_and_eval("")
 
-    def pick_action(self):
-        state = self.state.copy()
-        actions = self.sample_actions()
-        actions_to_screen = []
-        states_to_screen = []
-        for i in range(self.virtual_screen):
-            x = np.zeros((self.alphabet_len, self.seq_len))
-            for action in actions[i]:
-                x[action] = 1
-            actions_to_screen.append(x)
-            state_to_screen = construct_mutant_from_sample(x, state)
-            states_to_screen.append(
-                translate_one_hot_to_string(state_to_screen, self.alphabet)
-            )
-        ensemble_preds = [
-            self.model.get_fitness_distribution(state) for state in states_to_screen
-        ]
-        method_pred = (
-            [self.EI(vals) for vals in ensemble_preds]
-            if self.method == "EI"
-            else [self.UCB(vals) for vals in ensemble_preds]
-        )
-        action_ind = np.argmax(method_pred)
-        uncertainty = np.std(method_pred[action_ind])
-        action = actions_to_screen[action_ind]
-        new_state_string = states_to_screen[action_ind]
-        self.state = translate_string_to_one_hot(new_state_string, self.alphabet)
-        new_state = self.state
-        reward = np.mean(ensemble_preds[action_ind])
-        if not new_state_string in self.model.measured_sequences:
-            if reward >= self.best_fitness:
-                self.top_sequence.append((reward, new_state, self.model.cost))
-            self.best_fitness = max(self.best_fitness, reward)
-        self.num_actions += 1
-        return uncertainty, new_state_string, reward
+        # Sort descending based on the value.
+        return sorted(self.maxima, reverse=True, key=lambda x: x[0])
 
-    @staticmethod
-    def Thompson_sample(measured_batch):
+    def Thompson_sample(self, measured_batch):
         fitnesses = np.cumsum([np.exp(10 * x[0]) for x in measured_batch])
         fitnesses = fitnesses / fitnesses[-1]
         x = np.random.uniform()
@@ -136,9 +146,9 @@ class New_BO_Explorer(Base_explorer):
         return sequences[index]
 
     def propose_samples(self):
-        if self.num_actions == 0:
+        if self._reset:
             # indicates model was reset
-            self.initialize_data_structures()
+            self._initialize()
         else:
             # set state to best measured sequence from prior batch
             last_batch = self.batches[self.get_last_batch()]
@@ -147,30 +157,41 @@ class New_BO_Explorer(Base_explorer):
             )
             sampled_seq = self.Thompson_sample(measured_batch)
             self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
-        # generate next batch by picking actions
-        self.initial_uncertainty = None
+            initial_seq = self.state.copy()
+            
+        self._reset = False
+            
         samples = set()
+        
+        # fit GPR to samples
+        self.gpr.fit(self.X_sample, self.y_sample)
+
+        new_seqs = self.propose_new_sequence(self.EI)
+
         prev_cost, prev_evals = (
             copy.deepcopy(self.model.cost),
             copy.deepcopy(self.model.evals),
         )
-        while (self.model.cost - prev_cost < self.batch_size) and (
-            self.model.evals - prev_evals < self.batch_size * self.virtual_screen
-        ):
-            uncertainty, new_state_string, _ = self.pick_action()
-            samples.add(new_state_string)
-            if self.initial_uncertainty is None:
-                self.initial_uncertainty = uncertainty
-            if uncertainty > 2 * self.initial_uncertainty:
-                # reset sequence to starting sequence if we're in territory that's too uncharted
-                sampled_seq = self.Thompson_sample(measured_batch)
-                self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
-                self.initial_uncertainty = None
 
-        if len(samples) < self.batch_size:
-            random_sequences = generate_random_sequences(
-                self.seq_len, self.batch_size - len(samples), self.alphabet
-            )
-            samples.update(random_sequences)
+        new_states = []
+        new_fitnesses = []
+        i = 0
+        while (self.model.cost - prev_cost < self.batch_size) and i < len(new_seqs):
+            if new_seqs[i][1] not in self.model.measured_sequences:
+                fitness = self.model.get_fitness(new_seqs[i][1])
+                if fitness > self.best_fitness:
+                    print("New top sequence:", new_seqs[i][1], fitness)
+                    self.top_sequence.append((fitness, new_seqs[i][2], self.model.cost))
+                    self.best_fitness = fitness
+                samples.add(new_seqs[i][1])
+                new_states.append(new_seqs[i][2])
+                new_fitnesses.append(fitness)
+            i += 1
+
+        print("Current best fitness:", self.best_fitness)
+
+        for i, new_state in enumerate(new_states):
+            self.X_sample = np.vstack((self.X_sample, self._one_hot_to_num(new_state)))
+            self.y_sample.append(new_fitnesses[i])
 
         return list(samples)
