@@ -28,5 +28,5 @@ evaluator_random = Evaluator(
     path="../simulations/eval_random_consistency/",
 )
 evaluator_random.evaluate_for_landscapes(
-    evaluator_random.consistency_robustness_independence, num_starts=3
+    evaluator_random.consistency_robustness_independence, num_starts=15
 )

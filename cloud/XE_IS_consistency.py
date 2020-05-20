@@ -27,5 +27,5 @@ evaluator_xeis = Evaluator(
     path="../simulations/eval_xeis_consistency/",
 )
 evaluator_xeis.evaluate_for_landscapes(
-    evaluator_xeis.consistency_robustness_independence, num_starts=3
+    evaluator_xeis.consistency_robustness_independence, num_starts=15
 )
