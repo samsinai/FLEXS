@@ -1,7 +1,8 @@
-from meta.explorer import Explorer
 import os.path
-from utils.sequence_utils import generate_random_mutant
 import uuid
+
+from meta.explorer import Explorer
+from utils.sequence_utils import generate_random_mutant
 
 
 class Base_explorer(Explorer):
@@ -22,29 +23,37 @@ class Base_explorer(Explorer):
         self.path = path
         self.debug = debug
         self.run_id = str(uuid.uuid1())
+        self.model = None
 
     @property
     def file_to_write(self):
         return f"{self.path}{self.explorer_type}.csv"
 
-    def write(self, round, overwrite):
-        if not os.path.exists(self.file_to_write) or (round == 0 and overwrite):
+    def write(self, current_round, overwrite):
+        if not os.path.exists(self.file_to_write) or (current_round == 0 and overwrite):
             with open(self.file_to_write, "w") as output_file:
                 output_file.write(
-                    """id,batch,sequence,true_score,model_score,batch_size,measurement_cost,virtual_evals,landscape_id,start_id,model_type,virtual_screen,horizon,explorer_type\n"""
+                    "id,batch,sequence,true_score,model_score,batch_size,"
+                    "measurement_cost,virtual_evals,landscape_id,start_id,"
+                    "model_type,virtual_screen,horizon,explorer_type\n"
                 )
 
         with open(self.file_to_write, "a") as output_file:
             batch = self.get_last_batch()
             for sequence in self.batches[batch]:
                 output_file.write(
-                    f"{self.run_id},{batch},{sequence},{self.batches[batch][sequence][1]},{self.batches[batch][sequence][0]},{self.batch_size},{self.model.cost},{self.model.evals},{self.model.landscape_id},{self.model.start_id},{self.model.model_type},{self.virtual_screen}, {self.horizon},{self.explorer_type}\n"
+                    f"{self.run_id},{batch},{sequence},"
+                    f"{self.batches[batch][sequence][1]},"
+                    f"{self.batches[batch][sequence][0]},{self.batch_size},"
+                    f"{self.model.cost},{self.model.evals},{self.model.landscape_id},"
+                    f"{self.model.start_id},{self.model.model_type},"
+                    f"{self.virtual_screen}, {self.horizon},{self.explorer_type}\n"
                 )
 
     def get_last_batch(self):
         return max(self.batches.keys())
 
-    def set_model(self, model, reset=True):
+    def set_model(self, model, reset=True):  # pylint: disable=W0221
         if reset:
             self.reset()
         self.model = model
@@ -85,7 +94,8 @@ class Base_explorer(Explorer):
         for r in range(rounds):
             if verbose:
                 print(
-                    f"round: {r}, cost: {self.model.cost}, evals: {self.model.evals}, top: {max(self.model.measured_sequences.values())}"
+                    f"round: {r}, cost: {self.model.cost}, evals: {self.model.evals}, "
+                    f"top: {max(self.model.measured_sequences.values())}"
                 )
             new_samples = self.propose_samples()
             self.measure_proposals(new_samples)
@@ -93,29 +103,3 @@ class Base_explorer(Explorer):
                 self.write(r, overwrite)
             self.horizon -= 1
 
-
-class Random_explorer(Base_explorer):
-    def __init__(
-        self,
-        mu,
-        batch_size=100,
-        alphabet="UCGA",
-        virtual_screen=10,
-        path="./simulations/",
-        debug=False,
-    ):
-        super(Random_explorer, self).__init__(
-            batch_size, alphabet, virtual_screen, path, debug
-        )
-        self.mu = mu
-        self.explorer_type = f"Random_mu{self.mu}"
-
-    def propose_samples(self):
-        new_seqs = set()
-        last_batch = self.get_last_batch()
-        while len(new_seqs) < self.batch_size:
-            for seq in self.batches[last_batch]:
-                new_seq = generate_random_mutant(seq, self.mu * 1/len(seq), alphabet = self.alphabet)
-                if new_seq not in self.model.measured_sequences:
-                    new_seqs.add(new_seq)
-        return new_seqs

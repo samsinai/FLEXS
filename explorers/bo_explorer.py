@@ -1,17 +1,14 @@
 import copy
-import os
-import sys
-import random
-from collections import defaultdict
-from typing import Dict, List, Tuple
-import matplotlib.pyplot as plt
-
-from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import *
-from utils.replay_buffers import PrioritizedReplayBuffer
+from bisect import bisect_left
 
 import numpy as np
-from bisect import bisect_left
+
+from explorers.base_explorer import Base_explorer
+from utils.replay_buffers import PrioritizedReplayBuffer
+from utils.sequence_utils import (construct_mutant_from_sample,
+                                  generate_random_sequences,
+                                  translate_one_hot_to_string,
+                                  translate_string_to_one_hot)
 
 
 class BO_Explorer(Base_explorer):
@@ -25,6 +22,24 @@ class BO_Explorer(Base_explorer):
         method="EI",
         recomb_rate=0
     ):
+        """
+        Bayesian Optimization (BO) Explorer. 
+
+        Parameters:
+            method (str, equal to EI or UCB): The improvement method used in BO, 
+                default EI.  
+            recomb_rate (float): The recombination rate on the previous batch before 
+                BO proposes samples, default 0.
+        
+        Algorithm works as follows:
+        for N experiment rounds
+            recombine samples from previous batch if it exists and measure them, otherwise skip 
+            Thompson sample starting sequence for new batch 
+            while less than B samples in batch
+                Generate VS virtual screened samples 
+                If variance of ensemble models is above twice that of the starting sequence
+                Thompson sample another starting sequence    
+        """
         super(BO_Explorer, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
@@ -41,6 +56,11 @@ class BO_Explorer(Base_explorer):
         self.num_actions = 0
         # use PER buffer, same as in DQN
         self.model_type = "blank"
+
+        self.state = None
+        self.seq_len = None
+        self.memory = None
+        self.initial_uncertainty = None
 
     def initialize_data_structures(self):
         start_sequence = list(self.model.measured_sequences)[0]
@@ -92,7 +112,8 @@ class BO_Explorer(Base_explorer):
     def EI(self, vals):
         return np.mean([max(val - self.best_fitness, 0) for val in vals])
 
-    def UCB(self, vals):
+    @staticmethod
+    def UCB(vals):
         discount = 0.01
         return np.mean(vals) - discount * np.std(vals)
 
@@ -153,7 +174,8 @@ class BO_Explorer(Base_explorer):
         self.num_actions += 1
         return uncertainty, new_state_string, reward
 
-    def Thompson_sample(self, measured_batch):
+    @staticmethod
+    def Thompson_sample(measured_batch):
         fitnesses = np.cumsum([np.exp(10 * x[0]) for x in measured_batch])
         fitnesses = fitnesses / fitnesses[-1]
         x = np.random.uniform()

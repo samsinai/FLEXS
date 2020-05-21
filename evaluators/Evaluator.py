@@ -1,15 +1,36 @@
-import yaml
-from models.Noisy_models.Noisy_abstract_model import Noisy_abstract_model, Null_model
-from models.Noisy_models.Neural_network_models import NN_model
-from models.Noisy_models.Ensemble import Ensemble_models
-from pathlib import Path
+import time
 import uuid
+from pathlib import Path
 
-LANDSCAPE_TYPES = {"RNA": [2], "TF": [], "Protein": [2], "GFP": []}  # ["RNA","TF","GFP","ADDITIVE"]
-LANDSCAPE_ALPHABET = {"RNA": "UCGA", "TF": "TCGA", "Protein": "ILVAGMFYWEDQNHCRKSTP", "GFP": "ILVAGMFYWEDQNHCRKSTP"}
+from models.Noisy_models.Ensemble import Ensemble_models
+from models.Noisy_models.Neural_network_models import NN_model
+from models.Noisy_models.Noisy_abstract_model import (Noisy_abstract_model,
+                                                      Null_model)
+from utils.model_architectures import (NLNN, SKBR, SKGB, SKGP, SKRF, CNNa,
+                                       Linear, SKExtraTrees, SKLasso, SKLinear,
+                                       SKNeighbors)
+
+LANDSCAPE_TYPES = {
+    "RNA": [2],
+    "TF": [],
+    "Protein": [2],
+    "GFP": [],
+}  # ["RNA","TF","GFP","ADDITIVE"]
+LANDSCAPE_ALPHABET = {
+    "RNA": "UCGA",
+    "TF": "TCGA",
+    "Protein": "ILVAGMFYWEDQNHCRKSTP",
+    "GFP": "ILVAGMFYWEDQNHCRKSTP",
+}
 
 
 class Evaluator:
+    '''
+    Evaluator for explorers 
+
+    Currently, the evaluator supports transcription factor (TF), RNA, Protein, 
+    and Green Fluorescent Protein (GFP) landscapes. 
+    '''
     def __init__(
         self,
         explorer,
@@ -37,10 +58,8 @@ class Evaluator:
             f'Protein: {self.landscape_types.get("Protein")}, GFP: {self.landscape_types.get("GFP")}'
         )
         if "RNA" in self.landscape_types:
-            from models.Ground_truth_oracles.RNA_landscape_models import (
-                RNA_landscape_constructor,
-            )
-
+            from models.Ground_truth_oracles.RNA_landscape_models import \
+                RNA_landscape_constructor
             RNALconstructor = RNA_landscape_constructor()
             RNALconstructor.load_landscapes(
                 "../data/RNA_landscapes/RNA_landscape_config.yaml",
@@ -51,10 +70,8 @@ class Evaluator:
             ] = RNALconstructor.generate_from_loaded_landscapes()
 
         if "TF" in self.landscape_types:
-            from models.Ground_truth_oracles.TF_binding_landscape_models import (
-                TF_binding_landscape_constructor,
-            )
-
+            from models.Ground_truth_oracles.TF_binding_landscape_models import \
+                TF_binding_landscape_constructor
             TFconstructor = TF_binding_landscape_constructor()
             TFconstructor.load_landscapes(landscapes_to_test=self.landscape_types["TF"])
             self.landscape_generator[
@@ -62,86 +79,65 @@ class Evaluator:
             ] = TFconstructor.generate_from_loaded_landscapes()
 
         if "Protein" in self.landscape_types:
-            from models.Ground_truth_oracles.Protein_landscape_models import (
-                Protein_landscape_constructor,
-            )   
-
+            from models.Ground_truth_oracles.Protein_landscape_models import \
+                Protein_landscape_constructor
             Protein_constructor = Protein_landscape_constructor()
-            Protein_constructor.load_landscapes(landscapes_to_test=self.landscape_types["Protein"])
+            Protein_constructor.load_landscapes(
+                landscapes_to_test=self.landscape_types["Protein"]
+            )
             self.landscape_generator[
                 "Protein"
-            ] = Protein_constructor.generate_from_loaded_landscapes()   
+            ] = Protein_constructor.generate_from_loaded_landscapes()
 
         if "GFP" in self.landscape_types:
-            from models.Ground_truth_oracles.GFP_landscape_models import (
-                GFP_landscape_constructor,
-            )   
-
+            from models.Ground_truth_oracles.GFP_landscape_models import \
+                GFP_landscape_constructor
             GFP_constructor = GFP_landscape_constructor()
-            GFP_constructor.load_landscapes(landscapes_to_test=self.landscape_types["GFP"])
+            GFP_constructor.load_landscapes(
+                landscapes_to_test=self.landscape_types["GFP"]
+            )
             self.landscape_generator[
                 "GFP"
-            ] = GFP_constructor.generate_from_loaded_landscapes()                     
+            ] = GFP_constructor.generate_from_loaded_landscapes()
 
         self.explorer.run_id = str(uuid.uuid1())
-        print(f"loading complete")
+        print("Loading complete.")
 
-    def load_ensemble(self, ML_ensemble):
+    @staticmethod
+    def load_ensemble(ML_ensemble):
         ensemble = []
         for key in ML_ensemble:
             if key == "LNN":
-                from utils.model_architectures import Linear
-
                 ensemble.append(Linear)
 
             elif key == "NLNN":
-                from utils.model_architectures import NLNN
-
                 ensemble.append(NLNN)
 
             elif key == "CNNa":
-                from utils.model_architectures import CNNa
-
                 ensemble.append(CNNa)
 
             elif key == "Linear":
-                from utils.model_architectures import SKLinear
-
                 ensemble.append(SKLinear)
 
             elif key == "Lasso":
-                from utils.model_architectures import SKLasso
-
                 ensemble.append(SKLasso)
 
             elif key == "RF":
-                from utils.model_architectures import SKRF
-
                 ensemble.append(SKRF)
 
             elif key == "GB":
-                from utils.model_architectures import SKGB
-
                 ensemble.append(SKGB)
 
             elif key == "NE":
-                from utils.model_architectures import SKNeighbors
-
                 ensemble.append(SKNeighbors)
 
             elif key == "BR":
-                from utils.model_architectures import SKBR
-
                 ensemble.append(SKBR)
 
             elif key == "ExtraTrees":
-                from utils.model_architectures import SKExtraTrees
-
                 ensemble.append(SKExtraTrees)
 
             elif key == "GP":
-                from utils.model_architectures import SKGP
-
                 ensemble.append(SKGP)
 
         return ensemble
@@ -160,9 +156,7 @@ class Evaluator:
         print("Running null ", Null_args)
 
         if not self.ML_ensemble:
-
             noisy_landscape = Null_model(landscape_oracle, **Null_args)
-            start_seq = start_seq
             if hot_start:
                 pass
             else:
@@ -172,7 +166,7 @@ class Evaluator:
 
         else:
             nnlandscapes = []
-            for k in range(len(self.ML_ensemble)):
+            for _ in range(len(self.ML_ensemble)):
                 noisy_landscape = Null_model(landscape_oracle, **Null_args)
                 nnlandscapes.append(noisy_landscape)
 
@@ -210,7 +204,7 @@ class Evaluator:
             self.explorer.run(num_batches, overwrite=overwrite, verbose=verbose)
         else:
             nnlandscapes = []
-            for k in range(len(self.ML_ensemble)):
+            for _ in range(len(self.ML_ensemble)):
                 noisy_landscape = Noisy_abstract_model(landscape_oracle, **NAM_args)
                 nnlandscapes.append(noisy_landscape)
 
@@ -240,7 +234,6 @@ class Evaluator:
 
         if not self.ML_ensemble:
             nnlandscapes = []
-            from utils.model_architectures import SKLinear, SKRF, NLNN, CNNa
 
             for arch in [SKLinear, SKRF, NLNN, CNNa]:
                 nn_model = arch(len(start_seq), alphabet=self.explorer.alphabet)
@@ -294,6 +287,9 @@ class Evaluator:
     def consistency_robustness_independence(
         self, oracle, start_seq, landscape_id, start_seq_id
     ):
+        '''
+        Evaluate explorer on NAM model using a variety of noise levels. 
+        '''
         Path(self.path + "consistency_robustness_independence/").mkdir(exist_ok=True)
         self.explorer.path = self.path + "consistency_robustness_independence/"
 
@@ -348,8 +344,6 @@ class Evaluator:
             )
 
     def scalability(self, oracle, start_seq, landscape_id, start_seq_id):
-        import time
-
         Path(self.path + "scalability/").mkdir(exist_ok=True)
         self.explorer.path = self.path + "scalability/"
 
