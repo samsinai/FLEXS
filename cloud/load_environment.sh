@@ -9,5 +9,6 @@ conda install tqdm
 pip install editdistance
 pip install keras
 pip install gin
+pip install tape 
 
 # then you need to git clone
