@@ -1,7 +1,8 @@
 from meta.model import Ground_truth_oracle
 import numpy as np
 import pandas as pd
-from sklearn.neighbors import KNeighborsRegressor
+import torch 
+from tape import ProteinBertForValuePrediction, TAPETokenizer
 
 from utils.sequence_utils import *
 
@@ -61,17 +62,16 @@ class GFP_landscape(Ground_truth_oracle):
         self.held_out = held_out
         self.GFP_df = all_seqs
         self.GFP_info = dict(zip(self.GFP_df['seq'], self.GFP_df['brightness']))
-        # in unknown sequences, we set its brightness to the average of its three nearest neighbors 
-        self.knn = KNeighborsRegressor(n_neighbors=3)
-        one_hot_encoded_seq = np.array([translate_string_to_one_hot(seq, AAS).ravel() for seq in self.GFP_df['seq'].values])
-        self.knn.fit(one_hot_encoded_seq, self.GFP_df['brightness'].values)
+        self.model = ProteinBertForValuePrediction.from_pretrained('bert-base')
+        self.tokenizer = TAPETokenizer(vocab='iupac')
 
     def _fitness_function(self, sequence):
         if sequence in self.GFP_info:
             return self.GFP_info[sequence]
         else:
-            one_hot_seq = translate_string_to_one_hot(sequence, AAS).ravel()
-            return self.knn.predict([one_hot_seq])[0]
+            encoded_seq = torch.tensor([self.tokenizer.encode(sequence)])
+            fitness_val, = self.model(encoded_seq)
+            return float(fitness_val)
 
     def get_fitness(self, sequence):
         if self.noise == 0:
