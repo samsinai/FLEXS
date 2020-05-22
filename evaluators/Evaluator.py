@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 
 from models.Noisy_models.Ensemble import Ensemble_models
-from models.Noisy_models.Neural_network_models import NN_model
+from models.Noisy_models.Neural_network_models import NN_model, GPR_model
 from models.Noisy_models.Noisy_abstract_model import (Noisy_abstract_model,
                                                       Null_model)
 from utils.model_architectures import (NLNN, SKBR, SKGB, SKGP, SKRF, CNNa,
@@ -266,6 +266,30 @@ class Evaluator:
             self.explorer.set_model(nn_ensemble_landscape)
             self.explorer.run(num_batches, overwrite, verbose)
 
+    def run_on_GPRmodel(
+        self,
+        landscape_oracle,
+        NNM_args,
+        start_seq,
+        num_batches=10,
+        hot_start=False,
+        verbose=False,
+        overwrite=False,
+    ):
+
+        print("Running GPR", NNM_args)
+        
+        nn_model = SKGP(len(start_seq), alphabet=self.explorer.alphabet)
+        nnlandscape = GPR_model(landscape_oracle, nn_model, **NNM_args)
+
+        if hot_start:
+            pass
+        else:
+            nnlandscape.update_model([start_seq])
+        
+        self.explorer.set_model(nnlandscape)
+        self.explorer.run(num_batches, overwrite, verbose)
+
     def evaluate_for_landscapes(self, property_of_interest_evaluator, num_starts=100):
         for landscape_type in self.landscape_types:
             self.explorer.alphabet = LANDSCAPE_ALPHABET[landscape_type]
@@ -295,17 +319,18 @@ class Evaluator:
 
         print(f"start seq {start_seq_id}")
 
-        for ss in [0, 0.5, 0.9, 1]:
-            print(f"Evaluating for signal_strength: {ss}")
-            landscape_idents = {
-                "landscape_id": landscape_id,
-                "start_id": start_seq_id,
-                "signal_strength": ss,
-            }
-            self.run_on_NAM(oracle, landscape_idents, start_seq, verbose=True)
+        # for ss in [0, 0.5, 0.9, 1]:
+        #     print(f"Evaluating for signal_strength: {ss}")
+        #     landscape_idents = {
+        #         "landscape_id": landscape_id,
+        #         "start_id": start_seq_id,
+        #         "signal_strength": ss,
+        #     }
+        #     self.run_on_NAM(oracle, landscape_idents, start_seq, verbose=True)
         landscape_idents = {"landscape_id": landscape_id, "start_id": start_seq_id}
-        self.run_on_NNmodel(oracle, landscape_idents, start_seq, verbose=True)
-        self.run_on_null_model(oracle, landscape_idents, start_seq, verbose=True)
+        # self.run_on_NNmodel(oracle, landscape_idents, start_seq, verbose=True)
+        # self.run_on_null_model(oracle, landscape_idents, start_seq, verbose=True)
+        self.run_on_GPRmodel(oracle, landscape_idents, start_seq, verbose=True)
 
     def efficiency(self, oracle, start_seq, landscape_id, start_seq_id):
         Path(self.path + "efficiency/").mkdir(exist_ok=True)

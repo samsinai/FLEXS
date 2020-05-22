@@ -8,6 +8,8 @@ from scipy.stats import pearsonr
 from tensorflow import keras
 import sklearn
 
+from utils.model_architectures import SKGP
+
 # TODO: These names need to get fixed to reflect that it supports SKlearn models as well
 class NN_model(Model):
     def __init__(
@@ -34,7 +36,7 @@ class NN_model(Model):
         self.validation_split = nn_architecture.validation_split
         self.epochs = nn_architecture.epochs
         self.alphabet = nn_architecture.alphabet
-        self.nn_architeture = nn_architecture
+        self.nn_architecture = nn_architecture
         self.one_hot_sequences = {}
         self.model_type = f"arch={nn_architecture.architecture_name}"
         if "NN" in self.model_type:
@@ -195,5 +197,76 @@ class NN_model(Model):
 
         else:
             self.model_sequences[sequence] = self._fitness_function(sequence)
+            self.evals += 1
+            return self.model_sequences[sequence]
+
+class GPR_model(NN_model):
+    def __init__(
+        self,
+        ground_truth_oracle,
+        nn_architecture,
+        cache=True,
+        batch_update=False,
+        landscape_id=-1,
+        start_id=-1,
+    ):
+        super().__init__(ground_truth_oracle=ground_truth_oracle,
+            nn_architecture=nn_architecture,
+            cache=cache,
+            batch_update=batch_update,
+            landscape_id=landscape_id,
+            start_id=start_id)
+
+    def _one_hot_to_num(self, one_hot):
+        return np.argmax(np.transpose(one_hot), axis=1)
+
+    def update_model(self, sequences):
+        X = []
+        Y = []
+        self.measure_true_landscape(sequences)
+        for sequence in sequences:
+            if sequence not in self.one_hot_sequences:
+                x = translate_string_to_one_hot(sequence, self.alphabet)
+                x = self._one_hot_to_num(x)
+                y = self.measured_sequences[sequence]
+                self.one_hot_sequences[sequence] = (x, y)
+                if len(X) == 0:
+                    X = [x]
+                else:
+                    X = np.vstack((X, x))
+                Y.append(y)
+            else:
+                x, y = self.one_hot_sequences[sequence]
+                if len(X) == 0:
+                    X = [x]
+                else:
+                    X = np.vstack((X, x))
+                Y.append(y)
+        X = np.array(X)
+        Y = np.array(Y)
+
+        self.neuralmodel.fit(X, Y)
+
+    def _fitness_function(self, sequence, return_std=True):
+        # try:
+        x = translate_string_to_one_hot(sequence, self.alphabet)
+        x = self._one_hot_to_num(x)
+        return self.neuralmodel.predict(x.reshape(1, -1), return_std=return_std)
+        # except:
+        #     print(sequence)
+
+    def get_fitness(self, sequence, return_std=True):
+        if sequence in self.measured_sequences:
+            if return_std:
+                return self.measured_sequences[sequence], 0
+            else:
+                return self.measured_sequences[sequence]
+        elif (
+            sequence in self.model_sequences and self.cache
+        ):  # caching model answer to save computation
+            return self.model_sequences[sequence]
+
+        else:
+            self.model_sequences[sequence] = self._fitness_function(sequence, return_std=return_std)
             self.evals += 1
             return self.model_sequences[sequence]
