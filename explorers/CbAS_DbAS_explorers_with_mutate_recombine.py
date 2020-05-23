@@ -1,8 +1,4 @@
 from explorers.base_explorer import Base_explorer
-from utils.model_architectures import VAE
-from utils.exceptions import GenerateError
-from utils.sequence_utils import generate_random_mutant
-import random
 import numpy as np
 
 
@@ -38,8 +34,8 @@ class DbAS_explorer(Base_explorer):
                 self.top_sequence = sequence
                 top_score = self.model.measured_sequences[sequence]
 
-        print('Starting a DbAS cycle...')
-        print('Initial training set size: ', len(initial_batch))
+        # print('Starting a DbAS cycle...')
+        # print('Initial training set size: ', len(initial_batch))
 
         # this will be the current state of the generator
         self.generator.seq_len=len(initial_batch[0])
@@ -56,45 +52,17 @@ class DbAS_explorer(Base_explorer):
             proposals = []
 
             while len(proposals) == 0:
-                print('Generating samples...')
+                # print('Generating samples...')
                 proposals = self.generator.generate(self.batch_size, all_samples_and_weights[0])
-                print(f'Proposed {len(proposals)} new samples')
+                # print(f'Proposed {len(proposals)} new samples')
                 count += len(proposals)
-
-
-            # while len(proposals) == 0:
-            #     try:
-            #         proposals = self.generator.generate(self.batch_size, all_samples_and_weights[0])
-            #         # print(f'Proposed {len(proposals)} new samples')
-            #         count += len(proposals)
-            #     #except GenerateError as e:
-            #     except:
-            #         #print(e.message)
-            #         print('Ending the DbAS cycle, returning existing proposals...')
-            #         if len(self.all_proposals_ranked) >= self.n_new_proposals:
-            #             return self.all_proposals_ranked[-self.n_new_proposals:]
-            #         else:
-            #             #print('got here')
-            #             random_mutants = []
-            #             for sample in initial_batch:
-            #                 random_mutants.extend(list(set([generate_random_mutant(sample,
-            #                                                                        self.avg_mutations_per_sequence/len(sample),
-            #                                                                        alphabet=self.alphabet)
-            #                                                 for i in range(self.n_new_proposals * 10)])))
-            #             for sample in initial_batch:
-            #                 if sample in random_mutants:
-            #                     random_mutants.remove(sample)
-            #             new_samples = random.sample(random_mutants, (self.n_new_proposals - len(self.all_proposals_ranked)))
-            #             #self.all_proposals_ranked.extend(new_samples)
-            #             return self.all_proposals_ranked + new_samples
-
 
 
             # calculate the scores of the new samples using the oracle
             scores = []
             for proposal in proposals:
                 scores.append(self.model.get_fitness(proposal))
-            print('Top score in proposed samples: ', np.max(scores))
+            # print('Top score in proposed samples: ', np.max(scores))
 
             # set a new fitness threshold if the new percentile is higher than the current
             gamma_new = np.percentile(scores, self.Q*100)
@@ -113,7 +81,7 @@ class DbAS_explorer(Base_explorer):
 
 
             # update the generator
-            print('New training set size: ', len(all_samples_and_weights[0]))
+            # print('New training set size: ', len(all_samples_and_weights[0]))
             self.generator.train_model(all_samples_and_weights[0], all_samples_and_weights[1])
 
             scores_dict = dict(zip(proposals, scores))
