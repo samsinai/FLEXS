@@ -159,6 +159,79 @@ class CNNa(Architecture):
         model.compile(loss='mean_squared_error',  optimizer="adam", metrics=['mse'])
         return model
 
+class Mutate_Recombine_Generator(Architecture):
+
+    def __init__(self,
+                 seq_len=0,
+        batch_size=None,
+        validation_split=None,
+        epochs=None,
+        alphabet="UCGA",
+        mutation_rate=1,
+        recombination_rate=0):
+        super().__init__(
+            seq_len, batch_size, validation_split, epochs, alphabet)
+        self.mu = mutation_rate
+        self.recomb_rate = recombination_rate
+        self.model = []
+        self.name = "MutateRecombine"
+
+    def _remove_ineligibles(self, candidates, existing_samples):
+        candidates = list(set(candidates).difference(set(existing_samples)))
+        random.shuffle(candidates)
+        return candidates
+
+    def _recombine_population(self, gen):
+        random.shuffle(gen)
+        ret = []
+        for i in range(0, len(gen) - 1, 2):
+            strA = []
+            strB = []
+            switch = False
+            for ind in range(len(gen[i])):
+                if random.random() < self.recomb_rate:
+                    switch = not switch
+                # putting together recombinantsp
+                if switch:
+                    strA.append(gen[i][ind])
+                    strB.append(gen[i + 1][ind])
+                else:
+                    strB.append(gen[i][ind])
+                    strA.append(gen[i + 1][ind])
+            ret.append("".join(strA))
+            ret.append("".join(strB))
+        return ret
+
+    def train_model_withouth_weights(self, samples):
+        self.model = samples
+
+    def train_model(self, samples, weights):
+        chosen_samples = []
+        for sample, weight in zip(samples, weights):
+            if weight >= random.uniform(0, 1):
+                chosen_samples.append(sample)
+        self.model = chosen_samples
+
+    def generate(self, n_samples, existing_samples):
+        parents = self.model
+        if self.recomb_rate > 0 and len(parents) > 1:
+                parents = self._recombine_population(parents)
+        ret = []
+        while len(ret)< n_samples:
+            for seq in parents:
+                child = generate_random_mutant(
+                    seq, self.mu * 1 / len(seq), self.alphabet
+                )
+                children = [child]
+                while len(children) < n_samples/len(parents):
+                    child = generate_random_mutant(
+                        seq, self.mu * 1 / len(seq), self.alphabet
+                    )
+                    children.append(child)
+                ret.extend(children)
+            ret = self._remove_ineligibles(ret, existing_samples)
+        return ret[:n_samples]
+
 
 class VAE(Architecture):
 
