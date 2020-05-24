@@ -9,7 +9,6 @@ from utils.softmax import softmax
 
 
 class XE_IS(Base_explorer):
-
     def __init__(
         self,
         beta=1,

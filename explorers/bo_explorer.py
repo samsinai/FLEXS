@@ -20,25 +20,25 @@ class BO_Explorer(Base_explorer):
         path="./simulations/",
         debug=False,
         method="EI",
-        recomb_rate=0
+        recomb_rate=0,
     ):
         """
-        Bayesian Optimization (BO) Explorer. 
+        Bayesian Optimization (BO) Explorer.
 
         Parameters:
-            method (str, equal to EI or UCB): The improvement method used in BO, 
-                default EI.  
-            recomb_rate (float): The recombination rate on the previous batch before 
+            method (str, equal to EI or UCB): The improvement method used in BO,
+                default EI.
+            recomb_rate (float): The recombination rate on the previous batch before
                 BO proposes samples, default 0.
-        
+
         Algorithm works as follows:
         for N experiment rounds
-            recombine samples from previous batch if it exists and measure them, otherwise skip 
-            Thompson sample starting sequence for new batch 
+            recombine samples from previous batch if it exists and measure them, otherwise skip
+            Thompson sample starting sequence for new batch
             while less than B samples in batch
-                Generate VS virtual screened samples 
+                Generate VS virtual screened samples
                 If variance of ensemble models is above twice that of the starting sequence
-                Thompson sample another starting sequence    
+                Thompson sample another starting sequence
         """
         super(BO_Explorer, self).__init__(
             batch_size=batch_size,
@@ -50,7 +50,7 @@ class BO_Explorer(Base_explorer):
         self.explorer_type = "BO_Explorer"
         self.alphabet_len = len(alphabet)
         self.method = method
-        self.recomb_rate = recomb_rate 
+        self.recomb_rate = recomb_rate
         self.best_fitness = 0
         self.top_sequence = []
         self.num_actions = 0
@@ -87,14 +87,14 @@ class BO_Explorer(Base_explorer):
         self.model.update_model(state_seqs)
 
     def _recombine_population(self, gen):
-        random.shuffle(gen)
+        np.random.shuffle(gen)
         ret = []
         for i in range(0, len(gen) - 1, 2):
             strA = []
             strB = []
             switch = False
             for ind in range(len(gen[i])):
-                if random.random() < self.recomb_rate:
+                if np.random.random() < self.recomb_rate:
                     switch = not switch
 
                 # putting together recombinants
@@ -197,7 +197,6 @@ class BO_Explorer(Base_explorer):
             )
             sampled_seq = self.Thompson_sample(measured_batch)
             self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
-            initial_seq = self.state.copy()
         # generate next batch by picking actions
         self.initial_uncertainty = None
         samples = set()
@@ -208,7 +207,7 @@ class BO_Explorer(Base_explorer):
         while (self.model.cost - prev_cost < self.batch_size) and (
             self.model.evals - prev_evals < self.batch_size * self.virtual_screen
         ):
-            uncertainty, new_state_string, reward = self.pick_action()
+            uncertainty, new_state_string, _ = self.pick_action()
             samples.add(new_state_string)
             if self.initial_uncertainty is None:
                 self.initial_uncertainty = uncertainty

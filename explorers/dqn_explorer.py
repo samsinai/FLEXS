@@ -13,14 +13,17 @@ from explorers.base_explorer import Base_explorer
 from utils.replay_buffers import PrioritizedReplayBuffer
 from utils.sequence_utils import (construct_mutant_from_sample,
                                   generate_random_sequences,
+                                  make_random_action, renormalize_moves,
+                                  sample_greedy, sample_random,
                                   translate_one_hot_to_string,
                                   translate_string_to_one_hot)
 
 
 class Q_Network(nn.Module):
-    '''
-    Q Network implementation, used in DQN Explorer. 
-    '''
+    """
+    Q Network implementation, used in DQN Explorer.
+    """
+
     def __init__(self, sequence_len, alphabet_len):
         super(Q_Network, self).__init__()
         self.sequence_len = sequence_len
@@ -47,6 +50,7 @@ def build_q_network(sequence_len, alphabet_len, device):
 
 class DQN_Explorer(Base_explorer):
     """
+    Explorer for DQN.
     """
 
     def __init__(
@@ -61,17 +65,18 @@ class DQN_Explorer(Base_explorer):
         generations=10,
         gamma=0.9,
         device="cpu",
-        noise_alpha=1,
+        noise_alpha=1,  # pylint: disable=W0613
     ):
         """
-        DQN Explorer implementation, based off https://colab.research.google.com/drive/1NsbSPn6jOcaJB_mp9TmkgQX7UrRIrTi0. 
+        DQN Explorer implementation, based off
+        https://colab.research.google.com/drive/1NsbSPn6jOcaJB_mp9TmkgQX7UrRIrTi0.
 
         Algorithm works as follows:
         for N experiment rounds
             collect samples with policy
             policy updates using Q network:
-                Q(s, a) <- Q(s, a) + alpha * (R(s, a) + gamma * max Q(s, a) - Q(s, a)) 
-                
+                Q(s, a) <- Q(s, a) + alpha * (R(s, a) + gamma * max Q(s, a) - Q(s, a))
+
         Attributes:
         memory_size: size of agent memory
         batch_size: batch size to train the PER buffer with
@@ -142,7 +147,7 @@ class DQN_Explorer(Base_explorer):
 
         return next_states_values
 
-    def q_network_loss(self, batch, device="cpu"):
+    def q_network_loss(self, batch):
         """
         Calculate MSE between actual state action values,
         and expected state action values from DQN
@@ -169,7 +174,7 @@ class DQN_Explorer(Base_explorer):
         total_loss = 0.0
         # train Q network on new samples
         optimizer = optim.Adam(self.q_network.parameters())
-        for epoch in range(train_epochs):
+        for _ in range(train_epochs):
             batch = self.memory.sample_batch()
             optimizer.zero_grad()
             loss = self.q_network_loss(batch)
@@ -194,7 +199,6 @@ class DQN_Explorer(Base_explorer):
             action = make_random_action(self.state.shape)
         # get next state (mutant)
         mutant = construct_mutant_from_sample(action, self.state)
-        mutant_string = translate_one_hot_to_string(mutant, self.alphabet)
         self.state = mutant
 
         return action, mutant
@@ -221,7 +225,7 @@ class DQN_Explorer(Base_explorer):
             and self.model.cost % self.batch_size == 0
             and len(self.memory) >= self.batch_size
         ):
-            avg_loss = self.train_actor(self.train_epochs)
+            self.train_actor(self.train_epochs)
         self.num_actions += 1
         return new_state_string, reward
 
@@ -230,15 +234,12 @@ class DQN_Explorer(Base_explorer):
             # indicates model was reset
             self.initialize_data_structures()
         samples = set()
-        prev_cost, prev_evals = (
-            copy.deepcopy(self.model.cost),
-            copy.deepcopy(self.model.evals),
-        )
+        prev_cost = copy.deepcopy(self.model.cost)
         total_evals = 0
         while (self.model.cost - prev_cost < self.batch_size) and (
             total_evals < self.batch_size * self.virtual_screen
         ):
-            new_state_string, reward = self.pick_action()
+            new_state_string, _ = self.pick_action()
             samples.add(new_state_string)
             total_evals += 1
         if len(samples) < self.batch_size:
