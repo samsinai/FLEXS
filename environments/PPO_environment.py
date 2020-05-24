@@ -17,6 +17,7 @@ if module_path not in sys.path:
 
 class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """
+    PPO Environment.
     """
 
     def __init__(
