@@ -122,7 +122,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
             # if action is invalid,
             # terminate episode and punish
-            if np.amax(action) > 1 or np.amin(action) < 0:
+            if np.amax(action) >= 1 or np.amin(action) < 0:
                 return ts.termination(np.array(self._state, dtype=np.float32), -1)
 
             x, y = action[0]
