@@ -1,15 +1,15 @@
 from explorers.base_explorer import Base_explorer
-import os.path
 from utils.sequence_utils import generate_random_mutant
-import uuid
+
 
 class Random_explorer(Base_explorer):
-    '''
+    """
     Random explorer
 
     Parameters:
-        mu (float): The probability that each position gets mutated. 
-    '''
+        mu (float): The probability that each position gets mutated.
+    """
+
     def __init__(
         self,
         mu,
@@ -30,7 +30,9 @@ class Random_explorer(Base_explorer):
         last_batch = self.get_last_batch()
         while len(new_seqs) < self.batch_size:
             for seq in self.batches[last_batch]:
-                new_seq = generate_random_mutant(seq, self.mu * 1./len(seq), alphabet=self.alphabet)
+                new_seq = generate_random_mutant(
+                    seq, self.mu * 1.0 / len(seq), alphabet=self.alphabet
+                )
                 if new_seq not in self.model.measured_sequences:
                     new_seqs.add(new_seq)
         return new_seqs

@@ -1,9 +1,10 @@
+# pylint: disable=C0415
 import time
 import uuid
 from pathlib import Path
 
 from models.Noisy_models.Ensemble import Ensemble_models
-from models.Noisy_models.Neural_network_models import NN_model, GPR_model
+from models.Noisy_models.Neural_network_models import GPR_model, NN_model
 from models.Noisy_models.Noisy_abstract_model import (Noisy_abstract_model,
                                                       Null_model)
 from utils.model_architectures import (NLNN, SKBR, SKGB, SKGP, SKRF, CNNa,
@@ -25,13 +26,14 @@ LANDSCAPE_ALPHABET = {
 
 
 class Evaluator:
-    '''
-    Evaluator for explorers 
+    """
+    Evaluator for explorers.
 
-    Currently, the evaluator supports transcription factor (TF), RNA, Protein, 
-    and Green Fluorescent Protein (GFP) landscapes. 
-    '''
-    def __init__(
+    Currently, the evaluator supports transcription factor (TF), RNA, Protein,
+    and Green Fluorescent Protein (GFP) landscapes.
+    """
+
+    def __init__(  # pylint: disable=W0102
         self,
         explorer,
         landscape_types=LANDSCAPE_TYPES,
@@ -54,12 +56,16 @@ class Evaluator:
 
     def load_landscapes(self):
         print(
-            f'loading landscapes RNA: {self.landscape_types.get("RNA")}, TF: {self.landscape_types.get("TF")}, '
-            f'Protein: {self.landscape_types.get("Protein")}, GFP: {self.landscape_types.get("GFP")}'
+            f'loading landscapes RNA: {self.landscape_types.get("RNA")}, '
+            f'TF: {self.landscape_types.get("TF")}, '
+            f'Protein: {self.landscape_types.get("Protein")}, '
+            f'GFP: {self.landscape_types.get("GFP")}'
         )
         if "RNA" in self.landscape_types:
-            from models.Ground_truth_oracles.RNA_landscape_models import \
-                RNA_landscape_constructor
+            from models.Ground_truth_oracles.RNA_landscape_models import (
+                RNA_landscape_constructor,
+            )
+
             RNALconstructor = RNA_landscape_constructor()
             RNALconstructor.load_landscapes(
                 "../data/RNA_landscapes/RNA_landscape_config.yaml",
@@ -70,8 +76,10 @@ class Evaluator:
             ] = RNALconstructor.generate_from_loaded_landscapes()
 
         if "TF" in self.landscape_types:
-            from models.Ground_truth_oracles.TF_binding_landscape_models import \
-                TF_binding_landscape_constructor
+            from models.Ground_truth_oracles.TF_binding_landscape_models import (
+                TF_binding_landscape_constructor,
+            )
+
             TFconstructor = TF_binding_landscape_constructor()
             TFconstructor.load_landscapes(landscapes_to_test=self.landscape_types["TF"])
             self.landscape_generator[
@@ -79,8 +87,10 @@ class Evaluator:
             ] = TFconstructor.generate_from_loaded_landscapes()
 
         if "Protein" in self.landscape_types:
-            from models.Ground_truth_oracles.Protein_landscape_models import \
-                Protein_landscape_constructor
+            from models.Ground_truth_oracles.Protein_landscape_models import (
+                Protein_landscape_constructor,
+            )
+
             Protein_constructor = Protein_landscape_constructor()
             Protein_constructor.load_landscapes(
                 landscapes_to_test=self.landscape_types["Protein"]
@@ -90,8 +100,10 @@ class Evaluator:
             ] = Protein_constructor.generate_from_loaded_landscapes()
 
         if "GFP" in self.landscape_types:
-            from models.Ground_truth_oracles.GFP_landscape_models import \
-                GFP_landscape_constructor
+            from models.Ground_truth_oracles.GFP_landscape_models import (
+                GFP_landscape_constructor,
+            )
+
             GFP_constructor = GFP_landscape_constructor()
             GFP_constructor.load_landscapes(
                 landscapes_to_test=self.landscape_types["GFP"]
@@ -286,7 +298,7 @@ class Evaluator:
             pass
         else:
             nnlandscape.update_model([start_seq])
-        
+
         self.explorer.set_model(nnlandscape)
         self.explorer.run(num_batches, overwrite, verbose)
 
@@ -311,9 +323,9 @@ class Evaluator:
     def consistency_robustness_independence(
         self, oracle, start_seq, landscape_id, start_seq_id
     ):
-        '''
-        Evaluate explorer on NAM model using a variety of noise levels. 
-        '''
+        """
+        Evaluate explorer on NAM model using a variety of noise levels.
+        """
         Path(self.path + "consistency_robustness_independence/").mkdir(exist_ok=True)
         self.explorer.path = self.path + "consistency_robustness_independence/"
 

@@ -16,14 +16,15 @@ from utils.sequence_utils import translate_one_hot_to_string
 
 
 class PPO_explorer(Base_explorer):
-    '''
+    """
     PPO implementation.
 
     The algorithm is:
         for N experiment rounds
             collect samples with policy
             train policy on samples
-    '''
+    """
+
     def __init__(
         self,
         batch_size=100,
