@@ -1,3 +1,5 @@
+import os 
+import requests
 from meta.model import Ground_truth_oracle
 import numpy as np
 import pandas as pd
@@ -71,14 +73,22 @@ class GFP_landscape(Ground_truth_oracle):
         self.sequences = {}
         self.noise = noise
         self.norm_value = norm_value
-        self.gfp_model_path = 'https://fluorescence-model.s3.amazonaws.com/fluorescence_transformer_20-05-25-03-49-06_184764'
+        self.gfp_model_path = 'https://fluorescence-model.s3.amazonaws.com/fluorescence_transformer_20-05-25-03-49-06_184764/'
+        self.save_path = 'fluorescence-model/'
+        os.makedirs(self.save_path, exist_ok=True)
+        for file_name in ['args.json', 'checkpoint.bin', 'config.json',' log', 'pytorch_model.bin']:
+            if not os.path.isfile(self.save_path + file_name):
+                print('Downloading', file_name)
+                response = requests.get(self.gfp_model_path + file_name)
+                with open(self.save_path + file_name, 'wb') as f:
+                    f.write(response.content)
 
     def construct(self, held_out, all_seqs):
         self.held_out = held_out
         self.GFP_df = all_seqs
         self.GFP_info = dict(zip(self.GFP_df['seq'], self.GFP_df['brightness']))
         self.tokenizer = TAPETokenizer(vocab='iupac')
-        self.model = ProteinBertForValuePrediction.from_pretrained(self.gfp_model_path)
+        self.model = ProteinBertForValuePrediction.from_pretrained(self.save_path)
 
     def _fitness_function(self, sequence):
         # if we have ground truth, use that value, otherwise use the prediction from the transformer model
