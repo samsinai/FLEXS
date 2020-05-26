@@ -1,0 +1,434 @@
+{
+    "heart:560:588:0": {
+        "phenotype": "heart",
+        "start": 560,
+        "end": 588,
+        "noise": 0
+    },
+    "lung:560:588:0": {
+        "phenotype": "lung",
+        "start": 560,
+        "end": 588,
+        "noise": 0
+    },
+    "kidney:560:588:0": {
+        "phenotype": "kidney",
+        "start": 560,
+        "end": 588,
+        "noise": 0
+    },
+    "liver:560:588:0": {
+        "phenotype": "liver",
+        "start": 560,
+        "end": 588,
+        "noise": 0
+    },
+    "blood:560:588:0": {
+        "phenotype": "blood",
+        "start": 560,
+        "end": 588,
+        "noise": 0
+    },
+    "spleen:560:588:0": {
+        "phenotype": "spleen",
+        "start": 560,
+        "end": 588,
+        "noise": 0
+    },
+    "heart:560:588:0.01": {
+        "phenotype": "heart",
+        "start": 560,
+        "end": 588,
+        "noise": 0.01
+    },
+    "lung:560:588:0.01": {
+        "phenotype": "lung",
+        "start": 560,
+        "end": 588,
+        "noise": 0.01
+    },
+    "kidney:560:588:0.01": {
+        "phenotype": "kidney",
+        "start": 560,
+        "end": 588,
+        "noise": 0.01
+    },
+    "liver:560:588:0.01": {
+        "phenotype": "liver",
+        "start": 560,
+        "end": 588,
+        "noise": 0.01
+    },
+    "blood:560:588:0.01": {
+        "phenotype": "blood",
+        "start": 560,
+        "end": 588,
+        "noise": 0.01
+    },
+    "spleen:560:588:0.01": {
+        "phenotype": "spleen",
+        "start": 560,
+        "end": 588,
+        "noise": 0.01
+    },
+    "heart:560:588:0.1": {
+        "phenotype": "heart",
+        "start": 560,
+        "end": 588,
+        "noise": 0.1
+    },
+    "lung:560:588:0.1": {
+        "phenotype": "lung",
+        "start": 560,
+        "end": 588,
+        "noise": 0.1
+    },
+    "kidney:560:588:0.1": {
+        "phenotype": "kidney",
+        "start": 560,
+        "end": 588,
+        "noise": 0.1
+    },
+    "liver:560:588:0.1": {
+        "phenotype": "liver",
+        "start": 560,
+        "end": 588,
+        "noise": 0.1
+    },
+    "blood:560:588:0.1": {
+        "phenotype": "blood",
+        "start": 560,
+        "end": 588,
+        "noise": 0.1
+    },
+    "spleen:560:588:0.1": {
+        "phenotype": "spleen",
+        "start": 560,
+        "end": 588,
+        "noise": 0.1
+    },
+    "heart:450:540:0": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "lung:450:540:0": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "kidney:450:540:0": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "liver:450:540:0": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "blood:450:540:0": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "spleen:450:540:0": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "heart:450:540:0.01": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "lung:450:540:0.01": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "kidney:450:540:0.01": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "liver:450:540:0.01": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "blood:450:540:0.01": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "spleen:450:540:0.01": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "heart:450:540:0.1": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "lung:450:540:0.1": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "kidney:450:540:0.1": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "liver:450:540:0.1": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "blood:450:540:0.1": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "spleen:450:540:0.1": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "heart:450:735:0": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 735,
+        "noise": 0
+    },
+    "lung:450:735:0": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 735,
+        "noise": 0
+    },
+    "kidney:450:735:0": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 735,
+        "noise": 0
+    },
+    "liver:450:735:0": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 735,
+        "noise": 0
+    },
+    "blood:450:735:0": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 735,
+        "noise": 0
+    },
+    "spleen:450:735:0": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 735,
+        "noise": 0
+    },
+    "heart:450:735:0.01": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 735,
+        "noise": 0.01
+    },
+    "lung:450:735:0.01": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 735,
+        "noise": 0.01
+    },
+    "kidney:450:735:0.01": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 735,
+        "noise": 0.01
+    },
+    "liver:450:735:0.01": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 735,
+        "noise": 0.01
+    },
+    "blood:450:735:0.01": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 735,
+        "noise": 0.01
+    },
+    "spleen:450:735:0.01": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 735,
+        "noise": 0.01
+    },
+    "heart:450:735:0.1": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 735,
+        "noise": 0.1
+    },
+    "lung:450:735:0.1": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 735,
+        "noise": 0.1
+    },
+    "kidney:450:735:0.1": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 735,
+        "noise": 0.1
+    },
+    "liver:450:735:0.1": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 735,
+        "noise": 0.1
+    },
+    "blood:450:735:0.1": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 735,
+        "noise": 0.1
+    },
+    "spleen:450:735:0.1": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 735,
+        "noise": 0.1
+    },
+    "heart:0:735:0": {
+        "phenotype": "heart",
+        "start": 0,
+        "end": 735,
+        "noise": 0
+    },
+    "lung:0:735:0": {
+        "phenotype": "lung",
+        "start": 0,
+        "end": 735,
+        "noise": 0
+    },
+    "kidney:0:735:0": {
+        "phenotype": "kidney",
+        "start": 0,
+        "end": 735,
+        "noise": 0
+    },
+    "liver:0:735:0": {
+        "phenotype": "liver",
+        "start": 0,
+        "end": 735,
+        "noise": 0
+    },
+    "blood:0:735:0": {
+        "phenotype": "blood",
+        "start": 0,
+        "end": 735,
+        "noise": 0
+    },
+    "spleen:0:735:0": {
+        "phenotype": "spleen",
+        "start": 0,
+        "end": 735,
+        "noise": 0
+    },
+    "heart:0:735:0.01": {
+        "phenotype": "heart",
+        "start": 0,
+        "end": 735,
+        "noise": 0.01
+    },
+    "lung:0:735:0.01": {
+        "phenotype": "lung",
+        "start": 0,
+        "end": 735,
+        "noise": 0.01
+    },
+    "kidney:0:735:0.01": {
+        "phenotype": "kidney",
+        "start": 0,
+        "end": 735,
+        "noise": 0.01
+    },
+    "liver:0:735:0.01": {
+        "phenotype": "liver",
+        "start": 0,
+        "end": 735,
+        "noise": 0.01
+    },
+    "blood:0:735:0.01": {
+        "phenotype": "blood",
+        "start": 0,
+        "end": 735,
+        "noise": 0.01
+    },
+    "spleen:0:735:0.01": {
+        "phenotype": "spleen",
+        "start": 0,
+        "end": 735,
+        "noise": 0.01
+    },
+    "heart:0:735:0.1": {
+        "phenotype": "heart",
+        "start": 0,
+        "end": 735,
+        "noise": 0.1
+    },
+    "lung:0:735:0.1": {
+        "phenotype": "lung",
+        "start": 0,
+        "end": 735,
+        "noise": 0.1
+    },
+    "kidney:0:735:0.1": {
+        "phenotype": "kidney",
+        "start": 0,
+        "end": 735,
+        "noise": 0.1
+    },
+    "liver:0:735:0.1": {
+        "phenotype": "liver",
+        "start": 0,
+        "end": 735,
+        "noise": 0.1
+    },
+    "blood:0:735:0.1": {
+        "phenotype": "blood",
+        "start": 0,
+        "end": 735,
+        "noise": 0.1
+    },
+    "spleen:0:735:0.1": {
+        "phenotype": "spleen",
+        "start": 0,
+        "end": 735,
+        "noise": 0.1
+    }
+}

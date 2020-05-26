@@ -43,4 +43,4 @@ bo_explorer_prod = New_BO_Explorer()
 bo_explorer_prod.debug = False
 
 evaluator_bo=Evaluator(bo_explorer_prod,landscape_types=LANDSCAPE_TYPES_TF, path="../simulations/eval/")
-evaluator_bo.evaluate_for_landscapes(evaluator_bo.consistency_robustness_independence, num_starts=5)
+evaluator_bo.evaluate_for_landscapes(evaluator_bo.consistency_robustness_independence, num_starts=15)

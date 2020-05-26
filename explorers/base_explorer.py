@@ -2,7 +2,6 @@ import os.path
 import uuid
 
 from meta.explorer import Explorer
-from utils.sequence_utils import generate_random_mutant
 
 
 class Base_explorer(Explorer):
@@ -102,4 +101,3 @@ class Base_explorer(Explorer):
             if not self.debug:
                 self.write(r, overwrite)
             self.horizon -= 1
-
