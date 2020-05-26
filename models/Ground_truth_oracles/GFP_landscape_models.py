@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import torch 
 from tape import ProteinBertForValuePrediction, TAPETokenizer
+from tape.datasets import FluorescenceDataset
+from tape.training import run_train
 
 from utils.sequence_utils import *
 
@@ -25,6 +27,7 @@ class GFP_landscape_constructor:
         self.all_seqs = clean_GFP_df(pd.read_csv(self.landscape_file, sep=","))
         # hold out 10% for testing as in here: https://www.biorxiv.org/content/10.1101/337154v1.full.pdf
         self.held_out = self.all_seqs.sample(frac=0.1)
+        self.all_seqs.reset_index(drop=True, inplace=True)
         self.all_seqs = self.all_seqs.drop(self.held_out.index) 
         self.all_seqs = self.all_seqs.sort_values('brightness')
         # starting sequences will be deciles of dataset 
@@ -53,20 +56,33 @@ class GFP_landscape_constructor:
 
 
 class GFP_landscape(Ground_truth_oracle):
-    def __init__(self, noise=0, norm_value=1):
+    def __init__(self, 
+        noise=0, 
+        norm_value=1
+    ):
+        """
+        Green fluorescent protein (GFP) lanscape. The oracle used in this lanscape is 
+        the transformer model from TAPE (https://github.com/songlab-cal/tape). 
+
+        To create the transformer model used here, run the command: 
+
+        tape-train transformer fluorescence --from_pretrained bert-base --batch_size 128 --gradient_accumulation_steps 10 --data_dir .
+        """
         self.sequences = {}
         self.noise = noise
         self.norm_value = norm_value
+        self.gfp_model_path = 'https://fluorescence-model.s3.amazonaws.com/fluorescence_transformer_20-05-25-03-49-06_184764'
 
     def construct(self, held_out, all_seqs):
         self.held_out = held_out
         self.GFP_df = all_seqs
         self.GFP_info = dict(zip(self.GFP_df['seq'], self.GFP_df['brightness']))
-        self.model = ProteinBertForValuePrediction.from_pretrained('bert-base')
         self.tokenizer = TAPETokenizer(vocab='iupac')
+        self.model = ProteinBertForValuePrediction.from_pretrained(self.gfp_model_path)
 
     def _fitness_function(self, sequence):
-        if sequence in self.GFP_info:
+        # if we have ground truth, use that value, otherwise use the prediction from the transformer model
+        if sequence in self.GFP_info: 
             return self.GFP_info[sequence]
         else:
             encoded_seq = torch.tensor([self.tokenizer.encode(sequence)])
