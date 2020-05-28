@@ -16,12 +16,14 @@ LANDSCAPE_TYPES = {
     "TF": [],
     "Protein": [2],
     "GFP": [],
+    "Additive":[]
 }  # ["RNA","TF","GFP","ADDITIVE"]
 LANDSCAPE_ALPHABET = {
     "RNA": "UCGA",
     "TF": "TCGA",
     "Protein": "ILVAGMFYWEDQNHCRKSTP",
     "GFP": "ILVAGMFYWEDQNHCRKSTP",
+    "Additive": "ILVAGMFYWEDQNHCRKSTP*",
 }
 
 
@@ -59,7 +61,9 @@ class Evaluator:
             f'loading landscapes RNA: {self.landscape_types.get("RNA")}, '
             f'TF: {self.landscape_types.get("TF")}, '
             f'Protein: {self.landscape_types.get("Protein")}, '
-            f'GFP: {self.landscape_types.get("GFP")}'
+            f'GFP: {self.landscape_types.get("GFP")}, '
+            f'Additive: {self.landscape_types.get("Additive")}'
+
         )
         if "RNA" in self.landscape_types:
             from models.Ground_truth_oracles.RNA_landscape_models import (
@@ -111,6 +115,19 @@ class Evaluator:
             self.landscape_generator[
                 "GFP"
             ] = GFP_constructor.generate_from_loaded_landscapes()
+
+        if "Additive" in self.landscape_types:
+            from models.Ground_truth_oracles.Additive_models import (
+                Additive_landscape_constructor,
+            )
+
+            Additive_constructor = Additive_landscape_constructor()
+            Additive_constructor.load_landscapes(
+                landscapes_to_test = self.landscape_types["Additive"]
+            )
+            self.landscape_generator[
+                "Additive"
+            ] = Additive_constructor.generate_from_loaded_landscapes()
 
         self.explorer.run_id = str(uuid.uuid1())
         print("Loading complete.")
