@@ -27,10 +27,6 @@ class GFP_landscape_constructor:
     ):
         self.landscape_file = f"{data_path}/sarkisyan_full_aa_seq_and_brightness_no_truncations.tsv"
         self.all_seqs = clean_GFP_df(pd.read_csv(self.landscape_file, sep=","))
-        # hold out 10% for testing as in here: https://www.biorxiv.org/content/10.1101/337154v1.full.pdf
-        self.held_out = self.all_seqs.sample(frac=0.1)
-        self.all_seqs.reset_index(drop=True, inplace=True)
-        self.all_seqs = self.all_seqs.drop(self.held_out.index) 
         self.all_seqs = self.all_seqs.sort_values('brightness')
         # starting sequences will be deciles of dataset 
         if landscapes_to_test != "all":
@@ -91,13 +87,9 @@ class GFP_landscape(Ground_truth_oracle):
         self.model = ProteinBertForValuePrediction.from_pretrained(self.save_path)
 
     def _fitness_function(self, sequence):
-        # if we have ground truth, use that value, otherwise use the prediction from the transformer model
-        if sequence in self.GFP_info: 
-            return self.GFP_info[sequence]
-        else:
-            encoded_seq = torch.tensor([self.tokenizer.encode(sequence)])
-            fitness_val, = self.model(encoded_seq)
-            return float(fitness_val)
+        encoded_seq = torch.tensor([self.tokenizer.encode(sequence)])
+        fitness_val, = self.model(encoded_seq)
+        return float(fitness_val)
 
     def get_fitness(self, sequence):
         if self.noise == 0:
