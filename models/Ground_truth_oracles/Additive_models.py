@@ -23,29 +23,38 @@ SEPRPIGTRYLTRNL"""
 
 class Additive_landscape_constructor():
     def __init__(self):
-       self.loaded_landscapes = None
+       self.loaded_landscapes = {}
 
-    def load_landscapes(self, config_file, landscapes_to_test = None):
-        self.config_file = config_file
+    def load_landscapes(self, config_file='../data/AAV_Additive_landscapes/landscapes_450_540.json', landscapes_to_test = None):
+
+        with open(config_file,'r') as infile:
+            all_loaded_landscapes = json.load(infile)
 
 
+        if landscapes_to_test:
+           for loaded_landscape in all_loaded_landscapes:
+               if all_loaded_landscapes[loaded_landscape]['phenotype'] in landscapes_to_test:
+                  self.loaded_landscapes[loaded_landscape] = all_loaded_landscapes[loaded_landscape]
 
-        for phenotype in self.loaded_landscapes:
-            print (f'{phenotype} landscape loaded')
+        else:
+           self.loaded_landscapes = all_loaded_landscapes    
+           print (f'loaded {len(self.loaded_landscapes)} landscapes')
 
 
         
-    def construct_landscape_object(self, phenotype):
+    def construct_landscape_object(self, landscape_id, landscape):
 
-        landscape = Additive_landscape_AAV(self.config_file, phenotype, **self.loaded_phenotypes)
+        additive_landscape = Additive_landscape_AAV(**landscape)
+        seq_start = landscape['start']
+        seq_end = landscape['end']
 
-        return {"landscape_id": phenotype, "starting_seqs": "AAV2" , "landscape_oracle": landscape} 
+        return {"landscape_id": landscape_id, "starting_seqs": {f'AAV2:{seq_start}-{seq_end}':AAV2_WT[seq_start:seq_end]} , "landscape_oracle": additive_landscape} 
 
     def generate_from_loaded_landscapes(self):
 
-        for landscape in self.loaded_phenotypes:
+        for landscape_id in self.loaded_landscapes:
 
-            yield self.construct_landscape_object(landscape)
+            yield self.construct_landscape_object(landscape_id, self.loaded_landscapes[landscape_id])
 
 
 class Additive_landscape_AAV(Ground_truth_oracle):
