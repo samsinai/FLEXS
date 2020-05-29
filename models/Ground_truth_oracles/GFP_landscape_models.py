@@ -41,7 +41,7 @@ class GFP_landscape_constructor:
     def construct_landscape_object(self):
         landscape_id = 'GFP'
         landscape = GFP_landscape()
-        landscape.construct(self.held_out, self.all_seqs)
+        landscape.construct(self.all_seqs)
 
         return {
             "landscape_id": landscape_id,
@@ -79,8 +79,7 @@ class GFP_landscape(Ground_truth_oracle):
                 with open(self.save_path + file_name, 'wb') as f:
                     f.write(response.content)
 
-    def construct(self, held_out, all_seqs):
-        self.held_out = held_out
+    def construct(self, all_seqs):
         self.GFP_df = all_seqs
         self.GFP_info = dict(zip(self.GFP_df['seq'], self.GFP_df['brightness']))
         self.tokenizer = TAPETokenizer(vocab='iupac')
