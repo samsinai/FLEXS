@@ -48,7 +48,6 @@ class BO_Explorer(Base_explorer):
             debug=debug,
         )
         self.explorer_type = "BO_Explorer"
-        self.alphabet_len = len(alphabet)
         self.method = method
         self.recomb_rate = recomb_rate
         self.best_fitness = 0
@@ -67,7 +66,7 @@ class BO_Explorer(Base_explorer):
         self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
         self.seq_len = len(start_sequence)
         self.memory = PrioritizedReplayBuffer(
-            self.alphabet_len * self.seq_len, 100000, self.batch_size, 0.6
+            len(self.alphabet) * self.seq_len, 100000, self.batch_size, 0.6
         )
 
     def reset(self):
@@ -122,7 +121,7 @@ class BO_Explorer(Base_explorer):
         pos_changes = []
         for i in range(self.seq_len):
             pos_changes.append([])
-            for j in range(self.alphabet_len):
+            for j in range(len(self.alphabet)):
                 if self.state[j, i] == 0:
                     pos_changes[i].append((j, i))
 
@@ -130,7 +129,7 @@ class BO_Explorer(Base_explorer):
             action = []
             for i in range(self.seq_len):
                 if np.random.random() < 1 / self.seq_len:
-                    pos_tuple = pos_changes[i][np.random.randint(self.alphabet_len - 1)]
+                    pos_tuple = pos_changes[i][np.random.randint(len(self.alphabet) - 1)]
                     action.append(pos_tuple)
             if len(action) > 0 and tuple(action) not in actions_set:
                 actions_set.add(tuple(action))
@@ -143,7 +142,7 @@ class BO_Explorer(Base_explorer):
         actions_to_screen = []
         states_to_screen = []
         for i in range(self.virtual_screen):
-            x = np.zeros((self.alphabet_len, self.seq_len))
+            x = np.zeros((len(self.alphabet), self.seq_len))
             for action in actions[i]:
                 x[action] = 1
             actions_to_screen.append(x)
