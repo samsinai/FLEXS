@@ -1,3 +1,5 @@
+"""DyNA-PPO explorer."""
+
 import collections
 from functools import partial
 
@@ -21,6 +23,8 @@ from utils.sequence_utils import (translate_one_hot_to_string,
 
 
 class DynaPPO_explorer(Base_explorer):
+    """Explorer for DyNA-PPO."""
+
     def __init__(
         self,
         batch_size=100,
@@ -32,8 +36,7 @@ class DynaPPO_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
-        """
-        Explorer which implements DynaPPO.
+        """Explorer which implements DynaPPO.
 
         Paper: https://openreview.net/pdf?id=HklxbgBKvr
 
@@ -91,9 +94,11 @@ class DynaPPO_explorer(Base_explorer):
         self.tf_env = None
 
     def reset(self):
+        """Reset."""
         self.batches = {-1: ""}
 
     def reset_measured_seqs(self):
+        """Reset measured sequences."""
         self.meas_seqs = [
             (self.model.get_fitness(seq), seq, self.model.cost)
             for seq in self.model.measured_sequences
@@ -101,6 +106,7 @@ class DynaPPO_explorer(Base_explorer):
         self.meas_seqs = sorted(self.meas_seqs, key=lambda x: x[0], reverse=True)
 
     def initialize_env(self):
+        """Initialize environment."""
         env = DynaPPOEnv(
             alphabet=self.alphabet,
             starting_seq=self.meas_seqs[0][1],
@@ -113,6 +119,7 @@ class DynaPPO_explorer(Base_explorer):
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
 
     def initialize_internal_ensemble(self):
+        """Initialize internal ensemble."""
         ens = [
             Linear,
             CNNa,
@@ -152,9 +159,11 @@ class DynaPPO_explorer(Base_explorer):
         self.internal_ensemble_uncertainty = None
 
     def set_tf_env_reward(self, is_oracle):
+        """Set reward."""
         self.tf_env.pyenv.envs[0].oracle_reward = is_oracle
 
     def initialize_agent(self):
+        """Initialize agent."""
         actor_fc_layers = [128]
         value_fc_layers = [128]
 
@@ -182,7 +191,8 @@ class DynaPPO_explorer(Base_explorer):
         self.agent = agent
 
     def add_last_seq_in_trajectory(self, experience, new_seqs):
-        """
+        """Add last sequence in trajectory to batch.
+
         Given a trajectory object, checks if
         the object is the last in the trajectory,
         then adds the sequence corresponding
@@ -195,7 +205,6 @@ class DynaPPO_explorer(Base_explorer):
         so that when the environment resets, mutants
         are generated from that new sequence.
         """
-
         if experience.is_boundary():
             seq = translate_one_hot_to_string(
                 experience.observation.numpy()[0], self.alphabet
@@ -206,6 +215,7 @@ class DynaPPO_explorer(Base_explorer):
             self.tf_env.pyenv.envs[0].seq = self.meas_seqs[self.meas_seqs_it][1]
 
     def get_oracle_sequences_and_fitness(self, sequences):
+        """Get oracle sequences and fitness."""
         X = []
         Y = []
 
@@ -219,6 +229,7 @@ class DynaPPO_explorer(Base_explorer):
         return np.array(X), np.array(Y)
 
     def get_internal_ensemble_fitness(self, sequence):
+        """Get internal ensemble fitness."""
         reward = []
 
         for (model, arch) in zip(self.internal_ensemble, self.internal_ensemble_archs):
@@ -248,6 +259,7 @@ class DynaPPO_explorer(Base_explorer):
         return np.sum(reward) / len(reward)
 
     def fit_internal_ensemble(self, sequences):
+        """Fit internal ensemble."""
         X, Y = self.get_oracle_sequences_and_fitness(sequences)
         X_train, X_test, Y_train, Y_test = train_test_split(
             X, Y, test_size=0.2, random_state=0
@@ -292,6 +304,7 @@ class DynaPPO_explorer(Base_explorer):
         self.filter_models(np.array(internal_r2s))
 
     def filter_models(self, r2s):
+        """Filter models."""
         # Filter out models by threshold.
         good = r2s > self.threshold
         print(f"Allowing {np.sum(good)}/{len(good)} models.")
@@ -299,6 +312,7 @@ class DynaPPO_explorer(Base_explorer):
         self.internal_ensemble = np.array(self.ens)[good]
 
     def perform_model_based_training_step(self):
+        """Perform model-based training step."""
         # Change reward to ensemble based.
         self.set_tf_env_reward(is_oracle=False)
 
@@ -341,6 +355,7 @@ class DynaPPO_explorer(Base_explorer):
         return 1
 
     def perform_experiment_based_training_step(self):
+        """Perform experiment-based training step."""
         # Change reward to oracle-based function.
         self.set_tf_env_reward(is_oracle=True)
 
@@ -411,6 +426,7 @@ class DynaPPO_explorer(Base_explorer):
                 break
 
     def learn_policy(self):
+        """Learn policy."""
         self.meas_seqs = [
             (self.model.get_fitness(seq), seq, self.model.cost)
             for seq in self.model.measured_sequences
@@ -431,6 +447,7 @@ class DynaPPO_explorer(Base_explorer):
         self.has_learned_policy = True
 
     def propose_samples(self):
+        """Propose samples."""
         if self.original_horizon is None:
             self.original_horizon = self.horizon
 

@@ -1,3 +1,5 @@
+"""DyNA-PPO environment module."""
+
 import os
 import sys
 
@@ -17,6 +19,8 @@ if module_path not in sys.path:
 
 
 class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
+    """DyNA-PPO environment based on TF-Agents."""
+
     def __init__(  # pylint: disable=W0231
         self,
         alphabet,
@@ -26,10 +30,9 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         ensemble_fitness,
         oracle_reward=False,
     ):
-        """
-        Environment for DyNA-PPO agent.
+        """Initialize DyNA-PPO agent environment.
 
-        Based on this:
+        Based on this tutorial:
         https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
 
         Args:
@@ -45,7 +48,6 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             oracle_reward: Whether or not to give reward based
                 on oracle or on ensemble model.
         """
-
         # alphabet
         self.alphabet = alphabet
         self.alphabet_len = len(self.alphabet)
@@ -89,18 +91,23 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         return ts.restart(np.array(self._state, dtype=np.float32))
 
     def time_step_spec(self):
+        """Define time steps."""
         return self._time_step_spec
 
     def action_spec(self):
+        """Define agent actions."""
         return self._action_spec
 
     def observation_spec(self):
+        """Define environment observations."""
         return self._observation_spec
 
     def get_state_string(self):
+        """Get sequence representing current state."""
         return translate_one_hot_to_string(self._state, self.alphabet)
 
     def sequence_density(self, seq):
+        """Get average distance to `seq` out of all observed sequences."""
         dens = 0
         for s in self.all_seqs:
             dist = int(editdistance.eval(s, seq))
@@ -109,13 +116,11 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         return dens
 
     def _step(self, action):
-        """
-        The agent moves until the reward is decreasing.
+        """Progress the agent one step in the environment.
 
-        The number of sequences that can be evaluated at each episode
-        is capped to `self.max_num_steps`.
+        The agent moves until the reward is decreasing. The number of sequences that
+        can be evaluated at each episode is capped to `self.max_num_steps`.
         """
-
         if self.num_steps < self.max_num_steps:
             self.num_steps += 1
             action_one_hot = np.zeros((self.alphabet_len, self.seq_len))

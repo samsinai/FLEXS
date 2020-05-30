@@ -6,4 +6,4 @@ format:
 
 lint:
 	python -m pylint --reports=n --rcfile=pylintrc $(directories)
-	python -m pydocstyle
+	python -m pydocstyle $(directories)

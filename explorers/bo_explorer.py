@@ -1,3 +1,4 @@
+"""BO explorer."""
 import copy
 from bisect import bisect_left
 
@@ -12,6 +13,7 @@ from utils.sequence_utils import (construct_mutant_from_sample,
 
 
 class BO_Explorer(Base_explorer):
+    """BO explorer."""
     def __init__(
         self,
         batch_size=100,
@@ -22,8 +24,7 @@ class BO_Explorer(Base_explorer):
         method="EI",
         recomb_rate=0,
     ):
-        """
-        Bayesian Optimization (BO) Explorer.
+        """Bayesian Optimization (BO) Explorer.
 
         Parameters:
             method (str, equal to EI or UCB): The improvement method used in BO,
@@ -63,6 +64,7 @@ class BO_Explorer(Base_explorer):
         self.initial_uncertainty = None
 
     def initialize_data_structures(self):
+        """Initialize."""
         start_sequence = list(self.model.measured_sequences)[0]
         self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
         self.seq_len = len(start_sequence)
@@ -71,11 +73,13 @@ class BO_Explorer(Base_explorer):
         )
 
     def reset(self):
+        """Reset."""
         self.best_fitness = 0
         self.batches = {-1: ""}
         self.num_actions = 0
 
     def train_models(self):
+        """Train."""
         batch = self.memory.sample_batch()
         states = batch["next_obs"]
         state_seqs = [
@@ -110,14 +114,17 @@ class BO_Explorer(Base_explorer):
         return ret
 
     def EI(self, vals):
+        """Expected improvement."""
         return np.mean([max(val - self.best_fitness, 0) for val in vals])
 
     @staticmethod
     def UCB(vals):
+        """Upper confidence bound."""
         discount = 0.01
         return np.mean(vals) - discount * np.std(vals)
 
     def sample_actions(self):
+        """Sample action."""
         actions, actions_set = [], set()
         pos_changes = []
         for i in range(self.seq_len):
@@ -138,6 +145,7 @@ class BO_Explorer(Base_explorer):
         return actions
 
     def pick_action(self):
+        """Pick action."""
         state = self.state.copy()
         actions = self.sample_actions()
         actions_to_screen = []
@@ -176,6 +184,7 @@ class BO_Explorer(Base_explorer):
 
     @staticmethod
     def Thompson_sample(measured_batch):
+        """Sample."""
         fitnesses = np.cumsum([np.exp(10 * x[0]) for x in measured_batch])
         fitnesses = fitnesses / fitnesses[-1]
         x = np.random.uniform()
@@ -184,6 +193,7 @@ class BO_Explorer(Base_explorer):
         return sequences[index]
 
     def propose_samples(self):
+        """Propose."""
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()

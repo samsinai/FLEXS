@@ -1,19 +1,16 @@
+"""BO Explorer."""
 import numpy as np
 
 from explorers.base_explorer import Base_explorer
 from utils.sequence_utils import translate_string_to_one_hot
 
-# new BO stuff
-
-
 class New_BO_Explorer(Base_explorer):
-    """
-    Bayesian optimization explorer. Uses Gaussian process with Matern kernel
-    on black box function.
+    """Bayesian optimization explorer.
+
+    Uses Gaussian process with Matern kernel on black box function.
 
     Reference: http://krasserm.github.io/2018/03/21/bayesian-optimization/
     """
-
     def __init__(
         self,
         batch_size=100,
@@ -23,6 +20,7 @@ class New_BO_Explorer(Base_explorer):
         debug=False,
         method="EI",
     ):
+        """Initialize."""
         super(New_BO_Explorer, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
@@ -46,16 +44,16 @@ class New_BO_Explorer(Base_explorer):
         self.seq_len = len(start_sequence)
 
     def reset(self):
+        """Reset."""
         self.best_fitness = 0
         self.batches = {-1: ""}
         self._reset = True
 
     def propose_sequences_via_thompson(self):
-        """
-        Proposes a batch of new sequences based on Thompson sampling with
-        a Gaussian posterior.
-        """
+        """Propose a batch of new sequences.
 
+        Based on Thompson sampling with a Gaussian posterior.
+        """
         print("Enumerating all sequences in the space.")
 
         self.maxima = []
@@ -76,11 +74,10 @@ class New_BO_Explorer(Base_explorer):
         return sorted(self.maxima, reverse=True, key=lambda x: x[0])
 
     def propose_sequences_via_greedy(self):
-        """
-        Proposes a batch of new sequences based on greedy in the expectation of the
-        Gaussian posterior.
-        """
+        """Propose a batch of new sequences.
 
+        Based on greedy in the expectation of the Gaussian posterior.
+        """
         print("Enumerating all sequences in the space.")
 
         self.maxima = []
@@ -100,11 +97,10 @@ class New_BO_Explorer(Base_explorer):
         return sorted(self.maxima, reverse=True, key=lambda x: x[0])
 
     def propose_sequences_via_ucb(self):
-        """
-        Proposes a batch of new sequences based on greedy in the expectation of the
-        Gaussian posterior.
-        """
+        """Propose a batch of new sequences.
 
+        Based on greedy in the expectation of the Gaussian posterior.
+        """
         print("Enumerating all sequences in the space.")
 
         self.maxima = []
@@ -124,6 +120,7 @@ class New_BO_Explorer(Base_explorer):
         return sorted(self.maxima, reverse=True, key=lambda x: x[0])
 
     def propose_samples(self):
+        """Propose."""
         if self._reset:
             # indicates model was reset
             self._initialize()

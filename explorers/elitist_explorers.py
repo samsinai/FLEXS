@@ -1,3 +1,4 @@
+"""Elitist explorers."""
 import bisect
 import random
 
@@ -9,6 +10,7 @@ from utils.softmax import softmax
 
 
 class XE_IS(Base_explorer):
+    """XEIS explorer."""
     def __init__(
         self,
         beta=1,
@@ -20,7 +22,7 @@ class XE_IS(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
-        """X-entropy indepedent-sites explorer"""
+        """X-entropy independent-sites explorer."""
         super(XE_IS, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
@@ -37,6 +39,7 @@ class XE_IS(Base_explorer):
 
     @staticmethod
     def recombine(sequence1, sequence2, rate):
+        """Recombine."""
         recomb_1 = []
         recomb_2 = []
         flipped = 1
@@ -53,6 +56,7 @@ class XE_IS(Base_explorer):
         return "".join(recomb_1), "".join(recomb_2)
 
     def get_matrix(self, top_seqs):
+        """Get."""
         XE_matrix = np.ones((len(self.alphabet), len(top_seqs[0])))
 
         for seq in top_seqs:
@@ -62,6 +66,7 @@ class XE_IS(Base_explorer):
         return XE_matrix  # /len(top_seqs)
 
     def sample_matrix(self, pwm):
+        """Sample."""
         out_seq = ""
         for col in range(pwm.shape[1]):
             sample = np.random.uniform()
@@ -73,6 +78,7 @@ class XE_IS(Base_explorer):
         return out_seq
 
     def generate_sequences(self):
+        """Generate."""
         offspring = []
         seq_and_fitness = []
         last_batch = self.get_last_batch()
@@ -124,6 +130,7 @@ class XE_IS(Base_explorer):
         return sorted(seq_and_fitness, reverse=True)
 
     def propose_samples(self):
+        """Propose."""
         new_seqs_and_fitnesses = self.generate_sequences()
         new_batch = new_seqs_and_fitnesses[: self.batch_size]
         batch_seq = []
@@ -135,6 +142,7 @@ class XE_IS(Base_explorer):
 
 
 class Greedy(XE_IS):
+    """Greedy."""
     def __init__(
         self,
         mu=1,
@@ -147,7 +155,7 @@ class Greedy(XE_IS):
         path="./simulations/",
         debug=False,
     ):
-        """Greedy algorithm implementation"""
+        """Greedy algorithm implementation."""
         super(Greedy, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
@@ -192,6 +200,7 @@ class Greedy(XE_IS):
         return candidates
 
     def generate_sequences(self):
+        """Generate."""
         ret = []
 
         seq_and_fitness = []

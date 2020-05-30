@@ -1,3 +1,5 @@
+"""Base explorer."""
+
 import os.path
 import uuid
 
@@ -5,6 +7,7 @@ from meta.explorer import Explorer
 
 
 class Base_explorer(Explorer):
+    """Base explorer."""
     def __init__(
         self,
         batch_size=100,
@@ -13,6 +16,7 @@ class Base_explorer(Explorer):
         path="./simulations/",
         debug=False,
     ):
+        """Initialize."""
         self.alphabet = alphabet
         self.batch_size = batch_size
         self.virtual_screen = virtual_screen
@@ -26,9 +30,11 @@ class Base_explorer(Explorer):
 
     @property
     def file_to_write(self):
+        """File."""
         return f"{self.path}{self.explorer_type}.csv"
 
     def write(self, current_round, overwrite):
+        """Write."""
         if not os.path.exists(self.file_to_write) or (current_round == 0 and overwrite):
             with open(self.file_to_write, "w") as output_file:
                 output_file.write(
@@ -50,9 +56,11 @@ class Base_explorer(Explorer):
                 )
 
     def get_last_batch(self):
+        """Get."""
         return max(self.batches.keys())
 
     def set_model(self, model, reset=True):  # pylint: disable=W0221
+        """Set."""
         if reset:
             self.reset()
         self.model = model
@@ -64,12 +72,13 @@ class Base_explorer(Explorer):
                 self.batches[batch][seq] = [score, score]
 
     def propose_samples(self):
-        """implement this function for your own explorer"""
+        """Implement this function for your own explorer."""
         raise NotImplementedError(
             "propose_samples must be implemented by your explorer"
         )
 
     def measure_proposals(self, proposals):
+        """Measure."""
         to_measure = list(proposals)[: self.batch_size]
         last_batch = self.get_last_batch()
         self.batches[last_batch + 1] = {}
@@ -80,13 +89,14 @@ class Base_explorer(Explorer):
             self.batches[last_batch + 1][seq].append(self.model.get_fitness(seq))
 
     def reset(self):
-        """
-        Resets the explorer; overwrite if you are working with a stateful
-        explorer.
+        """Reset the explorer.
+
+        Overwrite if you are working with a stateful explorer.
         """
         self.batches = {-1: ""}
 
     def run(self, rounds, overwrite=False, verbose=True):
+        """Run."""
         self.horizon = rounds
         if not self.debug:
             self.write(0, overwrite)
