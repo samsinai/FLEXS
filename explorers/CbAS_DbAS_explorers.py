@@ -1,4 +1,4 @@
-"""Explorers."""
+"""CbAS and DbAS explorers."""
 
 import logging
 
@@ -24,7 +24,7 @@ class CbAS_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
-        """Explorer which implements Conditioning by Adaptive Sampling.
+        """Explorer which implements Conditioning by Adaptive Sampling (CbAS).
 
         Paper: https://arxiv.org/pdf/1901.10060.pdf
 
@@ -52,7 +52,7 @@ class CbAS_explorer(Base_explorer):
         self.explorer_type = f"CbAS_Q{self.Q}_generator{self.generator.name}"
 
     def propose_samples(self):
-        """Propose."""
+        """Propose `batch_size` samples."""
         gamma = np.percentile(
             list(self.model.measured_sequences.values()), 100 * self.Q
         )  # Qth percentile of current measured sequences
@@ -192,7 +192,7 @@ class DbAS_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
-        """Explorer which implements Design by Adaptive Sampling.
+        """Explorer which implements Design by Adaptive Sampling (DbAS).
 
         Paper: https://arxiv.org/pdf/1810.03714.pdf
 
@@ -220,7 +220,7 @@ class DbAS_explorer(Base_explorer):
         self.explorer_type = f"DbAS_Q{self.Q}_generator{self.generator.name}"
 
     def propose_samples(self):
-        """Propose."""
+        """Propose `batch_size` samples."""
         gamma = np.percentile(
             list(self.model.measured_sequences.values()), 100 * self.Q
         )  # Qth percentile of current measured sequences

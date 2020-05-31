@@ -13,7 +13,7 @@ from utils.sequence_utils import (construct_mutant_from_sample,
 
 
 class BO_Explorer(Base_explorer):
-    """BO explorer."""
+    """Explorer using Bayesian Optimization."""
     def __init__(
         self,
         batch_size=100,
@@ -24,7 +24,7 @@ class BO_Explorer(Base_explorer):
         method="EI",
         recomb_rate=0,
     ):
-        """Bayesian Optimization (BO) Explorer.
+        """Bayesian Optimization (BO) explorer.
 
         Parameters:
             method (str, equal to EI or UCB): The improvement method used in BO,
@@ -33,13 +33,15 @@ class BO_Explorer(Base_explorer):
                 BO proposes samples, default 0.
 
         Algorithm works as follows:
-        for N experiment rounds
-            recombine samples from previous batch if it exists and measure them, otherwise skip
-            Thompson sample starting sequence for new batch
-            while less than B samples in batch
-                Generate VS virtual screened samples
-                If variance of ensemble models is above twice that of the starting sequence
-                Thompson sample another starting sequence
+            for N experiment rounds
+                recombine samples from previous batch if it exists and measure them,
+                    otherwise skip
+                Thompson sample starting sequence for new batch
+                while less than B samples in batch
+                    Generate VS virtual screened samples
+                    If variance of ensemble models is above twice that of the starting
+                        sequence
+                    Thompson sample another starting sequence
         """
         super(BO_Explorer, self).__init__(
             batch_size=batch_size,
@@ -73,13 +75,13 @@ class BO_Explorer(Base_explorer):
         )
 
     def reset(self):
-        """Reset."""
+        """Reset the explorer."""
         self.best_fitness = 0
         self.batches = {-1: ""}
         self.num_actions = 0
 
     def train_models(self):
-        """Train."""
+        """Train the model."""
         batch = self.memory.sample_batch()
         states = batch["next_obs"]
         state_seqs = [
@@ -124,7 +126,7 @@ class BO_Explorer(Base_explorer):
         return np.mean(vals) - discount * np.std(vals)
 
     def sample_actions(self):
-        """Sample action."""
+        """Sample actions resulting in sequences to screen."""
         actions, actions_set = [], set()
         pos_changes = []
         for i in range(self.seq_len):
@@ -184,7 +186,7 @@ class BO_Explorer(Base_explorer):
 
     @staticmethod
     def Thompson_sample(measured_batch):
-        """Sample."""
+        """Pick a sequence via Thompson sampling."""
         fitnesses = np.cumsum([np.exp(10 * x[0]) for x in measured_batch])
         fitnesses = fitnesses / fitnesses[-1]
         x = np.random.uniform()
@@ -193,7 +195,7 @@ class BO_Explorer(Base_explorer):
         return sequences[index]
 
     def propose_samples(self):
-        """Propose."""
+        """Propose `batch_size` samples."""
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()

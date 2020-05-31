@@ -1,4 +1,4 @@
-"""DQN."""
+"""DQN explorer."""
 
 import copy
 import random
@@ -25,7 +25,7 @@ class Q_Network(nn.Module):
     """Q Network implementation, used in DQN Explorer."""
 
     def __init__(self, sequence_len, alphabet_len):
-        """Initialize."""
+        """Initialize the Q Network."""
         super(Q_Network, self).__init__()
         self.sequence_len = sequence_len
         self.alphabet_len = alphabet_len
@@ -38,7 +38,7 @@ class Q_Network(nn.Module):
         self.linear3 = nn.Linear(sequence_len, 1)
 
     def forward(self, x):  # pylint: disable=W0221
-        """Forward."""
+        """Take a forward step."""
         x = self.bn1(F.relu(self.linear1(x)))
         x = self.bn2(F.relu(self.linear2(x)))
         x = F.relu(self.linear3(x))
@@ -46,7 +46,7 @@ class Q_Network(nn.Module):
 
 
 def build_q_network(sequence_len, alphabet_len, device):
-    """Build."""
+    """Build the Q Network."""
     model = Q_Network(sequence_len, alphabet_len).to(device)
     return model
 
@@ -113,7 +113,7 @@ class DQN_Explorer(Base_explorer):
         self.memory = None
 
     def initialize_data_structures(self):
-        """Initialize."""
+        """Initialize internal data structures."""
         start_sequence = list(self.model.measured_sequences)[0]
         self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
         self.seq_len = len(start_sequence)
@@ -124,13 +124,13 @@ class DQN_Explorer(Base_explorer):
         )
 
     def reset(self):
-        """Reset."""
+        """Reset the explorer."""
         self.best_fitness = 0
         self.batches = {-1: ""}
         self.num_actions = 0
 
     def sample(self):
-        """Sample."""
+        """Sample a random `batch_size` subset of the memory."""
         indices = np.random.choice(len(self.memory), self.batch_size)
         rewards, actions, states, next_states = zip(
             *[self.memory[ind] for ind in indices]
@@ -143,7 +143,7 @@ class DQN_Explorer(Base_explorer):
         )
 
     def calculate_next_q_values(self, state_v):
-        """Calculate."""
+        """Calculate the next Q values."""
         dim = self.alphabet_size * self.seq_len
         states_repeated = state_v.repeat(1, dim).reshape(-1, dim)
         actions_repeated = torch.FloatTensor(np.identity(dim)).repeat(len(state_v), 1)
@@ -156,8 +156,8 @@ class DQN_Explorer(Base_explorer):
     def q_network_loss(self, batch):
         """Calculate MSE.
 
-        Computes between actual state action values,
-        and expected state action values from DQN.
+        Computes between actual state action values, and expected state action values
+        from DQN.
         """
         rewards, actions, states, next_states = (
             batch["rews"],
@@ -178,7 +178,7 @@ class DQN_Explorer(Base_explorer):
         return nn.MSELoss()(state_action_values, expected_state_action_values)
 
     def train_actor(self, train_epochs):
-        """Train."""
+        """Train the Q Network."""
         total_loss = 0.0
         # train Q network on new samples
         optimizer = optim.Adam(self.q_network.parameters())
@@ -193,7 +193,7 @@ class DQN_Explorer(Base_explorer):
         return total_loss / train_epochs
 
     def get_action_and_mutant(self, epsilon):
-        """Get."""
+        """Return an action and the resulting mutant."""
         state_tensor = torch.FloatTensor([self.state.ravel()])
         prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
         prediction = prediction.reshape((len(self.alphabet), self.seq_len))
@@ -213,7 +213,10 @@ class DQN_Explorer(Base_explorer):
         return action, mutant
 
     def pick_action(self):
-        """Pick."""
+        """Pick an action.
+        
+        Generates a new string representing the state, along with its associated reward.
+        """
         eps = max(
             self.epsilon_min,
             (0.5 - self.model.cost / (self.batch_size * self.generations)),
@@ -240,7 +243,7 @@ class DQN_Explorer(Base_explorer):
         return new_state_string, reward
 
     def propose_samples(self):
-        """Propose."""
+        """Propose `batch_size` samples."""
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()

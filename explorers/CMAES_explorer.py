@@ -1,4 +1,4 @@
-"""CMAES."""
+"""CMAES explorer."""
 
 import numpy as np
 
@@ -21,7 +21,7 @@ class CMAES_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
-        """Initialize."""
+        """Initialize the explorer."""
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)
         self.explorer_type = "CMAES"
 
@@ -48,7 +48,7 @@ class CMAES_explorer(Base_explorer):
         self.reset()
 
     def reset(self):
-        """Reset."""
+        """Reset the explorer."""
         self.lam = self.batch_size
         self.round = 0
 
@@ -58,7 +58,7 @@ class CMAES_explorer(Base_explorer):
         self.batches = {-1: ""}
 
     def initialize_params(self):
-        """Initialize."""
+        """Initialize all parameters."""
         # to be called after set_model
         seq = list(self.model.measured_sequences.keys())[0]
         self.seq_len = len(seq)
@@ -94,8 +94,7 @@ class CMAES_explorer(Base_explorer):
         self.has_been_initialized = True
 
     def convert_mvn_to_seq(self, mvn):
-        """Convert."""
-        # converts multivariate normal to one hot
+        """Convert a multivariate normal sample to a one-hot representation."""
         mvn = mvn.reshape((self.alphabet_len, self.seq_len))
         one_hot = np.zeros((self.alphabet_len, self.seq_len))
         amax = np.argmax(mvn, axis=0)
@@ -124,7 +123,7 @@ class CMAES_explorer(Base_explorer):
         return samples
 
     def compute_new_mean(self, samples):
-        """Compute."""
+        """Helper function to recompute mean."""
         s = np.zeros(self.mean.shape)
 
         for i in range(self.mu):
@@ -134,23 +133,23 @@ class CMAES_explorer(Base_explorer):
         self.mean = s / np.linalg.norm(s)
 
     def expectation(self):
-        """Return expectation."""
+        """Helper function to approximate expectation."""
         return np.sqrt(self.N) * (1 - 1 / (4 * self.N) + 1 / (21 * self.N ** 2))
 
     def update_isotropic_evolution_path(self):
-        """Update."""
+        """Helper function to update isotropic evolution path."""
         self.ps = (1 - self.cs) * self.ps + np.sqrt(
             self.cs * (2 - self.cs) * self.mueff
         ) * np.linalg.inv(np.sqrt(self.cov)) * (self.mean - self.old_mean) / self.sigma
 
     def update_step_size(self):
-        """Update."""
+        """Update the step size."""
         self.sigma = self.sigma * np.exp(
             (self.cs / self.damp) * (np.linalg.norm(self.ps) / self.chiN - 1)
         )
 
     def ps_indicator(self):
-        """Return indicator."""
+        """Return indicator of ps."""
         return int(
             np.linalg.norm(self.ps)
             / np.sqrt(1 - (1 - self.cs) ** (2 * self.round / self.lam))
@@ -159,13 +158,13 @@ class CMAES_explorer(Base_explorer):
         )
 
     def update_anisotropic_evolution_path(self):
-        """Update."""
+        """Helper function to update anisotropic evolution path."""
         self.pc = (1 - self.cc) * self.pc + self.ps_indicator() * np.sqrt(
             self.cc * (2 - self.cc) * self.mueff
         ) * (self.mean - self.old_mean) / self.sigma
 
     def update_covariance_matrix(self, samples):
-        """Update."""
+        """Update the covariance matrix."""
         weighted_sum = sum(
             [
                 self.weights[i - 1]
@@ -186,7 +185,7 @@ class CMAES_explorer(Base_explorer):
         )
 
     def propose_samples(self):
-        """Propose samples."""
+        """Propose `batch_size` samples."""
         if not self.has_been_initialized:
             self.initialize_params()
 
