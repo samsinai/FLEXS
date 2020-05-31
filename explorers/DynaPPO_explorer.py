@@ -94,11 +94,11 @@ class DynaPPO_explorer(Base_explorer):
         self.tf_env = None
 
     def reset(self):
-        """Reset."""
+        """Reset the explorer."""
         self.batches = {-1: ""}
 
     def reset_measured_seqs(self):
-        """Reset measured sequences."""
+        """Reset the measured sequences."""
         self.meas_seqs = [
             (self.model.get_fitness(seq), seq, self.model.cost)
             for seq in self.model.measured_sequences
@@ -106,7 +106,7 @@ class DynaPPO_explorer(Base_explorer):
         self.meas_seqs = sorted(self.meas_seqs, key=lambda x: x[0], reverse=True)
 
     def initialize_env(self):
-        """Initialize environment."""
+        """Initialize TF-Agents environment."""
         env = DynaPPOEnv(
             alphabet=self.alphabet,
             starting_seq=self.meas_seqs[0][1],
@@ -119,7 +119,12 @@ class DynaPPO_explorer(Base_explorer):
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
 
     def initialize_internal_ensemble(self):
-        """Initialize internal ensemble."""
+        """Initialize the internal ensemble.
+        
+        DyNA-PPO relies on an ensemble model as a surrogate for the oracle. Here, we
+        initialize every supported model architecture and trim them out based on their
+        R^2 score.
+        """
         ens = [
             Linear,
             CNNa,
@@ -159,7 +164,11 @@ class DynaPPO_explorer(Base_explorer):
         self.internal_ensemble_uncertainty = None
 
     def set_tf_env_reward(self, is_oracle):
-        """Set reward."""
+        """Set TF-Agents environment reward.
+        
+        If `is_oracle` is true, the reward value in the environment is coming from the
+        oracle. Otherwise, the reward value comes from the ensemble model.
+        """
         self.tf_env.pyenv.envs[0].oracle_reward = is_oracle
 
     def initialize_agent(self):
@@ -191,18 +200,14 @@ class DynaPPO_explorer(Base_explorer):
         self.agent = agent
 
     def add_last_seq_in_trajectory(self, experience, new_seqs):
-        """Add last sequence in trajectory to batch.
+        """Add the last sequence in an episode's trajectory.
 
-        Given a trajectory object, checks if
-        the object is the last in the trajectory,
-        then adds the sequence corresponding
-        to the state to batch.
+        Given a trajectory object, checks if the object is the last in the trajectory.
+        Since the environment ends the episode when the score is non-increasing, it
+        adds the associated maximum-valued sequence to the batch.
 
-        TODO: Update docstring
-        If the episode is ending, it changes the
-        "current sequence" of the environment
-        to the next one in `last_batch`,
-        so that when the environment resets, mutants
+        If the episode is ending, it changes the "current sequence" of the environment
+        to the next one in `last_batch`, so that when the environment resets, mutants
         are generated from that new sequence.
         """
         if experience.is_boundary():
@@ -215,7 +220,7 @@ class DynaPPO_explorer(Base_explorer):
             self.tf_env.pyenv.envs[0].seq = self.meas_seqs[self.meas_seqs_it][1]
 
     def get_oracle_sequences_and_fitness(self, sequences):
-        """Get oracle sequences and fitness."""
+        """Get sequences and fitnesses according to the oracle."""
         X = []
         Y = []
 
@@ -229,7 +234,11 @@ class DynaPPO_explorer(Base_explorer):
         return np.array(X), np.array(Y)
 
     def get_internal_ensemble_fitness(self, sequence):
-        """Get internal ensemble fitness."""
+        """Get the fitness of a sequence according to the internal ensemble model.
+        
+        If the uncertainty of the reward returned by the ensemble model is too high,
+        then we stop model-based training.
+        """
         reward = []
 
         for (model, arch) in zip(self.internal_ensemble, self.internal_ensemble_archs):
@@ -259,7 +268,12 @@ class DynaPPO_explorer(Base_explorer):
         return np.sum(reward) / len(reward)
 
     def fit_internal_ensemble(self, sequences):
-        """Fit internal ensemble."""
+        """Fit internal ensemble to oracle observations.
+        
+        This will train all models in the internal ensemble according to the sequences
+        and fitnesses observed by the oracle. Then it will filter the models in the
+        ensemble according to their R^2 score.
+        """
         X, Y = self.get_oracle_sequences_and_fitness(sequences)
         X_train, X_test, Y_train, Y_test = train_test_split(
             X, Y, test_size=0.2, random_state=0
@@ -304,8 +318,11 @@ class DynaPPO_explorer(Base_explorer):
         self.filter_models(np.array(internal_r2s))
 
     def filter_models(self, r2s):
-        """Filter models."""
-        # Filter out models by threshold.
+        """Filter models.
+        
+        This function filters out models in the ensemble based on whether or not their
+        R^2 score passes a predetermined threshold.
+        """
         good = r2s > self.threshold
         print(f"Allowing {np.sum(good)}/{len(good)} models.")
         self.internal_ensemble_archs = np.array(self.ens_archs)[good]
@@ -447,7 +464,7 @@ class DynaPPO_explorer(Base_explorer):
         self.has_learned_policy = True
 
     def propose_samples(self):
-        """Propose samples."""
+        """Propose `batch_size` samples."""
         if self.original_horizon is None:
             self.original_horizon = self.horizon
 
