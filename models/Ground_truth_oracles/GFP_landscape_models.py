@@ -83,12 +83,11 @@ class GFP_landscape(Ground_truth_oracle):
         self.GFP_df = all_seqs
         self.GFP_info = dict(zip(self.GFP_df['seq'], self.GFP_df['brightness']))
         self.tokenizer = TAPETokenizer(vocab='iupac')
-        self.model = ProteinBertForValuePrediction.from_pretrained(self.save_path)
-        if torch.cuda.is_available():
-            self.model.cuda()
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.model = ProteinBertForValuePrediction.from_pretrained(self.save_path).to(self.device)
 
     def _fitness_function(self, sequence):
-        encoded_seq = torch.tensor([self.tokenizer.encode(sequence)])
+        encoded_seq = torch.tensor([self.tokenizer.encode(sequence)]).to(self.device)
         fitness_val, = self.model(encoded_seq)
         return float(fitness_val)
 
