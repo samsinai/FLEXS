@@ -19,7 +19,7 @@ class Random_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
-        """Initialize."""
+        """Initialize the explorer."""
         super(Random_explorer, self).__init__(
             batch_size, alphabet, virtual_screen, path, debug
         )
@@ -27,7 +27,7 @@ class Random_explorer(Base_explorer):
         self.explorer_type = f"Random_mu{self.mu}"
 
     def propose_samples(self):
-        """Propose."""
+        """Propose `batch_size` samples."""
         new_seqs = set()
         last_batch = self.get_last_batch()
         while len(new_seqs) < self.batch_size:

@@ -8,7 +8,7 @@ from utils.sequence_utils import generate_random_mutant
 
 
 class Evolution(Base_explorer):
-    """Evolution."""
+    """Evolutionary explorer."""
     def __init__(
         self,
         mu=1,

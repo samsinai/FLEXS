@@ -10,7 +10,7 @@ from utils.softmax import softmax
 
 
 class XE_IS(Base_explorer):
-    """XEIS explorer."""
+    """XE-IS explorer."""
     def __init__(
         self,
         beta=1,
@@ -34,7 +34,7 @@ class XE_IS(Base_explorer):
         self.beta = beta
         self.recomb_rate = recomb_rate
         self.explorer_type = (
-            f"XS_IS_tr{self.threshold}_beta{self.beta}_r{self.recomb_rate}"
+            f"XE_IS_tr{self.threshold}_beta{self.beta}_r{self.recomb_rate}"
         )
 
     @staticmethod
@@ -56,7 +56,7 @@ class XE_IS(Base_explorer):
         return "".join(recomb_1), "".join(recomb_2)
 
     def get_matrix(self, top_seqs):
-        """Get."""
+        """Get XE matrix."""
         XE_matrix = np.ones((len(self.alphabet), len(top_seqs[0])))
 
         for seq in top_seqs:
@@ -142,7 +142,7 @@ class XE_IS(Base_explorer):
 
 
 class Greedy(XE_IS):
-    """Greedy."""
+    """Greedy explorer."""
     def __init__(
         self,
         mu=1,

@@ -5,9 +5,11 @@ from explorers.base_explorer import Base_explorer
 from utils.sequence_utils import translate_string_to_one_hot
 
 class New_BO_Explorer(Base_explorer):
-    """Bayesian optimization explorer.
+    """Explorer using Bayesian Optimization.
 
     Uses Gaussian process with Matern kernel on black box function.
+    IMPORTANT: This explorer is not limited by `virtual_screen`, and is used to find
+    the upper-bound performance of Bayesian Optimization techniques.
 
     Reference: http://krasserm.github.io/2018/03/21/bayesian-optimization/
     """
@@ -20,7 +22,7 @@ class New_BO_Explorer(Base_explorer):
         debug=False,
         method="EI",
     ):
-        """Initialize."""
+        """Initialize the explorer."""
         super(New_BO_Explorer, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
@@ -40,7 +42,6 @@ class New_BO_Explorer(Base_explorer):
 
     def _initialize(self):
         start_sequence = list(self.model.measured_sequences)[0]
-        #     self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
         self.seq_len = len(start_sequence)
 
     def reset(self):
@@ -99,7 +100,7 @@ class New_BO_Explorer(Base_explorer):
     def propose_sequences_via_ucb(self):
         """Propose a batch of new sequences.
 
-        Based on greedy in the expectation of the Gaussian posterior.
+        Based on upper confidence bound.
         """
         print("Enumerating all sequences in the space.")
 
@@ -120,7 +121,7 @@ class New_BO_Explorer(Base_explorer):
         return sorted(self.maxima, reverse=True, key=lambda x: x[0])
 
     def propose_samples(self):
-        """Propose."""
+        """Propose `batch_size` samples."""
         if self._reset:
             # indicates model was reset
             self._initialize()
