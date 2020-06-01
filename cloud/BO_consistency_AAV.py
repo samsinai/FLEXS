@@ -11,7 +11,7 @@ from evaluators.Evaluator import Evaluator
 from models.Ground_truth_oracles.TF_binding_landscape_models import *
 from explorers.bo_explorer import BO_Explorer
 
-LANDSCAPE_TYPES = {"Additive": ['heart', 'liver']}  # for testing
+LANDSCAPE_TYPES = {"Additive": ['heart', 'liver', 'kidney', 'lung', 'blood', 'spleen']}  # for testing
 bo_explorer_prod = BO_Explorer(virtual_screen=20)
 bo_explorer_prod.debug = False
 evaluator_bo = Evaluator(
