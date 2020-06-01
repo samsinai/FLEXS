@@ -27,11 +27,7 @@ class GFP_landscape_constructor:
     ):
         self.landscape_file = f"{data_path}/sarkisyan_full_aa_seq_and_brightness_no_truncations.tsv"
         self.all_seqs = clean_GFP_df(pd.read_csv(self.landscape_file, sep=","))
-        # hold out 10% for testing as in here: https://www.biorxiv.org/content/10.1101/337154v1.full.pdf
-        self.held_out = self.all_seqs.sample(frac=0.1)
-        self.all_seqs.reset_index(drop=True, inplace=True)
-        self.all_seqs = self.all_seqs.drop(self.held_out.index) 
-        self.all_seqs = self.all_seqs.sort_values('brightness')
+        self.all_seqs = self.all_seqs.sort_values('brightness').reset_index(drop=True)
         # starting sequences will be deciles of dataset 
         if landscapes_to_test != "all":
             if landscapes_to_test:
@@ -45,7 +41,7 @@ class GFP_landscape_constructor:
     def construct_landscape_object(self):
         landscape_id = 'GFP'
         landscape = GFP_landscape()
-        landscape.construct(self.held_out, self.all_seqs)
+        landscape.construct(self.all_seqs)
 
         return {
             "landscape_id": landscape_id,
@@ -83,21 +79,17 @@ class GFP_landscape(Ground_truth_oracle):
                 with open(self.save_path + file_name, 'wb') as f:
                     f.write(response.content)
 
-    def construct(self, held_out, all_seqs):
-        self.held_out = held_out
+    def construct(self, all_seqs):
         self.GFP_df = all_seqs
         self.GFP_info = dict(zip(self.GFP_df['seq'], self.GFP_df['brightness']))
         self.tokenizer = TAPETokenizer(vocab='iupac')
-        self.model = ProteinBertForValuePrediction.from_pretrained(self.save_path)
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.model = ProteinBertForValuePrediction.from_pretrained(self.save_path).to(self.device)
 
     def _fitness_function(self, sequence):
-        # if we have ground truth, use that value, otherwise use the prediction from the transformer model
-        if sequence in self.GFP_info: 
-            return self.GFP_info[sequence]
-        else:
-            encoded_seq = torch.tensor([self.tokenizer.encode(sequence)])
-            fitness_val, = self.model(encoded_seq)
-            return float(fitness_val)
+        encoded_seq = torch.tensor([self.tokenizer.encode(sequence)]).to(self.device)
+        fitness_val, = self.model(encoded_seq)
+        return float(fitness_val)
 
     def get_fitness(self, sequence):
         if self.noise == 0:

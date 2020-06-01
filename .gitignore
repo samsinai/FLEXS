@@ -27,6 +27,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+plotting_data_subset/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

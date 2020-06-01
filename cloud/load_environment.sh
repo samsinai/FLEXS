@@ -9,6 +9,6 @@ conda install tqdm
 pip install editdistance
 pip install keras
 pip install gin
-pip install tape 
+pip install tape_proteins
 
 # then you need to git clone
