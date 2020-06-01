@@ -16,7 +16,7 @@ xeis_explorer_prod.debug = False
 evaluator_xeis = Evaluator(
     xeis_explorer_prod,
     landscape_types=LANDSCAPE_TYPES,
-    path="../simulations/eval_greedy_consistency/",
+    path="../simulations/eval_greedy_efficiency/",
 )
 evaluator_xeis.evaluate_for_landscapes(
     evaluator_xeis.efficiency, num_starts=3
