@@ -10,7 +10,7 @@ from evaluators.Evaluator import Evaluator
 from models.Ground_truth_oracles.TF_binding_landscape_models import *
 from explorers.elitist_explorers import Greedy
 
-LANDSCAPE_TYPES = {"Additive": ['heart', 'liver']
+LANDSCAPE_TYPES = {"Additive": ['heart', 'liver', 'kidney', 'lung', 'blood', 'spleen']
 }
 xeis_explorer_prod = Greedy(recomb_rate=0.2, virtual_screen=20)
 xeis_explorer_prod.debug = False
