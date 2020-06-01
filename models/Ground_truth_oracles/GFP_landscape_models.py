@@ -27,7 +27,7 @@ class GFP_landscape_constructor:
     ):
         self.landscape_file = f"{data_path}/sarkisyan_full_aa_seq_and_brightness_no_truncations.tsv"
         self.all_seqs = clean_GFP_df(pd.read_csv(self.landscape_file, sep=","))
-        self.all_seqs = self.all_seqs.sort_values('brightness')
+        self.all_seqs = self.all_seqs.sort_values('brightness').reset_index(drop=True)
         # starting sequences will be deciles of dataset 
         if landscapes_to_test != "all":
             if landscapes_to_test:
