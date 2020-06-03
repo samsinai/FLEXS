@@ -1,7 +1,9 @@
 import numpy as np
 
 from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import translate_one_hot_to_string
+from utils.sequence_utils import (generate_random_sequences,
+                                  translate_one_hot_to_string,
+                                  translate_string_to_one_hot)
 
 
 class CMAES_explorer(Base_explorer):
@@ -103,8 +105,14 @@ class CMAES_explorer(Base_explorer):
     def _sample(self):
         samples = []
 
+        new_sequences = 0
         attempts = 0
-        while attempts < self.lam * self.virtual_screen:
+
+        # Terminate if all we see are old sequences.
+        while (new_sequences < self.lam * self.virtual_screen) and (
+            attempts < self.lam * self.virtual_screen * 3
+        ):
+            attempts += 1
             x = np.random.multivariate_normal(self.mean, (self.sigma ** 2) * self.cov)
             seq = self.convert_mvn_to_seq(x)
 
@@ -113,9 +121,24 @@ class CMAES_explorer(Base_explorer):
 
             self.seen_sequences[seq] = 1
             fitness = self.model.get_fitness(seq)
-            attempts += 1
+            new_sequences += 1
 
             samples.append((x, fitness))
+
+        # If we only saw old sequences, randomly generate to fill the batch.
+        while len(samples) < self.batch_size:
+            seqs = generate_random_sequences(
+                self.seq_len, self.batch_size - len(samples), alphabet=self.alphabet
+            )
+            for seq in seqs:
+                if seq in self.sequences:
+                    continue
+                self.seen_sequences[seq] = 1
+                fitness = self.model.get_fitness(seq)
+                samples.append(
+                    (translate_string_to_one_hot(seq, self.alphabet), fitness)
+                )
+
         return samples
 
     def compute_new_mean(self, samples):

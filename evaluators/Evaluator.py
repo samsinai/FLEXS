@@ -16,7 +16,7 @@ LANDSCAPE_TYPES = {
     "TF": [],
     "Protein": [2],
     "GFP": [],
-    "Additive":[]
+    "Additive": [],
 }  # ["RNA","TF","GFP","ADDITIVE"]
 LANDSCAPE_ALPHABET = {
     "RNA": "UCGA",
@@ -63,7 +63,6 @@ class Evaluator:
             f'Protein: {self.landscape_types.get("Protein")}, '
             f'GFP: {self.landscape_types.get("GFP")}, '
             f'Additive: {self.landscape_types.get("Additive")}'
-
         )
         if "RNA" in self.landscape_types:
             from models.Ground_truth_oracles.RNA_landscape_models import (
@@ -123,7 +122,7 @@ class Evaluator:
 
             Additive_constructor = Additive_landscape_constructor()
             Additive_constructor.load_landscapes(
-                landscapes_to_test = self.landscape_types["Additive"]
+                landscapes_to_test=self.landscape_types["Additive"]
             )
             self.landscape_generator[
                 "Additive"
