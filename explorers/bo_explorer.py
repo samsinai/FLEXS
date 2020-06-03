@@ -129,7 +129,9 @@ class BO_Explorer(Base_explorer):
             action = []
             for i in range(self.seq_len):
                 if np.random.random() < 1 / self.seq_len:
-                    pos_tuple = pos_changes[i][np.random.randint(len(self.alphabet) - 1)]
+                    pos_tuple = pos_changes[i][
+                        np.random.randint(len(self.alphabet) - 1)
+                    ]
                     action.append(pos_tuple)
             if len(action) > 0 and tuple(action) not in actions_set:
                 actions_set.add(tuple(action))

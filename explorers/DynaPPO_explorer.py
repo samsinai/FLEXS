@@ -16,7 +16,8 @@ from explorers.base_explorer import Base_explorer
 from utils.model_architectures import (NLNN, SKBR, SKGB, SKGP, SKRF, CNNa,
                                        Linear, SKExtraTrees, SKLasso, SKLinear,
                                        SKNeighbors)
-from utils.sequence_utils import (translate_one_hot_to_string,
+from utils.sequence_utils import (generate_random_sequences,
+                                  translate_one_hot_to_string,
                                   translate_string_to_one_hot)
 
 
@@ -474,14 +475,31 @@ class DynaPPO_explorer(Base_explorer):
 
         print("Effective budget:", effective_budget)
         previous_evals = self.model.evals
-        while (self.model.evals - previous_evals) < effective_budget:
+
+        attempts = 0
+
+        # Terminate if all we see are old sequences.
+        while ((self.model.evals - previous_evals) < effective_budget) and (
+            attempts < effective_budget * 3
+        ):
             collect_driver.run()
+            attempts += 1
             # We've looped over, found nothing new.
             if self.meas_seqs_it == 0:
                 break
         print("Total evals:", self.model.evals - previous_evals)
 
         new_seqs = new_seqs.difference(all_seqs)
+
+        # If we only saw old sequences, randomly generate to fill the batch.
+        while len(new_seqs) < self.batch_size:
+            seqs = generate_random_sequences(
+                self.seq_len, self.batch_size - len(new_seqs), alphabet=self.alphabet
+            )
+            for seq in seqs:
+                if (seq in new_seqs) or (seq in all_seqs):
+                    continue
+                new_seqs.add(seq)
 
         # Add new sequences to `measured_sequences` and sort.
         new_meas_seqs = [
