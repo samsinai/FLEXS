@@ -1,3 +1,5 @@
+"""Evaluator module."""
+
 # pylint: disable=C0415
 import time
 import uuid
@@ -28,8 +30,7 @@ LANDSCAPE_ALPHABET = {
 
 
 class Evaluator:
-    """
-    Evaluator for explorers.
+    """Evaluator for explorers.
 
     Currently, the evaluator supports transcription factor (TF), RNA, Protein,
     and Green Fluorescent Protein (GFP) landscapes.
@@ -43,6 +44,7 @@ class Evaluator:
         ML_ensemble=["CNNa", "CNNa", "CNNa"],
         adaptive_ensemble=True,
     ):
+        """Initialize evaluator."""
         self.explorer = explorer
         self.path = path
         self.verbose = False
@@ -57,6 +59,7 @@ class Evaluator:
         self.load_landscapes()
 
     def load_landscapes(self):
+        """Load landscapes."""
         print(
             f'loading landscapes RNA: {self.landscape_types.get("RNA")}, '
             f'TF: {self.landscape_types.get("TF")}, '
@@ -133,6 +136,7 @@ class Evaluator:
 
     @staticmethod
     def load_ensemble(ML_ensemble):
+        """Create ensemble of models."""
         ensemble = []
         for key in ML_ensemble:
             if key == "LNN":
@@ -180,7 +184,7 @@ class Evaluator:
         verbose=False,
         overwrite=False,
     ):
-
+        """Run with null model."""
         print("Running null ", Null_args)
 
         if not self.ML_ensemble:
@@ -219,7 +223,7 @@ class Evaluator:
         verbose=False,
         overwrite=False,
     ):
-
+        """Run with NAM model."""
         print("Running  NAM", NAM_args)
 
         if not self.ML_ensemble:
@@ -257,7 +261,7 @@ class Evaluator:
         verbose=False,
         overwrite=False,
     ):
-
+        """Run with NN model."""
         print("Running NN", NNM_args)
 
         if not self.ML_ensemble:
@@ -304,7 +308,7 @@ class Evaluator:
         verbose=False,
         overwrite=False,
     ):
-
+        """Run with GPR model."""
         print("Running GPR", NNM_args)
 
         nn_model = SKGP(len(start_seq), alphabet=self.explorer.alphabet)
@@ -319,6 +323,7 @@ class Evaluator:
         self.explorer.run(num_batches, overwrite, verbose)
 
     def evaluate_for_landscapes(self, property_of_interest_evaluator, num_starts=100):
+        """Evaluate for property of interest."""
         for landscape_type in self.landscape_types:
             self.explorer.alphabet = LANDSCAPE_ALPHABET[landscape_type]
             for landscape in self.landscape_generator[landscape_type]:
@@ -339,9 +344,7 @@ class Evaluator:
     def consistency_robustness_independence(
         self, oracle, start_seq, landscape_id, start_seq_id
     ):
-        """
-        Evaluate explorer on NAM model using a variety of noise levels.
-        """
+        """Evaluate explorer on NAM model using a variety of noise levels."""
         Path(self.path + "consistency_robustness_independence/").mkdir(exist_ok=True)
         self.explorer.path = self.path + "consistency_robustness_independence/"
 
@@ -361,6 +364,7 @@ class Evaluator:
         # self.run_on_GPRmodel(oracle, landscape_idents, start_seq, verbose=True)
 
     def efficiency(self, oracle, start_seq, landscape_id, start_seq_id):
+        """Evaluate explorer efficiency."""
         Path(self.path + "efficiency/").mkdir(exist_ok=True)
         self.explorer.path = self.path + "efficiency/"
 
@@ -378,6 +382,7 @@ class Evaluator:
             self.run_on_NAM(oracle, landscape_idents, start_seq)
 
     def adaptivity(self, oracle, start_seq, landscape_id, start_seq_id):
+        """Evaluate explorer adaptivity."""
         Path(self.path + "adaptivity/").mkdir(exist_ok=True)
         self.explorer.path = self.path + "adaptivity/"
 
@@ -397,6 +402,7 @@ class Evaluator:
             )
 
     def scalability(self, oracle, start_seq, landscape_id, start_seq_id):
+        """Evaluate explorer scalability."""
         Path(self.path + "scalability/").mkdir(exist_ok=True)
         self.explorer.path = self.path + "scalability/"
 
