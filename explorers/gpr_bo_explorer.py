@@ -4,10 +4,10 @@ import numpy as np
 from explorers.base_explorer import Base_explorer
 from utils.sequence_utils import translate_string_to_one_hot
 
-class New_BO_Explorer(Base_explorer):
+class GPR_BO_Explorer(Base_explorer):
     """Explorer using Bayesian Optimization.
 
-    Uses Gaussian process with Matern kernel on black box function.
+    Uses Gaussian process with RBF kernel on black box function.
     IMPORTANT: This explorer is not limited by `virtual_screen`, and is used to find
     the upper-bound performance of Bayesian Optimization techniques.
 
@@ -23,14 +23,14 @@ class New_BO_Explorer(Base_explorer):
         method="EI",
     ):
         """Initialize the explorer."""
-        super(New_BO_Explorer, self).__init__(
+        super(GPR_BO_Explorer, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
             virtual_screen=virtual_screen,
             path=path,
             debug=debug,
         )
-        self.explorer_type = "New_BO_Explorer"
+        self.explorer_type = "GPR_BO_Explorer"
         self.alphabet_len = len(alphabet)
         self.method = method
         self.best_fitness = 0
