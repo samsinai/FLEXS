@@ -1,3 +1,5 @@
+"""PPO explorer."""
+
 import collections
 from functools import partial
 
@@ -16,14 +18,7 @@ from utils.sequence_utils import translate_one_hot_to_string
 
 
 class PPO_explorer(Base_explorer):
-    """
-    PPO implementation.
-
-    The algorithm is:
-        for N experiment rounds
-            collect samples with policy
-            train policy on samples
-    """
+    """Explorer for PPO."""
 
     def __init__(
         self,
@@ -33,20 +28,41 @@ class PPO_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
+        """Explorer which uses PPO.
+        
+        The algorithm is:
+            for N experiment rounds
+                collect samples with policy
+                train policy on samples
+
+        Attributes:
+            meas_seqs: All measured sequences.
+            meas_seqs_it: Iterator through `meas_seqs`.
+            top_seqs: Top measured sequences by fitness score.
+            top_seqs_it: Iterator through `top_seqs`.
+            has_pretrained_agent: Whether or not the agent has been trained already.
+            original_horizon: Total number of rounds. Used to compute proposal
+                budget and distribute this budget between rounds.
+            tf_env: TF-Agents environment in which to run the explorer.
+            agent: Decision-making agent.
+        """
         super().__init__(batch_size, alphabet, virtual_screen, path, debug)
 
         self.meas_seqs = None
         self.meas_seqs_it = None
         self.top_seqs = None
         self.top_seqs_it = None
+
         self.has_pretrained_agent = None
         self.original_horizon = None
+
         self.tf_env = None
         self.agent = None
 
         self.explorer_type = "PPO_Agent"
 
     def reset(self):
+        """Reset the explorer."""
         self.meas_seqs = []
         self.meas_seqs_it = 0
 
@@ -59,6 +75,7 @@ class PPO_explorer(Base_explorer):
         self.original_horizon = None
 
     def reset_measured_seqs(self):
+        """Reset the measured sequences."""
         measured_seqs = [
             (self.model.get_fitness(seq), seq, self.model.cost)
             for seq in self.model.measured_sequences
@@ -69,6 +86,7 @@ class PPO_explorer(Base_explorer):
         self.meas_seqs = measured_seqs
 
     def initialize_env(self):
+        """Initialize TF-Agents environment."""
         env = PPOEnv(
             alphabet=self.alphabet,
             starting_seq=self.meas_seqs[0][1],
@@ -81,6 +99,7 @@ class PPO_explorer(Base_explorer):
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
 
     def initialize_agent(self):
+        """Initialize agent."""
         actor_fc_layers = [128]
         value_fc_layers = [128]
 
@@ -108,19 +127,16 @@ class PPO_explorer(Base_explorer):
         self.agent = agent
 
     def add_last_seq_in_trajectory(self, experience, new_seqs):
-        """
-        Given a trajectory object, checks if
-        the object is the last in the trajectory,
-        then adds the sequence corresponding
-        to the state to batch.
+        """Add the last sequence in an episode's trajectory.
 
-        If the episode is ending, it changes the
-        "current sequence" of the environment
-        to the next one in `last_batch`,
-        so that when the environment resets, mutants
+        Given a trajectory object, checks if the object is the last in the trajectory.
+        Since the environment ends the episode when the score is non-increasing, it
+        adds the associated maximum-valued sequence to the batch.
+
+        If the episode is ending, it changes the "current sequence" of the environment
+        to the next one in `last_batch`, so that when the environment resets, mutants
         are generated from that new sequence.
         """
-
         if experience.is_boundary():
             seq = translate_one_hot_to_string(
                 experience.observation.numpy()[0], self.alphabet
@@ -131,6 +147,12 @@ class PPO_explorer(Base_explorer):
             self.tf_env.pyenv.envs[0].seq = self.meas_seqs[self.meas_seqs_it][1]
 
     def pretrain_agent(self):
+        """Pretrain the agent.
+        
+        Because of the budget constraint, we can only pretrain the agent on so many
+        sequences (this number is currently set to `self.batch_size * self.
+        virtual_screen / 2`).
+        """
         measured_seqs = [
             (self.model.get_fitness(seq), seq, self.model.cost)
             for seq in self.model.measured_sequences
@@ -216,6 +238,7 @@ class PPO_explorer(Base_explorer):
         self.has_pretrained_agent = True
 
     def propose_samples(self):
+        """Propose `batch_size` samples."""
         if self.original_horizon is None:
             self.original_horizon = self.horizon
 

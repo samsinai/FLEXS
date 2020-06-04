@@ -1,10 +1,10 @@
+"""Random explorer."""
 from explorers.base_explorer import Base_explorer
 from utils.sequence_utils import generate_random_mutant
 
 
 class Random_explorer(Base_explorer):
-    """
-    Random explorer
+    """Random explorer.
 
     Parameters:
         mu (float): The probability that each position gets mutated.
@@ -19,6 +19,7 @@ class Random_explorer(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
+        """Initialize the explorer."""
         super(Random_explorer, self).__init__(
             batch_size, alphabet, virtual_screen, path, debug
         )
@@ -26,6 +27,7 @@ class Random_explorer(Base_explorer):
         self.explorer_type = f"Random_mu{self.mu}"
 
     def propose_samples(self):
+        """Propose `batch_size` samples."""
         new_seqs = set()
         last_batch = self.get_last_batch()
         while len(new_seqs) < self.batch_size:

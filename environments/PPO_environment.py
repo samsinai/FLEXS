@@ -1,3 +1,5 @@
+"""PPO environment module."""
+
 import os
 import sys
 
@@ -16,15 +18,12 @@ if module_path not in sys.path:
 
 
 class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
-    """
-    PPO Environment.
-    """
+    """PPO environment based on TF-Agents."""
 
     def __init__(
         self, alphabet, starting_seq, landscape, max_num_steps
     ):  # pylint: disable=W0231
-        """
-        Environment for PPO agent.
+        """Initialize PPO agent environment.
 
         Based on this tutorial:
         https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
@@ -39,7 +38,6 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 episode is forced to terminate. Usually the
                 virtual screening ratio.
         """
-
         # alphabet
         self.alphabet = alphabet
         self.alphabet_len = len(self.alphabet)
@@ -79,32 +77,34 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         return ts.restart(np.array(self._state, dtype=np.float32))
 
     def time_step_spec(self):
+        """Define time steps."""
         return self._time_step_spec
 
     def action_spec(self):
+        """Define agent actions."""
         return self._action_spec
 
     def observation_spec(self):
+        """Define environment observations."""
         return self._observation_spec
 
     def get_state_string(self):
+        """Get sequence representing current state."""
         return translate_one_hot_to_string(self._state, self.alphabet)
 
     def _step(self, action):
-        """
-        The agent moves until the reward is decreasing.
+        """Progress the agent one step in the environment.
 
-        The number of sequences that can be evaluated at each episode
-        is capped to `self.max_num_steps`.
+        The agent moves until the reward is decreasing. The number of sequences that
+        can be evaluated at each episode is capped to `self.max_num_steps`.
         """
-
         if self.num_steps < self.max_num_steps:
             self.num_steps += 1
             action_one_hot = np.zeros((self.alphabet_len, self.seq_len))
 
             # if action is invalid,
             # terminate episode and punish
-            if np.amax(action) > 1 or np.amin(action) < 0:
+            if np.amax(action) >= 1 or np.amin(action) < 0:
                 return ts.termination(np.array(self._state, dtype=np.float32), -1)
 
             x, y = action[0]
