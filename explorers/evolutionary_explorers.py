@@ -135,7 +135,7 @@ class WF(Evolution):
     def propose_samples(self):
 
         last_batch = self.get_last_batch()
-        current_population = self.batches[last_batch]
+        current_population = list(self.batches[last_batch])
         while len(current_population) < self.batch_size:
             current_population.append(current_population[0])
 
