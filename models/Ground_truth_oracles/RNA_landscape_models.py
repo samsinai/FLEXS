@@ -1,9 +1,6 @@
 import sys
 
 sys.path.append("usr/local/ViennaRNA/lib/python3.6/site-packages/")
-# TODO: ANONYMIZE
-sys.path.append("/n/home01/ssinaei/sw/lib/python3.4/site-packages/")
-sys.path.append("/n/home01/ssinaei/sw/lib/python3.6/site-packages/")
 
 import RNA
 import numpy as np
