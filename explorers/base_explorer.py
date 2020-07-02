@@ -1,5 +1,5 @@
 """Base explorer."""
-
+from abc import abstractmethod
 import os.path
 import uuid
 
