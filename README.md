@@ -4,6 +4,23 @@ FLEXS is a simulation environment that enables you to develop and compare model-
 
 ## Installation
 
+We strongly recommend that you install the dependencies for the sandbox in a conda virtual environment. If you are in a conda environment, run `./load_environment.sh` in the main directory to install the dependencies. 
+
+The dependencies of the sandbox are the latest versions of the following packages:
+
+* Numpy 
+* Scikit-Learn
+* Pandas 
+* ViennaRNA
+* Editdistance 
+* TQDM
+* Tensorflow 
+* Tensorflow-Probability 
+* TF-Agents 
+* TAPE
+* Gin 
+
+In order to use the protein folding landscape models, you will additionally need to install [Rosetta](https://www.rosettacommons.org/), which requires a separate license.  
 
 
 ## Overview
@@ -108,4 +125,5 @@ booktitle = {Advances in Neural Information Processing Systems}
 year = {2019}
 }
 ```
+
 
