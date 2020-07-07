@@ -10,7 +10,9 @@ from utils.softmax import softmax
 
 
 class XE_IS(Base_explorer):
-    """XE-IS explorer."""
+    """
+    Independent sites cross-entropy explorer. 
+    """
     def __init__(
         self,
         beta=1,
@@ -130,7 +132,7 @@ class XE_IS(Base_explorer):
         return sorted(seq_and_fitness, reverse=True)
 
     def propose_samples(self):
-        """Propose."""
+        """Propose new samples for production"""
         new_seqs_and_fitnesses = self.generate_sequences()
         new_batch = new_seqs_and_fitnesses[: self.batch_size]
         batch_seq = []
@@ -142,7 +144,11 @@ class XE_IS(Base_explorer):
 
 
 class Greedy(XE_IS):
-    """Greedy explorer."""
+    """
+    ADALEAD explorer. 
+    
+
+    """
     def __init__(
         self,
         mu=1,
@@ -228,7 +234,7 @@ class Greedy(XE_IS):
             if self.recomb_rate > 0 and len(parents) > 1:
                 for _ in range(self.rho):
                     parents = self._recombine_population(parents)
-
+            # generate children from the recombinant mutants
             for seq in parents:
                 child = generate_random_mutant(
                     seq, self.mu * 1 / len(seq), self.alphabet
