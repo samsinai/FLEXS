@@ -1,17 +1,17 @@
-# FLEXS: Fitness Landscape Exploration Sandbox (for model-guided biological sequence design)
+# FLEXS: Fitness Landscape Exploration Sandbox
 
 FLEXS is an open simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. 
 
 - [Installation](#installation)
-- [Quickstart](#quickstart) 
+- [Overview](#overview)
+	- [Quickstart](Tutorial.ipynb) 
 - [Major components](#major-components)
 
-Your PR and contributions to this sandbox are most welcome. If you make use of it, please ensure that you cite original articles that were used to build this work (we provide links in this readme). 
+Your PR and contributions to this sandbox are most welcome. If you make use of it, please ensure that you cite the relevant original articles upon which this work was made possible (we provide links in this readme). 
 
 ## Installation
 
-We strongly recommend that you install the dependencies for the sandbox in a conda virtual environment. If you are in a conda environment, run `./load_environment.sh` in the main directory to install the dependencies. 
-
+We strongly recommend that you install the dependencies for the sandbox in a conda virtual environment. 
 The dependencies of the sandbox are the latest versions of the following packages:
 
 * Numpy 
@@ -21,17 +21,28 @@ The dependencies of the sandbox are the latest versions of the following package
 * Tensorflow + Keras 
 * Editdistance 
 
-The following dependencies are required for specific use case. 
+A minimal set of requirements can be installed with the following:
+```
+conda install pip -y
+conda install -c bioconda viennarna -y
+conda install scikit-learn -y
+conda install pandas -y
+pip install --upgrade tensorflow 
+pip install keras 
 
-* TQDM
-* Tensorflow-Probability (If you aim to use)
-* TF-Agents 
-* TAPE
+```
+
+If you are in a conda environment, you can also `./load_environment.sh` in the main directory to install all of the dependencies. The following dependencies are required for specific use case. 
+
+* TQDM (If you plan on using the Evolutionary Bayesian Explorer)
+* Tensorflow-Probability (If you aim to use DyNAPPO)
+* TF-Agents  (If you aim to use DyNAPPO)
+* TAPE (If you want to use the GFP oracle)
 * Gin 
-* We also provide limited support for making landscapes with [Rosetta](https://www.rosettacommons.org/), note that it requires a separate license.  
 
+We also provide limited support for making landscapes with [Rosetta](https://www.rosettacommons.org/), note that it requires a separate license.  
 
-## Quickstart
+## Overview
 
 Biological sequence design through machine-guided directed evolution has been of increasing interest. This process often involves two closely connected steps:
   * Models `f` that attempt to learn the ground truth sequence `x` to function `y` relationships `g(x) = y`. 
@@ -40,7 +51,7 @@ Biological sequence design through machine-guided directed evolution has been of
  
  While in some cases, these two steps are learned simultaneously, it is fairly common to have access to a well-trained model `f` which is *not* invertible. Namely, given a sequence `x`, the model can estimate `y'` (with variable accuracy), but it cannot generate a sequence `x'` associated with a specific function `y`. Therefore it is valuable to develop exploration algorithms `E(f)` that make use of the model `f` to propose sequences `x'`. 
 
- We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the tutorial. 
+ We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the [quickstart tutorial](Tutorial.ipynb). 
 
 Our abstraction is comprised of three levels:
 #### 1.  Ground truth oracles (landscapes) 
@@ -54,15 +65,17 @@ For all landscapes we also provide a fixed set of initial points with different 
 
 #### 2. Noisy oracles
 We have two types of noisy oracles `f`. 
-- **Noisy_abstract_model**: These models get access to the `g`, but do not allow the explorer to access `g` directly. They corrupt the signal from `g` but adding noise to it, proportional to the distance of the query from the observed data. The parameter `signal_strength` which is between 0 (no signal) and 1 (perfect model) determines the rate of decay.  
-- **Empirical models**: These models train a standard algorithm (selected from a suite, or new ones can be implements) on the data observed data. The currently available architectures can be found in `utils/model_architectures`. 
+- **Noisy_abstract_model**: These models get access to the ground truth `g`, but do not allow the explorer to access `g` directly. They corrupt the signal from `g` but adding noise to it, proportional to the distance of the query from the (nearest) observed data. The parameter `signal_strength` which is between 0 (no signal) and 1 (perfect model) determines the rate of decay.  
+- **Empirical models**: These models train a standard algorithm on the observed data. The currently available architectures can be found in `utils/model_architectures`. 
 All noisy models can be ensembled using ensemble class. Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set. 
 
 #### 3. Exploration algorithms
 
-This is where the experimentation happens. Exploration algorithms have access to `f` with some limit on the number of queries `virtual_screen`. Once they have queried that many samples, they would commit to measuring `batch_size` from the ground truth, which incurrs the "real" cost to the algorithm. 
+ Exploration algorithms have access to `f` with some limit on the number of queries to this oracle `virtual_screen`. Once they have queried that many samples, they would commit to measuring `batch_size` from the ground truth, which incurrs a real cost. The class `base_explorer` implements the housekeeping tasks, and new exploration algorithms can be implemented by inheriting from it.  
 
-### 
+#### 4. Evaluators
+
+
 
 
 # Major components
@@ -111,7 +124,7 @@ Additionally, we construct more complex landscapes by increasing the number of h
 
 ### Additive AAV landscapes
 
- Ogden et al. (2019) perform a comprehensive single mutation scan of AAV2 capsid protein, assaying tropism for five different target tissues. The authors show that an additive model is informative about the local structure of the landscape. Here we use the data from the single mutations to generate a toy additive model. Here `y' := sum(s_i)+ e`, where `i` indicates the position across the sequences, and `s_i` indicates a sequence with mutation `s` at position `i` and `e` is Gaussian noise. This construct is also known as "Rough Mt. Fuji" (RMF) and many empirical fitness landscapes are consistent with an RMF local structure around viable natural sequences with unpredictable regions in between. In the noise-free setting, the RMF landscape is convex with a single peak. We allow the construction of multiple target tissues, and different design lengths (tasks ranging from desiging short region of the protein to tasks that encompass designing the full protein). The scores are normalized between `[0,1]`. 
+ Ogden et al. (2019) perform a comprehensive single mutation scan of AAV2 capsid protein, assaying tropism for five different target tissues. The authors show that an additive model is informative about the local structure of the landscape. Here we use the data from the single mutations to generate a toy additive model. Here `y' := sum(s_i)+ e`, where `i` indicates the position across the sequences, and `s_i` indicates a sequence with mutation `s` at position `i` and `e` indicates iid Gaussian noise. This construct is also known as "Rough Mt. Fuji" (RMF) and many empirical fitness landscapes are consistent with an RMF local structure around viable natural sequences with unpredictable regions in between. In the noise-free setting, the RMF landscape is convex with a single peak. We allow the construction of multiple target tissues, and different design lengths (tasks ranging from desiging short region of the protein to tasks that encompass designing the full protein). The scores are normalized between `[0,1]`. 
 
 ```
 @article{ogden2019comprehensive,
@@ -127,7 +140,7 @@ Additionally, we construct more complex landscapes by increasing the number of h
 ```
 
 ### GFP 
- In [TAPE](https://github.com/songlab-cal/tape), the authors benchmark multiple machine learning methods on a set of tasks including GFP fluorescence prediction. The GFP task is comprised of training and predicting fluorescence values on approximately 52,000 protein sequences of length 238 which are derived from the naturally occurring GFP in *Aequorea victoria*. These landscapes are not normalized and therefore scores higher than 1 are possible. 
+ In [TAPE](https://github.com/songlab-cal/tape), the authors benchmark multiple machine learning methods on a set of tasks including GFP fluorescence prediction. The GFP task is comprised of training and predicting fluorescence values on approximately 52,000 protein sequences of length 238 which are derived from the naturally occurring GFP in *Aequorea victoria* (See [this paper](https://www.nature.com/articles/nature17995)). Downloading and doing inference with this model is memory and time intensive. These landscapes are not normalized and therefore scores higher than 1 are possible (we do not know the maximum activation for the model). 
 
 ```
 @inproceedings{tape2019,
@@ -148,5 +161,30 @@ year = {2019}
   publisher={Nature Publishing Group}
 }
 ```
+### Noisy Oracles
 
+#### Noisy Abstract Models
+
+#### Empirical Models
+
+### Exploration Algorithms
+	[Base Explorer](explorers/base_explorer.py)
+	[Random Explorer](explorers/random_explorer.py)
+#### Evolutionary Algorithms
+	 [Wright-Fisher, Model-guided Wright Fisher](explorers/evolutionary_explorers.py)
+	 [CMA-ES](explorers/CMAES_explorer.py)
+	 [Independent sites X-entropy, ADALEAD](explorers/elitist_explorers.py)
+#### DbAS and CbAS
+	 Adaptation of [CbAS and DbAS](explorers/CbAS_DbAS_explorers.py)
+#### Reinforcement Learning Algorithms
+     [DQN]()
+     [PPO]()
+     [DyNAPPO]()		
+#### Bayesian Optimization 
+	 [Evolutionary BO]()
+	 [Enumerative BO]()
+
+
+
+ 
 
