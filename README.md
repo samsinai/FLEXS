@@ -168,21 +168,54 @@ year = {2019}
 #### Empirical Models
 
 ### Exploration Algorithms
-	[Base Explorer](explorers/base_explorer.py)
-	[Random Explorer](explorers/random_explorer.py)
+-[Base Explorer](explorers/base_explorer.py)
+
+-[Random Explorer](explorers/random_explorer.py)
+
 #### Evolutionary Algorithms
-	 [Wright-Fisher, Model-guided Wright Fisher](explorers/evolutionary_explorers.py)
-	 [CMA-ES](explorers/CMAES_explorer.py)
-	 [Independent sites X-entropy, ADALEAD](explorers/elitist_explorers.py)
+-[Wright-Fisher, Model-guided Wright Fisher](explorers/evolutionary_explorers.py)
+
+-[CMA-ES](explorers/CMAES_explorer.py)
+
+-[Independent sites X-entropy, ADALEAD](explorers/elitist_explorers.py)
+
 #### DbAS and CbAS
-	 Adaptation of [CbAS and DbAS](explorers/CbAS_DbAS_explorers.py)
+-Adaptation of [CbAS and DbAS](explorers/CbAS_DbAS_explorers.py)
+```
+@article{brookes2019conditioning,
+  title={Conditioning by adaptive sampling for robust design},
+  author={Brookes, David H and Park, Hahnbeom and Listgarten, Jennifer},
+  journal={arXiv preprint arXiv:1901.10060},
+  year={2019}
+}
+@article{brookes2018design,
+  title={Design by adaptive sampling},
+  author={Brookes, David H and Listgarten, Jennifer},
+  journal={arXiv preprint arXiv:1810.03714},
+  year={2018}
+}
+```
+
 #### Reinforcement Learning Algorithms
-     [DQN]()
-     [PPO]()
-     [DyNAPPO]()		
+Adaptations of the following RL algorithms.
+-[DQN](explorers/dqn_explorer.py)
+
+-[PPO](explorers/PPO_explorer.py)
+
+-[DyNAPPO](explorers/DynaPPO_explorer.py): See the following citation.
+```
+@inproceedings{angermueller2019model,
+  title={Model-based reinforcement learning for biological sequence design},
+  author={Angermueller, Christof and Dohan, David and Belanger, David and Deshpande, Ramya and Murphy, Kevin and Colwell, Lucy},
+  booktitle={International Conference on Learning Representations},
+  year={2019}
+}
+```	
 #### Bayesian Optimization 
-	 [Evolutionary BO]()
-	 [Enumerative BO]()
+
+-[Evolutionary BO](bo_explorer.py)
+
+-[Enumerative BO](gpr_bo_explorer.py)
 
 
 
