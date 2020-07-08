@@ -21,7 +21,6 @@ class Evolution(Base_explorer):
         path="./simulations/",
         debug=False,
     ):
-        """Genetic algorithm."""
         super(Evolution, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
@@ -35,7 +34,7 @@ class Evolution(Base_explorer):
         self.beta = beta
 
     def recombine(self, sequence1, sequence2):
-        """Recombine."""
+        """Recombine two sequences"""
         recomb_1 = []
         recomb_2 = []
         flipped = 1
@@ -52,7 +51,7 @@ class Evolution(Base_explorer):
         return "".join(recomb_1), "".join(recomb_2)
 
     def recombine_population(self, gen):
-        """Recombine."""
+        """Recombine a population of sequences"""
         random.shuffle(gen)
         ret = []
         for i in range(0, len(gen), 2):
@@ -76,7 +75,7 @@ class Evolution(Base_explorer):
         return ret
 
     def compute_fitnesses(self, sequences):
-        """Compute."""
+        """Compute exponential fitnesses for all sequences"""
         pop_size = len(sequences)
         fitnesses = [0] * pop_size
         for i in range(pop_size):
@@ -103,7 +102,7 @@ class Moran(Evolution):
         alphabet="UCGA",
         virtual_screen=0,
     ):
-        """Moran."""
+        """Moran Explorer."""
         super(Moran, self).__init__(
             mu, rho, recomb_rate, beta, batch_size, alphabet, virtual_screen
         )
@@ -112,7 +111,7 @@ class Moran(Evolution):
         )
 
     def propose_samples(self):
-        """Propose."""
+        """Propose new samples"""
         raise NotImplementedError(
             "`propose_samples` must be implemented by your explorer."
         )
@@ -140,7 +139,7 @@ class WF(Evolution):
         )
 
     def propose_samples(self):
-        """Propose."""
+        """Propose new samples"""
         last_batch = self.get_last_batch()
         current_population = list(self.batches[last_batch])
         while len(current_population) < self.batch_size:
@@ -182,7 +181,7 @@ class ML_WF(Evolution):
         virtual_screen=20,
         path="./simulations/",
     ):
-        """Machine Learning/Wright Fisher algorithm."""
+        """Model guided Wright-Fisher"""
         super(ML_WF, self).__init__(
             mu, rho, recomb_rate, beta, batch_size, alphabet, virtual_screen, path
         )
@@ -191,7 +190,7 @@ class ML_WF(Evolution):
         )
 
     def sub_sample(self, sequences):
-        """Sample."""
+        """Select best sequences using the model"""
         top_seqs_and_fits = []
         for seq in set(sequences):
             top_seqs_and_fits.append((self.model.get_fitness(seq), seq))
@@ -200,7 +199,7 @@ class ML_WF(Evolution):
         return [t[1] for t in top_seqs_and_fits][: self.batch_size]
 
     def propose_samples(self):
-        """Propose."""
+        """Propose new sequences"""
         last_batch = self.get_last_batch()
         current_population = self.batches[last_batch]
         while len(current_population) < self.batch_size:

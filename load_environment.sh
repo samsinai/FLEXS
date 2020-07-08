@@ -5,9 +5,9 @@ conda install tqdm -y
 conda install scikit-learn -y
 conda install pandas -y
 pip install --upgrade tensorflow 
+pip install keras 
+pip install editdistance
 pip install --upgrade tensorflow-probability 
 pip install --upgrade tf-agents 
-pip install editdistance
 pip install gin
 pip install tape_proteins
-pip install keras 
