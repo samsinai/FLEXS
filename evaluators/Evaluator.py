@@ -323,7 +323,8 @@ class Evaluator:
         self.explorer.run(num_batches, overwrite, verbose)
 
     def evaluate_for_landscapes(self, property_of_interest_evaluator, num_starts=100):
-        """Evaluate for property of interest."""
+        """Evaluate for property of interest. This function iterates through the test landscapes
+        and invokes the appropriate evaluator function for all starting sequences."""
         for landscape_type in self.landscape_types:
             self.explorer.alphabet = LANDSCAPE_ALPHABET[landscape_type]
             for landscape in self.landscape_generator[landscape_type]:

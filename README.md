@@ -6,6 +6,9 @@ FLEXS is an open simulation environment that enables you to develop and compare 
 - [Overview](#overview)
 	- [Quickstart](Tutorial.ipynb) 
 - [Major components](#major-components)
+  - [Ground truth landscapes](#ground-truth-landscapes)
+  - [Noisy oracles](#noisy-oracles)
+  - [Exploration algorithms](#exploration-algorithms)
 
 Your PR and contributions to this sandbox are most welcome. If you make use of it, please ensure that you cite the relevant original articles upon which this work was made possible (we provide links in this readme). 
 
@@ -32,12 +35,12 @@ pip install keras
 
 ```
 
-If you are in a conda environment, you can also `./load_environment.sh` in the main directory to install all of the dependencies. The following dependencies are required for specific use case. 
+If you are in a conda environment, you can also run `./load_environment.sh` in the main directory to install all of the dependencies. The following dependencies are required for specific use case. 
 
 * TQDM (If you plan on using the Evolutionary Bayesian Explorer)
 * Tensorflow-Probability (If you aim to use DyNAPPO)
 * TF-Agents  (If you aim to use DyNAPPO)
-* TAPE (If you want to use the GFP oracle)
+* [TAPE](https://github.com/songlab-cal/tape) (If you want to use the GFP oracle)
 * Gin 
 
 We also provide limited support for making landscapes with [Rosetta](https://www.rosettacommons.org/), note that it requires a separate license.  
@@ -165,19 +168,22 @@ year = {2019}
 
 #### Noisy Abstract Models
 
+
+
 #### Empirical Models
 
 ### Exploration Algorithms
--[Base Explorer](explorers/base_explorer.py)
+-[Base Explorer](explorers/base_explorer.py): Base class from which you can inherit to implement your algorithm.
 
--[Random Explorer](explorers/random_explorer.py)
+-[Random Explorer](explorers/random_explorer.py): A baseline explorer.
 
 #### Evolutionary Algorithms
 -[Wright-Fisher, Model-guided Wright Fisher](explorers/evolutionary_explorers.py)
 
 -[CMA-ES](explorers/CMAES_explorer.py)
 
--[Independent sites X-entropy, ADALEAD](explorers/elitist_explorers.py)
+-[Independent sites X-entropy , ADALEAD](explorers/elitist_explorers.py)
+
 
 #### DbAS and CbAS
 -Adaptation of [CbAS and DbAS](explorers/CbAS_DbAS_explorers.py)
@@ -198,6 +204,7 @@ year = {2019}
 
 #### Reinforcement Learning Algorithms
 Adaptations of the following RL algorithms.
+
 -[DQN](explorers/dqn_explorer.py)
 
 -[PPO](explorers/PPO_explorer.py)
