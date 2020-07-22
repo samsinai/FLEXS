@@ -1,13 +1,14 @@
 """Base explorer."""
-from abc import abstractmethod
 import os.path
 import uuid
+from abc import abstractmethod
 
 from meta.explorer import Explorer
 
 
 class Base_explorer(Explorer):
     """Base explorer."""
+
     def __init__(
         self,
         batch_size=100,

@@ -11,6 +11,7 @@ from utils.model_architectures import VAE
 
 class CbAS_explorer(Base_explorer):
     """CbAS explorer."""
+
     def __init__(
         self,
         generator=None,
@@ -179,6 +180,7 @@ class CbAS_explorer(Base_explorer):
 
 class DbAS_explorer(Base_explorer):
     """DbAS explorer."""
+
     def __init__(
         self,
         generator=None,

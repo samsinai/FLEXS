@@ -13,6 +13,7 @@ class XE_IS(Base_explorer):
     """
     Independent sites cross-entropy explorer. 
     """
+
     def __init__(
         self,
         beta=1,
@@ -149,6 +150,7 @@ class Greedy(XE_IS):
     
 
     """
+
     def __init__(
         self,
         mu=1,

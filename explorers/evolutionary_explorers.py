@@ -9,6 +9,7 @@ from utils.sequence_utils import generate_random_mutant
 
 class Evolution(Base_explorer):
     """Evolutionary explorer."""
+
     def __init__(
         self,
         mu=1,
@@ -92,6 +93,7 @@ class Evolution(Base_explorer):
 
 class Moran(Evolution):
     """Moran."""
+
     def __init__(
         self,
         mu=0.01,
@@ -119,6 +121,7 @@ class Moran(Evolution):
 
 class WF(Evolution):
     """WF."""
+
     def __init__(
         self,
         mu=1,
@@ -170,6 +173,7 @@ class WF(Evolution):
 
 class ML_WF(Evolution):
     """MLWF."""
+
     def __init__(
         self,
         mu=1,
