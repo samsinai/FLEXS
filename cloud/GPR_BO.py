@@ -37,7 +37,7 @@ from utils.sequence_utils import *
 import numpy as np
 from bisect import bisect_left
 
-from explorers.gpr_bo_explorer import GPR_BO_Explorer
+from explorers.bo_explorer import GPR_BO_Explorer
     
 bo_explorer_prod = GPR_BO_Explorer()
 bo_explorer_prod.debug = False
