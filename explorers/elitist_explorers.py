@@ -240,13 +240,8 @@ class Greedy(XE_IS):
                     seq, self.mu * 1 / len(seq), self.alphabet
                 )
                 children = [child]
-                while len(ret) + len(
-                    children
-                ) < self.virtual_screen * self.batch_size and self.model.get_fitness(
-                    child
-                ) > self.model.get_fitness(
-                    seq
-                ):
+                while len(ret) + len(children) < self.virtual_screen * self.batch_size \
+                        and self.model.get_fitness(child) > self.model.get_fitness(seq):
                     child = generate_random_mutant(
                         seq, self.mu * 1 / len(seq), self.alphabet
                     )

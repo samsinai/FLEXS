@@ -187,12 +187,11 @@ class NN_model(Model):
         self.model_sequences = {}  # empty cache
 
     def get_fitness(self, sequence):
-
         if sequence in self.measured_sequences:
             return self.measured_sequences[sequence]
-        elif (
-            sequence in self.model_sequences and self.cache
-        ):  # caching model answer to save computation
+
+        # caching model answer to save computation
+        elif sequence in self.model_sequences and self.cache:
             return self.model_sequences[sequence]
 
         else:
