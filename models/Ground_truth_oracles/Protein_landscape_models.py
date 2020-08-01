@@ -165,12 +165,9 @@ class Protein_landscape_folding_energy(Ground_truth_oracle):
         # Update the coordinates of atoms that depend on polymer bonds
         conformation.rebuild_polymer_bond_dependent_atoms_this_residue_only(mut_pos + 1)
 
-    def _sigmoid(self, x):
-        return np.where(x >= 0, 
-                    1 / (1 + np.exp(-x)), 
-                    np.exp(x) / (1 + np.exp(x)))
-
     def get_folding_energy(self, sequence):
+        """ Return rosetta folding energy (delta G) of the given sequence in `self.pose`'s conformation. """
+
         pose_sequence = self.pose.sequence()
 
         if len(sequence) != len(pose_sequence):
@@ -184,5 +181,7 @@ class Protein_landscape_folding_energy(Ground_truth_oracle):
         return self.score_function(self.pose)
 
     def get_fitness(self, sequence):
+        """ Negate and normalize folding energy to get maximization objective """
+
         folding_energy = self.get_folding_energy(sequence)
         return -folding_energy / self.norm_value
