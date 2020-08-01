@@ -221,7 +221,7 @@ class Greedy(XE_IS):
         top_f = top_seqs_and_fits[0][0]
         top_seqs = []
         for f, seq in top_seqs_and_fits:
-            if f >= top_f * (1 - self.threshold):
+            if f >= top_f * (1 - np.sign(top_f) * self.threshold):
                 top_seqs.append(seq)
             else:
                 break

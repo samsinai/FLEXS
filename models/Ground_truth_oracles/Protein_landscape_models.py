@@ -118,107 +118,52 @@ class Protein_landscape_folding_energy(Ground_truth_oracle):
     This is just a proxy for folding stability, but it is often an effective
     one and is the approach used by RosettaDesign.
 
+    We use Rosetta's centroid energy function instead of the full-atom one since
+    it is less sensitive to switching out residues without repacking side-chain conformations.
+
     """
 
-    def __init__(self, pdb_file, norm_value=10000):
+    def __init__(self, pdb_file, norm_value=3):
         # We will reuse this pose over and over, mutating it to match
         # whatever sequence we are given to measure.
         # This is necessary since sequence identity can only be mutated
         # one residue at a time in Rosetta, because the atom coords of the
         # backbone of the previous residue are copied into the new one.
         self.pose = prs.pose_from_pdb(pdb_file)
+        self.wt_pose = self.pose.clone()
 
-        # Use 1 - sigmoid(full-atom energy / norm_value) as the fitness score
-        self.scorefxn = prs.get_fa_scorefxn()
+        # Change self.pose from full-atom to centroid representation
+        to_centroid_mover = prs.SwitchResidueTypeSetMover('centroid')
+        to_centroid_mover.apply(self.pose) 
+
+        # Use 1 - sigmoid(centroid energy / norm_value) as the fitness score
+        self.score_function = prs.create_score_function('cen_std')
         self.norm_value = norm_value
 
-        # Reset every residue in protein to a new one to unpack the backbone
-        # and get more constent energies
-        for i, wt_aa in enumerate(self.pose.sequence()):
-            new_aa = 'A' if wt_aa != 'A' else 'C'
-            self._mutate_pose(new_aa, i + 1) # + 1 since rosetta is 1-indexed
-            self._mutate_pose(wt_aa, i + 1)
-
-    def _mutate_pose(self,
-                     mut_aa,
-                     mut_pos,
-                     do_not_preserve_atom_coords=False,
-                     update_polymer_dependents=True,
-                     orient_backbone=False):
+    def _mutate_pose(self, mut_aa, mut_pos):
+        """ This method mutates `self.pose` to contain `mut_aa` at `mut_pos`. """
         
-        current_residue = self.pose.residue(mut_pos)
+        current_residue = self.pose.residue(mut_pos + 1) # + 1 since rosetta is 1-indexed
         conformation = self.pose.conformation()
         
         # Get ResidueType for new residue
         new_restype = prs.rosetta.core.pose.get_restype_for_pose(self.pose,
                                                                  aa_single_to_three_letter_code[mut_aa])
 
-        # Create the new residue and replace it, using current_residue backbone
+        # Create the new residue using current_residue backbone
         new_res = prs.rosetta.core.conformation.ResidueFactory.create_residue(
-            new_restype, current_residue, conformation)
+            new_restype, current_residue, conformation, preserve_c_beta=False,
+            allow_alternate_backbone_matching=True)
 
         # Make sure we retain as much info from the previous res as possible
         prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
-            current_residue, new_res, conformation, do_not_preserve_atom_coords)
-        self.pose.replace_residue(mut_pos, new_res, orient_backbone)
+            current_residue, new_res, conformation, preserve_only_sidechain_dihedrals=False)
+
+        # Replace residue
+        self.pose.replace_residue(mut_pos + 1, new_res, orient_backbone=False)
 
         # Update the coordinates of atoms that depend on polymer bonds
-        if update_polymer_dependents:
-            conformation.rebuild_polymer_bond_dependent_atoms_this_residue_only(mut_pos)
-
-    def _mutate_pose_and_repack(self,
-                                mut_aa,
-                                mut_pos,
-                                pack_radius=10):
-
-        """
-        Replaces the residue at `mutant_position` in `pose` with `mutant_aa`
-        and repack any residues within `pack_radius` Angstroms of the mutating
-        residue's center (nbr_atom) using `pack_scorefxn`.
-
-        Examples
-        --------
-        >>> mutate_residue(pose, 30, A)
-
-        See also:
-            Pose
-            PackRotamersMover
-            MutateResidue
-            pose_from_sequence
-
-        """
-
-        #### a MutateResidue Mover exists similar to this except it does not pack
-        ####    the area around the mutant residue (no pack_radius feature)
-        #mutator = MutateResidue( mutant_position , mutant_aa )
-        #mutator.apply( test_pose )
-
-        task = prs.standard_packer_task(self.pose)
-
-        # Mutation is performed by using a PackerTask with only the mutant
-        #    amino acid available during design.
-        # To do this, construct a Vector1 of booleans indicating which amino acid
-        #    (by its numerical designation) to allow.
-        aa_bool = prs.rosetta.utility.vector1_bool()
-        mutant_aa_index = prs.rosetta.core.chemical.aa_from_oneletter_code(mut_aa)
-        for i in range(1 , 21):
-            aa_bool.append(i == mutant_aa_index)
-
-        # Modify the mutating residue's assignment in the PackerTask using the
-        #    Vector1 of booleans across the proteogenic amino acids
-        task.nonconst_residue_task(mut_pos).restrict_absent_canonical_aas(aa_bool)
-
-        # Only pack the mutating residue and any within the pack_radius.
-        # Prevent residues from packing by setting the per-residue "options" of
-        #    the PackerTask.
-        center = self.pose.residue(mut_pos).nbr_atom_xyz()
-        for i in range(1 , self.pose.total_residue() + 1):
-            if center.distance_squared(self.pose.residue(i).nbr_atom_xyz()) > pack_radius**2:
-                task.nonconst_residue_task(i).prevent_repacking()
-
-        # Apply the mutation and pack nearby residues
-        packer = prs.rosetta.protocols.minimization_packing.PackRotamersMover(self.scorefxn, task)
-        packer.apply(self.pose)
+        conformation.rebuild_polymer_bond_dependent_atoms_this_residue_only(mut_pos + 1)
 
     def _sigmoid(self, x):
         return np.where(x >= 0, 
@@ -234,10 +179,10 @@ class Protein_landscape_folding_energy(Ground_truth_oracle):
         # Mutate `self.pose` where necessary to have the same sequence identity as `sequence`
         for i in range(len(sequence)):
             if sequence[i] != pose_sequence[i]:
-                self._mutate_pose(sequence[i], i + 1)
+                self._mutate_pose(sequence[i], i)
 
-        return self.scorefxn(self.pose)
+        return self.score_function(self.pose)
 
     def get_fitness(self, sequence):
         folding_energy = self.get_folding_energy(sequence)
-        return 1 - self._sigmoid(folding_energy / self.norm_value)
+        return -folding_energy / self.norm_value
