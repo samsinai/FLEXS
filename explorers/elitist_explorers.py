@@ -146,9 +146,7 @@ class XE_IS(Base_explorer):
 
 class Greedy(XE_IS):
     """
-    ADALEAD explorer. 
-    
-
+    ADALEAD explorer.
     """
 
     def __init__(
