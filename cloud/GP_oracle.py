@@ -44,6 +44,8 @@ from explorers.CMAES_explorer import CMAES_explorer
 from explorers.DynaPPO_explorer import DynaPPO_explorer
 from explorers.elitist_explorers import Greedy
 
+import tensorflow as tf
+
 pairs = [
     ("CbAS", CbAS_explorer),
     ("DbAS", DbAS_explorer),
@@ -56,6 +58,9 @@ pairs = [
 for name, exp_fn in pairs:
     if name == "AdaLead":
         explorer = exp_fn(batch_size=100, virtual_screen=20, recomb_rate=0.2)
+    elif name == "CbAS" or name == "DbAS":
+        g = tf.keras.models.load_model("../notebooks/vae_initial_weights.h5")
+        explorer = exp_fn(batch_size=100, virtual_screen=20, generator=g)
     else:
         explorer = exp_fn(batch_size=100, virtual_screen=20)
     explorer.debug = False
@@ -74,6 +79,9 @@ for name, exp_fn in pairs:
 for name, exp_fn in pairs:
     if name == "AdaLead":
         explorer = exp_fn(batch_size=100, virtual_screen=20, recomb_rate=0.2)
+    elif name == "CbAS" or name == "DbAS":
+        g = tf.keras.models.load_model("../notebooks/vae_initial_weights.h5")
+        explorer = exp_fn(batch_size=100, virtual_screen=20, generator=g)
     else:
         explorer = exp_fn(batch_size=100, virtual_screen=20)
     explorer.debug = False
