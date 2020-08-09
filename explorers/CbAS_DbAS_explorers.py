@@ -306,8 +306,7 @@ class DbAS_explorer(Base_explorer):
             # starting with the first batch
 
             # check if converged
-            max_fitnesses.append(np.max(scores))
-            max_fitnesses = np.array(max_fitnesses).flatten()
+            max_fitnesses.append(np.max(np.array(scores).flatten()))
             if len(max_fitnesses) >= self.n_convergence:
                 if len(set(max_fitnesses[-self.n_convergence :])) == 1:
                     not_converged = False
