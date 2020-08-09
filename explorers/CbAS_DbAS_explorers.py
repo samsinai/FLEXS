@@ -120,7 +120,7 @@ class CbAS_explorer(Base_explorer):
             # calculate the scores of the new samples using the oracle
             scores = []
             for proposal in proposals:
-                scores.append(self.model.get_fitness(proposal)[0])
+                scores.append(self.model.get_fitness(proposal))
             # print('Top score in proposed samples: ', np.max(scores))
 
             # set a new fitness threshold if the new percentile is
@@ -165,7 +165,6 @@ class CbAS_explorer(Base_explorer):
 
             # check if converged
             max_fitnesses.append(np.max(scores))
-            max_fitnesses = np.array(max_fitnesses).flatten()
             if len(max_fitnesses) >= self.n_convergence:
                 if len(set(max_fitnesses[-self.n_convergence:])) == 1:
                     not_converged = False
@@ -270,7 +269,7 @@ class DbAS_explorer(Base_explorer):
             # calculate the scores of the new samples using the oracle
             scores = []
             for proposal in proposals:
-                scores.append(self.model.get_fitness(proposal)[0])
+                scores.append(self.model.get_fitness(proposal))
             # print('Top score in proposed samples: ', np.max(scores))
 
             # set a new fitness threshold if the new percentile is
@@ -306,7 +305,7 @@ class DbAS_explorer(Base_explorer):
             # starting with the first batch
 
             # check if converged
-            max_fitnesses.append(np.max(np.array(scores).flatten()))
+            max_fitnesses.append(np.max(scores))
             if len(max_fitnesses) >= self.n_convergence:
                 if len(set(max_fitnesses[-self.n_convergence :])) == 1:
                     not_converged = False
