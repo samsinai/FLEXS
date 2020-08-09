@@ -165,8 +165,9 @@ class CbAS_explorer(Base_explorer):
 
             # check if converged
             max_fitnesses.append(np.max(scores))
+            max_fitnesses = np.array(max_fitnesses).flatten()
             if len(max_fitnesses) >= self.n_convergence:
-                if len(set(max_fitnesses[-self.n_convergence :])) == 1:
+                if len(set(max_fitnesses[-self.n_convergence:])) == 1:
                     not_converged = False
                     print("CbAS converged")
 
@@ -306,6 +307,7 @@ class DbAS_explorer(Base_explorer):
 
             # check if converged
             max_fitnesses.append(np.max(scores))
+            max_fitnesses = np.array(max_fitnesses).flatten()
             if len(max_fitnesses) >= self.n_convergence:
                 if len(set(max_fitnesses[-self.n_convergence :])) == 1:
                     not_converged = False
