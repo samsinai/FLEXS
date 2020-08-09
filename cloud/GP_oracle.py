@@ -9,7 +9,7 @@ from models.Noisy_models.Ensemble import Ensemble_models
 from evaluators.Evaluator import Evaluator
 from models.Ground_truth_oracles.TF_binding_landscape_models import *
 from explorers.bo_explorer import BO_Explorer
-from explorers.dqn_explorer import DQN_Explorer 
+from explorers.dqn_explorer import DQN_Explorer
 
 LANDSCAPE_TYPES_RNA = {"RNA": [0, 12]}
 LANDSCAPE_TYPES_TF = {
@@ -45,6 +45,7 @@ from explorers.DynaPPO_explorer import DynaPPO_explorer
 from explorers.elitist_explorers import Greedy
 
 import tensorflow as tf
+from utils.model_architectures import VAE
 
 pairs = [
     ("CbAS", CbAS_explorer),
@@ -59,7 +60,18 @@ for name, exp_fn in pairs:
     if name == "AdaLead":
         explorer = exp_fn(batch_size=100, virtual_screen=20, recomb_rate=0.2)
     elif name == "CbAS" or name == "DbAS":
-        g = tf.keras.models.load_model("../notebooks/vae_initial_weights.h5")
+        g = VAE(
+            batch_size=100,
+            latent_dim=2,
+            intermediate_dim=250,
+            epochs=10,
+            epsilon_std=1.0,
+            beta=1,
+            validation_split=0,
+            min_training_size=100,
+            mutation_rate=2,
+            verbose=False
+        )
         explorer = exp_fn(batch_size=100, virtual_screen=20, generator=g)
     else:
         explorer = exp_fn(batch_size=100, virtual_screen=20)
@@ -80,7 +92,18 @@ for name, exp_fn in pairs:
     if name == "AdaLead":
         explorer = exp_fn(batch_size=100, virtual_screen=20, recomb_rate=0.2)
     elif name == "CbAS" or name == "DbAS":
-        g = tf.keras.models.load_model("../notebooks/vae_initial_weights.h5")
+        g = VAE(
+            batch_size=100,
+            latent_dim=2,
+            intermediate_dim=250,
+            epochs=10,
+            epsilon_std=1.0,
+            beta=1,
+            validation_split=0,
+            min_training_size=100,
+            mutation_rate=2,
+            verbose=False
+        )
         explorer = exp_fn(batch_size=100, virtual_screen=20, generator=g)
     else:
         explorer = exp_fn(batch_size=100, virtual_screen=20)

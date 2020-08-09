@@ -370,6 +370,7 @@ class VAE(Architecture):
         return xent_loss + self.beta * kl_loss
 
     def get_model(self, seq_size=0, alphabet=None):
+        # This is TF 1
         self.alphabet = alphabet
         self.KEY_LIST = list(self.alphabet)
         self.seq_size = seq_size
