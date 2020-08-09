@@ -120,7 +120,12 @@ class CbAS_explorer(Base_explorer):
             # calculate the scores of the new samples using the oracle
             scores = []
             for proposal in proposals:
-                scores.append(self.model.get_fitness(proposal))
+                f = self.model.get_fitness(proposal)
+                try:
+                    f = f[0]
+                except:
+                    pass
+                scores.append(f)
             # print('Top score in proposed samples: ', np.max(scores))
 
             # set a new fitness threshold if the new percentile is
@@ -269,7 +274,12 @@ class DbAS_explorer(Base_explorer):
             # calculate the scores of the new samples using the oracle
             scores = []
             for proposal in proposals:
-                scores.append(self.model.get_fitness(proposal))
+                f = self.model.get_fitness(proposal)
+                try:
+                    f = f[0]
+                except:
+                    pass
+                scores.append(f)
             # print('Top score in proposed samples: ', np.max(scores))
 
             # set a new fitness threshold if the new percentile is
