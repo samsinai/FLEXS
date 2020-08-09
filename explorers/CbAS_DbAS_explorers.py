@@ -137,7 +137,7 @@ class CbAS_explorer(Base_explorer):
                 for (logp0, logpt) in list(zip(log_probs_0, log_probs_t))
             ]
             weights_probs = np.nan_to_num(weights_probs)
-            weights_cdf = [1 if score >= gamma else 0 for score in scores]
+            weights_cdf = [1 if score[0] >= gamma else 0 for score in scores]
             weights = list(np.array(weights_cdf) * np.array(weights_probs))
 
             # add proposed samples to the total sample pool
@@ -279,7 +279,7 @@ class DbAS_explorer(Base_explorer):
                 gamma = gamma_new
 
             # calculate the weights for the proposed batch
-            weights = [1 if score >= gamma else 0 for score in scores]
+            weights = [1 if score[0] >= gamma else 0 for score in scores]
 
             # add proposed samples to the total sample pool
             all_samples = all_samples_and_weights[0] + proposals
