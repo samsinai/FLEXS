@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd 
 import random
-import yaml
 from glob import glob
 import pyrosetta as prs
 from meta.model import Ground_truth_oracle
