@@ -11,8 +11,7 @@ from utils.sequence_utils import (generate_random_sequences,
 class CMAES_explorer(Base_explorer):
     """An explorer which implements the covariance matrix adaptation evolution strategy.
 
-    http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful
-    link to read.
+    http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful guide
     """
 
     def __init__(

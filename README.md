@@ -67,10 +67,10 @@ These oracles `g` are simulators that are assumed as ground truth, i.e. when que
 For all landscapes we also provide a fixed set of initial points with different degrees of previous optimization, so that the relative strength of algorithms when starting from locations near or far away from peaks can be evaluated. 
 
 #### 2. Noisy oracles
-We have two types of noisy oracles `f`. 
-- **Noisy_abstract_model**: These models get access to the ground truth `g`, but do not allow the explorer to access `g` directly. They corrupt the signal from `g` but adding noise to it, proportional to the distance of the query from the (nearest) observed data. The parameter `signal_strength` which is between 0 (no signal) and 1 (perfect model) determines the rate of decay.  
-- **Empirical models**: These models train a standard algorithm on the observed data. The currently available architectures can be found in `utils/model_architectures`. 
-All noisy models can be ensembled using ensemble class. Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set. 
+ 
+Noisy oracles are (approximate) models `f` of the original ground truth landscape `g`. These allow for the exploration algorithm to screen sequences virtually, before committing to making expensive queries to `g`.  We implement two flavors of these
+- Noisy abstract models: Noise corrupted version of `g` (this allows for independent study of exploration algorithms). 
+- Empirical models: `f` is learned directly from the data that was collected so far. 
 
 #### 3. Exploration algorithms
 
@@ -78,8 +78,14 @@ All noisy models can be ensembled using ensemble class. Ensembles also have the 
 
 #### 4. Evaluators
 
+We also implement a suite of [evaluation modules](evaluators/Evaluator.py) that automatically collect data that is necessary for evaluating algorithms on different performance criteria. Some of these modules are not optimized at this time. 
 
+- *consistency_robustness_independence*: Produces data for analyzing how explorer performance changes given different quality of models.
+- *efficiency*: Produces data for analyzing how explorer performance changes when more computational evaluations are allowed.
+- *adaptivity*: Produces data for analyzing how the explorer is sensitive to the number of batches it is allowed to sample, given a fixed total budget.
+-*scalability*: Produces data for analyzing how fast the explorer produces a batch.
 
+See the [tutorial](Tutorial.ipynb) for an example of how these can be run. 
 
 # Major components
 
@@ -109,7 +115,7 @@ Our sandbox allows for constructing arbitrarily complex landscapes (although we 
 
 The simplest landscapes are binding landscapes with a single hidden target (often larger than the design sequence resulting in multiple peaks). The designed sequences is meant to be optimized to bind the target with the minimum binding energy (we use duplex energy as our objective). We estimate `optimal(y)` by computing the binding energy of the perfect complement of the target and normalize the fitnesses using that measure (hence this is only an approximation and often a slight underestimate). RNA landscapes show many local peaks, and often multiple global peaks due to symmetry. 
 
-Additionally, we construct more complex landscapes by increasing the number of hidden targets, enforcing specific conservation patterns, and composing the scores of each landscapes multiplicatively. See `utils/multi_dimensional_model.py` for the generic class that allows composing landscapes.  
+Additionally, we construct more complex landscapes by increasing the number of hidden targets, enforcing specific conservation patterns, and composing the scores of each landscapes multiplicatively. See [multi-dimensional models](utils/multi_dimensional_model.py) for the generic class that allows composing landscapes.  
 
 
 ```
@@ -167,22 +173,25 @@ year = {2019}
 ### Noisy Oracles
 
 #### Noisy Abstract Models
-
+These models get access to the ground truth `g`, but do not allow the explorer to access `g` directly. They corrupt the signal from `g` but adding noise to it, proportional to the distance of the query from the (nearest) observed data. The parameter `signal_strength` which is between 0 (no signal) and 1 (perfect model) determines the rate of decay.  
 
 
 #### Empirical Models
+These models train a standard algorithm on the observed data. The currently available architectures can be found in [architectures](utils/model_architectures.py). 
+All noisy models can be ensembled using the [ensemble class](Noisy_models/Ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
+
 
 ### Exploration Algorithms
 -[Base Explorer](explorers/base_explorer.py): Base class from which you can inherit to implement your algorithm.
 
--[Random Explorer](explorers/random_explorer.py): A baseline explorer.
+-[Random Explorer](explorers/random_explorer.py): A baseline random explorer.
 
 #### Evolutionary Algorithms
--[Wright-Fisher, Model-guided Wright Fisher](explorers/evolutionary_explorers.py)
+-[Wright-Fisher, Model-guided Wright Fisher](explorers/evolutionary_explorers.py): A standard Wright-Fisher process, in addition to a Wright-Fisher process that has access to an oracle for pre-screening. 
 
--[CMA-ES](explorers/CMAES_explorer.py)
+-[CMA-ES](explorers/CMAES_explorer.py): The CMA-ES algorithm (with access to the oracle) for comparison as another evolutionary baseline. 
 
--[Independent sites X-entropy , ADALEAD](explorers/elitist_explorers.py)
+-[Independent sites X-entropy , ADALEAD](explorers/elitist_explorers.py): Independent sites cross-entropy, and Adalead (Greedy) are both elitist explorers in the sense that they use statistics around high performing variants. ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithm.  
 
 
 #### DbAS and CbAS
@@ -220,9 +229,9 @@ Adaptations of the following RL algorithms.
 ```	
 #### Bayesian Optimization 
 
--[Evolutionary BO](bo_explorer.py)
+-[Evolutionary BO](bo_explorer.py): Bayesian optimization on sparse sampling of the mutation space.
 
--[Enumerative BO](gpr_bo_explorer.py)
+-[Enumerative BO](gpr_bo_explorer.py): Bayesion optimization on fully enumerated (when possible) mutation space.
 
 
 

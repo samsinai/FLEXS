@@ -8,7 +8,7 @@ class Ensemble_models(Model):
     Ensembles a list of models.
 
     If `adaptive=True`, it will reweight the outputs of each model based on each
-    fitness returned. Otherwise, it will take the average of all outputs.
+    fitness returned. Otherwise, it will take a simple average of all outputs.
     """
 
     def __init__(self, list_of_models=None, adaptive=True):

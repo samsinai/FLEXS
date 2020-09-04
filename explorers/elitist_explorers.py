@@ -163,7 +163,7 @@ class Greedy(XE_IS):
         path="./simulations/",
         debug=False,
     ):
-        """Greedy algorithm implementation."""
+        """Adapt-with-the-Leader algorithm implementation. """
         super(Greedy, self).__init__(
             batch_size=batch_size,
             alphabet=alphabet,
