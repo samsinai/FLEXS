@@ -24,7 +24,7 @@ from utils.sequence_utils import generate_random_mutant
 from sklearn.preprocessing import normalize
 from utils.exceptions import GenerateError
 
-import tensorflow
+import tensorflow as tf 
 import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.losses import categorical_crossentropy
@@ -38,6 +38,7 @@ from tensorflow.keras.layers import (
     MaxPooling1D,
     BatchNormalization,
 )
+tf.config.experimental_run_functions_eagerly(True)
 
 
 class Architecture:
@@ -370,6 +371,7 @@ class VAE(Architecture):
         return xent_loss + self.beta * kl_loss
 
     def get_model(self, seq_size=0, alphabet=None):
+        # This is TF 1
         self.alphabet = alphabet
         self.KEY_LIST = list(self.alphabet)
         self.seq_size = seq_size
