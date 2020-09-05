@@ -23,7 +23,10 @@ class KerasModel(flsd.Model):
         self.batch_size = batch_size
 
     def train(self, sequences, labels, verbose=False):
-        one_hots = np.array([s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences])
+        one_hots = tf.convert_to_tensor([
+            s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences
+        ], dtype=tf.float32)
+        labels = tf.convert_to_tensor(labels)
 
         self.model.fit(
             one_hots,
@@ -34,6 +37,8 @@ class KerasModel(flsd.Model):
         )
 
     def get_fitness(self, sequences):
-        one_hots = np.array([s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences])
+        one_hots = tf.convert_to_tensor([
+            s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences
+        ], dtype=tf.float32)
 
         return self.model.predict(one_hots, batch_size=self.batch_size).squeeze(axis=1)
