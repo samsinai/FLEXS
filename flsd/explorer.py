@@ -1,4 +1,5 @@
 import abc
+import uuid
 
 import pandas as pd
 
@@ -11,6 +12,7 @@ class Explorer(abc.ABC):
         self.experiment_budget = experiment_budget
         self.query_budget = query_budget
         self.initial_sequences = initial_sequences
+        self.run_id = str(uuid.uuid1())
 
     @abc.abstractmethod
     def propose_sequences(self, batches):
@@ -21,8 +23,10 @@ class Explorer(abc.ABC):
 
         sequences = pd.DataFrame({
             'sequence': self.initial_sequences,
-            'ground_truth': self.landscape.get_fitness(self.initial_sequences),
-            'round': 0
+            'true_score': self.landscape.get_fitness(self.initial_sequences),
+            'model_score': self.landscape.get_fitness(self.initial_sequences),
+            'round': 0, 
+            'run_id': self.run_id,
         })
 
         for r in range(1, self.rounds + 1):
@@ -37,9 +41,11 @@ class Explorer(abc.ABC):
             sequences = sequences.append(
                 pd.DataFrame({
                     'sequence': seqs,
-                    'pred': preds,
-                    'ground_truth': ground_truth,
-                    'round': r
+                    'model_score': preds,
+                    'true_score': ground_truth,
+                    'round': r, 
+                    'run_id': self.run_id,
+
                 })
             )
 
