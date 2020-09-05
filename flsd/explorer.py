@@ -1,4 +1,7 @@
-class Explorer:
+import abc
+
+class Explorer(abc.ABC):
+
     def set_model(self, model):
         pass
 

@@ -57,10 +57,10 @@ def construct_mutant_from_sample(pwm_sample, one_hot_base):
     return one_hot
 
 
-def translate_string_to_one_hot(sequence, order_list):
-    out = np.zeros((len(order_list), len(sequence)))
+def string_to_one_hot(sequence, alphabet):
+    out = np.zeros((len(sequence), len(alphabet)))
     for i in range(len(sequence)):
-        out[order_list.index(sequence[i])][i] = 1
+        out[i, alphabet.index(sequence[i])] = 1
     return out
 
 
