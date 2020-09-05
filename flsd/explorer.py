@@ -18,6 +18,7 @@ class Explorer(abc.ABC):
     def propose_sequences(self, batches):
         pass
 
+
     def run(self, verbose=True):
         """Run the exporer."""
 
@@ -26,7 +27,8 @@ class Explorer(abc.ABC):
             'true_score': self.landscape.get_fitness(self.initial_sequences),
             'model_score': self.landscape.get_fitness(self.initial_sequences),
             'round': 0, 
-            'run_id': self.run_id,
+            'measurement_cost' : len(self.initial_sequences),
+            'run_id': self.run_id
         })
 
         for r in range(1, self.rounds + 1):
@@ -44,8 +46,8 @@ class Explorer(abc.ABC):
                     'model_score': preds,
                     'true_score': ground_truth,
                     'round': r, 
-                    'run_id': self.run_id,
-
+                    'measurement_cost' : int(r * len(seqs)),
+                    'run_id': self.run_id
                 })
             )
 
