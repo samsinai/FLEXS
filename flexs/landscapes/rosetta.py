@@ -1,7 +1,7 @@
 import flexs
 import numpy as np
 import pyrosetta as prs
-
+#prs = None
 # Initialize pyrosetta and suppress output messages
 prs.init("-mute all")
 
