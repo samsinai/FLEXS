@@ -7,7 +7,7 @@ class NullModel(flexs.Model):
         super().__init__(name="NullModel")
 
         self.average_fitness = 0.05
-        self.rng = np.random.default_rng()
+        self.rng = np.random.default_rng(seed)
         self.cache = {}
 
     def train(self, sequences, labels):

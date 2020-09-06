@@ -4,7 +4,7 @@ import numpy as np
 
 class Ensemble(flexs.Model):
     def __init__(self, models, combine_with=lambda x: np.mean(x, axis=1)):
-        name = "|".join(model.name for model in models)
+        name = f"Ens({'|'.join(model.name for model in models)})"
         super().__init__(name)
 
         self.models = models
