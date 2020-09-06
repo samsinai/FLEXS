@@ -1,5 +1,4 @@
 """Elitist explorers."""
-import bisect
 import random
 
 import flexs
@@ -17,9 +16,9 @@ class Adalead(flexs.Explorer):
         model,
         landscape,
         rounds,
+        initial_sequence_data,
         experiment_budget,
         query_budget,
-        initial_sequences,
         alphabet,
         mu=1,
         recomb_rate=0,
@@ -37,7 +36,7 @@ class Adalead(flexs.Explorer):
             rounds,
             experiment_budget,
             query_budget,
-            initial_sequences,
+            initial_sequence_data,
         )
         self.threshold = threshold
         self.recomb_rate = recomb_rate
@@ -75,11 +74,11 @@ class Adalead(flexs.Explorer):
         """Generate."""
 
         measured_sequence_dict = dict(
-            zip(measured_sequences["sequence"], measured_sequences["ground_truth"])
+            zip(measured_sequences["sequence"], measured_sequences["true_score"])
         )
 
-        top_fitness = measured_sequences["ground_truth"].max()
-        top_inds = measured_sequences["ground_truth"] >= top_fitness * (
+        top_fitness = measured_sequences["true_score"].max()
+        top_inds = measured_sequences["true_score"] >= top_fitness * (
             1 - np.sign(top_fitness) * self.threshold
         )
 

@@ -1,7 +1,7 @@
-from glob import glob
-
+import numpy as np
 import pandas as pd
-from meta.model import Ground_truth_oracle
+
+import flexs
 
 
 class TF_binding_landscape_constructor:
@@ -60,18 +60,17 @@ class TF_binding_landscape_constructor:
             yield self.construct_landscape_object(landscape_file)
 
 
-class TF_binding_landscape(Ground_truth_oracle):
-    def __init__(self):
-        self.sequences = {}
+class TFBinding(flexs.Landscape):
+    def __init__(self, landscape_file):
+        super().__init__(name="TF_Binding")
 
-    def construct(self, landscape_file):
-        data = pd.read_csv(f"{landscape_file}", sep="\t")
-        data["normed_e_score"] = data["E-score"] - data["E-score"].min()
-        data["normed_e_score"] = data["normed_e_score"] / data["normed_e_score"].max()
+        # Load TF pairwise TF binding measurements from file
+        data = pd.read_csv(landscape_file, sep="\t")
+        score = data["Median"]
+        norm_score = (score - score.min()) / (score.max() - score.min())
 
-        for i, row in data.iterrows():
-            self.sequences[row["8-mer"]] = row["normed_e_score"]
-            self.sequences[row["8-mer.1"]] = row["normed_e_score"]
+        # Populate dictionary with normalized scores
+        self.sequences = dict(zip(data["8-mer"], norm_score))
 
-    def get_fitness(self, sequence):
-        return self.sequences[sequence]
+    def _fitness_function(self, sequences):
+        return np.array([self.sequences[seq] for seq in sequences])

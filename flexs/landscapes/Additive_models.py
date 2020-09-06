@@ -4,7 +4,6 @@ import sys
 
 import numpy as np
 from meta.model import Ground_truth_oracle
-from utils.multi_dimensional_model import Multi_dimensional_model
 
 AAV2_WT = """MAADGYLPDWLEDTLSEGIRQWWKLKPGPPPPKPAERHKDDSRGLVLPGYKYLGPFNGLD\
 KGEPVNEADAAALEHDKAYDRQLDSGDNPYLKYNHADAEFQERLKEDTSFGGNLGRAVFQ\

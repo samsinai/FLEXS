@@ -8,13 +8,12 @@ class Random(flexs.Explorer):
         self,
         model,
         landscape,
-        name,
         rounds,
-        initial_sequences,
         mu,
-        alphabet,
+        initial_sequence_data,
         experiment_budget,
         query_budget,
+        alphabet,
         seed=None,
     ):
         name = f"Random_mu={mu}"
@@ -26,7 +25,7 @@ class Random(flexs.Explorer):
             rounds,
             experiment_budget,
             query_budget,
-            initial_sequences,
+            initial_sequence_data,
         )
         self.mu = mu
         self.rng = np.random.default_rng(seed)
