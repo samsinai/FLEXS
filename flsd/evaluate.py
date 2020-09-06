@@ -5,7 +5,7 @@ from flsd import baselines
 def robustness(landscape, make_explorer):
     results = []
     for ss in [0, 0.5, 0.9, 1]:
-        print(f"Evaluating for signal_strength: {ss}")
+        print(f"Evaluating for robustness to model accuracy; signal_strength: {ss}")
 
         model = baselines.models.NoisyNeighbor(landscape, signal_strength=ss)
         explorer = make_explorer(model)
@@ -14,6 +14,9 @@ def robustness(landscape, make_explorer):
         results.append((ss, sequences))
 
     return results
+
+
+
 
 
 ### TODO: Add rest of the evaluation metrics from old suite to this file
