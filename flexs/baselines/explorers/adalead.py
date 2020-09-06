@@ -8,7 +8,7 @@ import numpy as np
 
 class Adalead(flexs.Explorer):
     """
-    ADALEAD explorer.
+    AdaLead explorer.
     """
 
     def __init__(
@@ -44,10 +44,11 @@ class Adalead(flexs.Explorer):
         self.mu = mu  # number of mutations per *sequence*.
         self.rho = rho
         self.explorer_type = (
-            f"Greedy_mu{self.mu}_tr{self.threshold}_r{self.recomb_rate}_rho{self.rho}"
+            f"Adalead_mu{self.mu}_tr{self.threshold}_r{self.recomb_rate}_rho{self.rho}"
         )
 
     def _recombine_population(self, gen):
+        # @TODO this returns an empty array if len(gen) = 1; for example if gen=[wt]
         random.shuffle(gen)
         ret = []
         for i in range(0, len(gen) - 1, 2):
@@ -90,10 +91,11 @@ class Adalead(flexs.Explorer):
         while len(sequences) < self.query_budget:
             # generate recombinant mutants
             for i in range(self.rho):
+                # @TODO if parents=[], the outer while loops infinitely
                 parents = self._recombine_population(parents)
 
             for root in parents:
-                # Here we do rollots from each parent (root of rollout tree)
+                # Here we do rollouts from each parent (root of rollout tree)
                 root_fitness = self.model.get_fitness([root]).item()
                 node = root
 
