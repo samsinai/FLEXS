@@ -2,14 +2,14 @@ import sys
 
 sys.path.append("../")
 import RNA
-from utils.model_architectures import Linear, NLNN, CNNa, VAE 
-from models.Noisy_models.Neural_network_models import NN_model
-from models.Ground_truth_oracles.RNA_landscape_models import RNA_landscape_constructor
-from models.Noisy_models.Ensemble import Ensemble_models
 from evaluators.Evaluator import Evaluator
-from models.Ground_truth_oracles.TF_binding_landscape_models import *
-from explorers.elitist_explorers import Greedy
 from explorers.CbAS_DbAS_explorers import CbAS_explorer, DbAS_explorer
+from explorers.elitist_explorers import Greedy
+from models.Ground_truth_oracles.RNA_landscape_models import RNA_landscape_constructor
+from models.Ground_truth_oracles.TF_binding_landscape_models import *
+from models.Noisy_models.Ensemble import Ensemble_models
+from models.Noisy_models.Neural_network_models import NN_model
+from utils.model_architectures import NLNN, VAE, CNNa, Linear
 
 LANDSCAPE_TYPES = {"RNA": [0]}
 g = VAE(
@@ -22,7 +22,7 @@ g = VAE(
     validation_split=0,
     min_training_size=100,
     mutation_rate=2,
-    verbose=False
+    verbose=False,
 )
 dbas_explorer = DbAS_explorer(batch_size=10, virtual_screen=20, generator=g)
 dbas_explorer.debug = False

@@ -1,16 +1,18 @@
-import os
 import itertools
+import os
 import pickle
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import numpy as np
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
 sys.path.append("../")
+import multiprocessing
+
 from models.Ground_truth_oracles.RNA_landscape_models import RNA_landscape_constructor
 from models.Ground_truth_oracles.TF_binding_landscape_models import *
-import multiprocessing
 from pathos.multiprocessing import ProcessingPool as Pool
 
 print("Number of CPUs", multiprocessing.cpu_count())
