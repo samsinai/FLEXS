@@ -1,3 +1,5 @@
+from flexs.baselines.models.adaptive_ensemble import AdaptiveEnsemble
+
 from flexs.baselines.models.null_model import NullModel
 from flexs.baselines.models.noisy_abstract_model import NoisyAbstractModel
 

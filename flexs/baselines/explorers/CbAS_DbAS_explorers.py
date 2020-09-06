@@ -4,7 +4,6 @@ import logging
 
 import numpy as np
 from explorers.base_explorer import Base_explorer
-from utils.exceptions import GenerateError
 from utils.model_architectures import VAE
 
 
@@ -111,7 +110,7 @@ class CbAS_explorer(Base_explorer):
                     )
                     # print(f'Proposed {len(proposals)} new samples')
                     count += len(proposals)
-                except GenerateError as e:
+                except ValuError as e:
                     print(e.message)
                     print("Ending the CbAS cycle, returning existing proposals...")
                     return self.all_proposals_ranked[-self.n_new_proposals :]
@@ -265,7 +264,7 @@ class DbAS_explorer(Base_explorer):
                     )
                     # print(f'Proposed {len(proposals)} new samples')
                     count += len(proposals)
-                except GenerateError as e:
+                except ValueError as e:
                     print(e.message)
                     print("Ending the CbAS cycle, returning existing proposals...")
                     return self.all_proposals_ranked[-self.n_new_proposals :]

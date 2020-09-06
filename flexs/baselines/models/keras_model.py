@@ -6,12 +6,7 @@ import tensorflow as tf
 
 class KerasModel(flexs.Model):
     def __init__(
-        self,
-        model,
-        alphabet,
-        name,
-        batch_size=256,
-        epochs=20,
+        self, model, alphabet, name, batch_size=256, epochs=20,
     ):
         super().__init__(name)
 

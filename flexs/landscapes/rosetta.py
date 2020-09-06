@@ -1,9 +1,9 @@
 import flexs
 import numpy as np
 import pyrosetta as prs
-#prs = None
 # Initialize pyrosetta and suppress output messages
 prs.init("-mute all")
+
 
 # Some pyrosetta methods take three letter aa representations
 # so we need to convert our single letter representations
@@ -57,6 +57,20 @@ class RosettaFolding(flexs.Landscape):
 
     def __init__(self, pdb_file, norm_value=3):
         super().__init__(name="RosettaFolding")
+
+        # Pyrosetta is an optional dependency, so import lazily and inform the
+        # user if pyrosetta is not available.
+        try:
+            import pyrosetta as prs
+        except ImportError as e:
+            raise ImportError(
+                f"{e}.\n"
+                "Hint: Pyrosetta not installed. "
+                "Source, binary, and conda installations available at http://www.pyrosetta.org/dow"
+            )
+
+        # Initialize pyrosetta and suppress output messages
+        prs.init("-mute all")
 
         # We will reuse this pose over and over, mutating it to match
         # whatever sequence we are given to measure.

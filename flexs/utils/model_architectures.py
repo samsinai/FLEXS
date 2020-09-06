@@ -19,7 +19,6 @@ from sklearn.linear_model import (
 )
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import normalize
-from utils.exceptions import GenerateError
 
 import tensorflow as tf
 import tensorflow.keras.backend as K
@@ -40,7 +39,6 @@ from tensorflow.keras.layers import (
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.optimizers import Adam
-from utils.exceptions import GenerateError
 from utils.sequence_utils import (
     generate_random_mutant,
     translate_one_hot_to_string,
@@ -496,7 +494,7 @@ class VAE(Architecture):
             np.isnan(x_reconstructed_matrix).any()
             or np.isinf(x_reconstructed_matrix).any()
         ):
-            raise GenerateError("NaN and/or inf in the reconstruction matrix")
+            raise ValueError("NaN and/or inf in the reconstruction matrix")
 
         # sample from the reconstructed pwm with Boltzmann weights
         # reject repeated sequences and ones that are in existing_samples

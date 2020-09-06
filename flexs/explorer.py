@@ -1,5 +1,6 @@
 import abc
 
+import numpy as np
 import pandas as pd
 from datetime import datetime
 
@@ -13,7 +14,7 @@ class Explorer(abc.ABC):
         rounds,
         experiment_budget,
         query_budget,
-        initial_sequences,
+        initial_sequence_data,
     ):
         self.model = model
         self.landscape = landscape
@@ -22,7 +23,7 @@ class Explorer(abc.ABC):
         self.rounds = rounds
         self.experiment_budget = experiment_budget
         self.query_budget = query_budget
-        self.initial_sequences = initial_sequences
+        self.initial_sequence_data = initial_sequence_data
         self.run_id = datetime.now().strftime("%H:%M:%S-%m/%d/%Y")
 
     @abc.abstractmethod
@@ -32,24 +33,25 @@ class Explorer(abc.ABC):
     def run(self, verbose=True):
         """Run the exporer."""
 
+        metadata = {"run_id": self.run_id}
         sequences = pd.DataFrame(
             {
-                "sequence": self.initial_sequences,
-                "true_score": self.landscape.get_fitness(self.initial_sequences),
-                "model_score": self.landscape.get_fitness(self.initial_sequences),
+                "sequence": self.initial_sequence_data,
+                "model_score": np.nan,
+                "true_score": self.landscape.get_fitness(self.initial_sequence_data),
                 "round": 0,
-                "measurement_cost": len(self.initial_sequences),
-                "run_id": self.run_id,
+                "model_cost": self.model.cost,
+                "measurement_cost": len(self.initial_sequence_data),
             }
         )
 
         for r in range(1, self.rounds + 1):
             self.model.train(
-                sequences["sequence"].to_numpy(), sequences["ground_truth"].to_numpy()
+                sequences["sequence"].to_numpy(), sequences["true_score"].to_numpy()
             )
 
             seqs, preds = self.propose_sequences(sequences)
-            ground_truth = self.landscape.get_fitness(seqs)
+            true_score = self.landscape.get_fitness(seqs)
 
             if len(seqs) > self.experiment_budget:
                 raise ValueError(
@@ -61,15 +63,15 @@ class Explorer(abc.ABC):
                     {
                         "sequence": seqs,
                         "model_score": preds,
-                        "true_score": ground_truth,
+                        "true_score": true_score,
                         "round": r,
-                        "measurement_cost": int(r * len(seqs)),
-                        "run_id": self.run_id,
+                        "model_cost": self.model.cost,
+                        "measurement_cost": len(sequences) + len(seqs),
                     }
                 )
             )
 
             if verbose:
-                print(f"round: {r}, top: {ground_truth.max()}")
+                print(f"round: {r}, top: {true_score.max()}")
 
-        return sequences
+        return sequences, metadata

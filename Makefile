@@ -1,9 +1,7 @@
-directories = ./explorers ./evaluators ./environments
-
 format:
-	python -m black $(directories)
-	python -m isort -rc $(directories)
+	python -m black flexs
+	python -m isort -rc flexs
 
 lint:
-	python -m pylint --reports=n --rcfile=pylintrc $(directories)
-	python -m pydocstyle $(directories)
+	python -m pylint --reports=n --rcfile=pylintrc flexs
+	python -m pydocstyle flexs
