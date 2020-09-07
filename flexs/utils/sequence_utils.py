@@ -53,7 +53,7 @@ def construct_mutant_from_sample(pwm_sample, one_hot_base):
     one_hot = np.zeros(one_hot_base.shape)
     one_hot += one_hot_base
     i, j = np.nonzero(pwm_sample)  # this can be problematic for non-positive fitnesses
-    one_hot[:, j] = 0
+    one_hot[i, :] = 0
     one_hot[i, j] = 1
     return one_hot
 
