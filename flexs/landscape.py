@@ -7,7 +7,7 @@ class Landscape(abc.ABC):
         self.name = name
 
     @abc.abstractmethod
-    def _fitness_function(self):
+    def _fitness_function(self, sequences):
         pass
 
     def get_fitness(self, sequences):
