@@ -13,18 +13,18 @@ class Explorer(abc.ABC):
         landscape,
         name,
         rounds,
-        experiment_budget,
-        query_budget,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
         initial_sequence_data,
-        log_file=None,
+        log_file,
     ):
         self.model = model
         self.landscape = landscape
         self.name = name
 
         self.rounds = rounds
-        self.experiment_budget = experiment_budget
-        self.query_budget = query_budget
+        self.ground_truth_measurements_per_round = ground_truth_measurements_per_round
+        self.model_queries_per_round = model_queries_per_round
         self.initial_sequence_data = initial_sequence_data
         self.log_file = log_file
 
@@ -35,7 +35,7 @@ class Explorer(abc.ABC):
     def _log(self, metadata, sequences, preds, true_score, current_round, verbose):
         if self.log_file is not None:
             with open(self.log_file, "w") as f:
-                json.dumps(metadata, f)
+                json.dump(metadata, f)
                 f.write("\n")
                 sequences.to_csv(f, index=False)
 
@@ -54,8 +54,8 @@ class Explorer(abc.ABC):
             "model_name": self.model.name,
             "landscape_name": self.landscape.name,
             "rounds": self.rounds,
-            "experiment_budget": self.experiment_budget,
-            "query_budget": self.query_budget,
+            "ground_truth_measurements_per_round": self.ground_truth_measurements_per_round,
+            "model_queries_per_round": self.model_queries_per_round,
         }
 
         # Initial sequences and their scores
@@ -67,8 +67,6 @@ class Explorer(abc.ABC):
                 "round": 0,
                 "model_cost": self.model.cost,
                 "measurement_cost": len(self.initial_sequence_data),
-                "landscape": self.landscape.name,
-                "model": self.model.name,
             }
         )
         self._log(
@@ -90,9 +88,9 @@ class Explorer(abc.ABC):
             seqs, preds = self.propose_sequences(sequences)
             true_score = self.landscape.get_fitness(seqs)
 
-            if len(seqs) > self.experiment_budget:
+            if len(seqs) > self.ground_truth_measurements_per_round:
                 raise ValueError(
-                    "Must propose <= `self.experiment_budget` sequences per round"
+                    "Must propose <= `self.ground_truth_measurements_per_round` sequences per round"
                 )
 
             sequences = sequences.append(
@@ -104,8 +102,6 @@ class Explorer(abc.ABC):
                         "round": r,
                         "model_cost": self.model.cost,
                         "measurement_cost": len(sequences) + len(seqs),
-                        "landscape": self.landscape.name,
-                        "model": self.model.name,
                     }
                 )
             )

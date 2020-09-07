@@ -12,8 +12,8 @@ class Random(flexs.Explorer):
         rounds,
         mu,
         initial_sequence_data,
-        experiment_budget,
-        query_budget,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
         alphabet,
         log_file=None,
         seed=None,
@@ -25,8 +25,8 @@ class Random(flexs.Explorer):
             landscape,
             name,
             rounds,
-            experiment_budget,
-            query_budget,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
             initial_sequence_data,
             log_file,
         )
@@ -36,13 +36,13 @@ class Random(flexs.Explorer):
         self.name = f"Random_mu{self.mu}"
 
     def propose_sequences(self, measured_sequences):
-        """Propose `experiment_budget` samples."""
+        """Propose `ground_truth_measurements_per_round` samples."""
 
         old_sequences = measured_sequences["sequence"]
         old_sequence_set = set(old_sequences)
         new_seqs = set()
 
-        while len(new_seqs) <= self.query_budget:
+        while len(new_seqs) <= self.model_queries_per_round:
             seq = self.rng.choice(old_sequences)
             new_seq = s_utils.generate_random_mutant(
                 seq, self.mu / len(seq), alphabet=self.alphabet
@@ -53,6 +53,8 @@ class Random(flexs.Explorer):
 
         new_seqs = np.array(list(new_seqs))
         preds = self.model.get_fitness(new_seqs)
-        sorted_order = np.argsort(preds)[: -self.experiment_budget : -1]
+        sorted_order = np.argsort(preds)[
+            : -self.ground_truth_measurements_per_round : -1
+        ]
 
         return new_seqs[sorted_order], preds[sorted_order]

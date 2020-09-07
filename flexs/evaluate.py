@@ -2,9 +2,9 @@ import flexs
 from flexs import baselines
 
 
-def robustness(landscape, make_explorer):
+def robustness(landscape, make_explorer, signal_strengths=[0, 0.5, 0.9, 1]):
     results = []
-    for ss in [0, 0.5, 0.9, 1]:
+    for ss in signal_strengths:
         print(f"Evaluating for robustness to model accuracy; signal_strength: {ss}")
 
         model = baselines.models.NoisyAbstractModel(landscape, signal_strength=ss)
@@ -16,7 +16,25 @@ def robustness(landscape, make_explorer):
     return results
 
 
+def efficiency(
+    landscape,
+    make_explorer,
+    budgets=[(100, 500), (100, 1000), (1000, 5000), (1000, 10000)],
+):
+    for ground_truth_measurements_per_round, model_queries_per_round in budgets:
+        print(
+            f"Evaluating for ground_truth_measurements_per_round: {ground_truth_measurements_per_round}, model_queries_per_round: {model_queries_per_round}"
+        )
+        explorer = make_explorer(
+            ground_truth_measurements_per_round, model_queries_per_round
+        )
+        sequences = explorer.run()
 
+        results.append(
+            ((ground_truth_measurements_per_round, model_queries_per_round), sequences)
+        )
+
+    return results
 
 
 ### TODO: Add rest of the evaluation metrics from old suite to this file

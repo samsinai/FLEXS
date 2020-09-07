@@ -18,8 +18,8 @@ class Adalead(flexs.Explorer):
         landscape,
         rounds,
         initial_sequence_data,
-        experiment_budget,
-        query_budget,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
         alphabet,
         mu=1,
         recomb_rate=0,
@@ -36,8 +36,8 @@ class Adalead(flexs.Explorer):
             landscape,
             name,
             rounds,
-            experiment_budget,
-            query_budget,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
             initial_sequence_data,
             log_file,
         )
@@ -85,11 +85,12 @@ class Adalead(flexs.Explorer):
         )
 
         parents = np.resize(
-            measured_sequences["sequence"][top_inds].to_numpy(), self.experiment_budget
+            measured_sequences["sequence"][top_inds].to_numpy(),
+            self.ground_truth_measurements_per_round,
         )
 
         sequences = {}
-        while len(sequences) < self.query_budget:
+        while len(sequences) < self.model_queries_per_round:
             # generate recombinant mutants
             for i in range(self.rho):
                 # @TODO if parents=[], the outer while loops infinitely
@@ -100,7 +101,7 @@ class Adalead(flexs.Explorer):
                 root_fitness = self.model.get_fitness([root]).item()
                 node = root
 
-                while len(sequences) < self.query_budget:
+                while len(sequences) < self.model_queries_per_round:
                     child = s_utils.generate_random_mutant(
                         node, self.mu * 1 / len(node), self.alphabet
                     )
@@ -121,9 +122,11 @@ class Adalead(flexs.Explorer):
                     else:
                         break
 
-        # We propose the top `self.experiment_budget` new sequences we have generated
+        # We propose the top `self.ground_truth_measurements_per_round` new sequences we have generated
         new_seqs = np.array(list(sequences.keys()))
         preds = np.array(list(sequences.values()))
-        sorted_order = np.argsort(preds)[: -self.experiment_budget : -1]
+        sorted_order = np.argsort(preds)[
+            : -self.ground_truth_measurements_per_round : -1
+        ]
 
         return new_seqs[sorted_order], preds[sorted_order]

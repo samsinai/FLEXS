@@ -204,8 +204,8 @@ class myExplorer(flexs.Explorer):
         landscape,
         rounds,
         initial_sequence_data,
-        experiment_budget,
-        query_budget,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
         **kwargs)
 
         super().__init__(
@@ -213,8 +213,8 @@ class myExplorer(flexs.Explorer):
             landscape,
             name,
             rounds,
-            experiment_budget,
-            query_budget,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
             initial_sequence_data,
             **kwargs
         )
@@ -223,8 +223,8 @@ class myExplorer(flexs.Explorer):
     def propose_sequences(self, batches):
         """
         Your method implementation overriding the main explorer.
-        It is allowed to make *query_budget* queries to the model
-        and make *experiment_budget* proposals in return.
+        It is allowed to make *model_queries_per_round* queries to the model
+        and make *ground_truth_measurements_per_round* proposals in return.
         """
 
 ~~~
