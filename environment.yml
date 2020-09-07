@@ -2,7 +2,6 @@ name: flexs
 channels:
   - bioconda
   - pytorch
-  - https://conda.graylab.jhu.edu
   - https://levinthal:paradox@conda.graylab.jhu.edu
   - conda-forge
   - defaults

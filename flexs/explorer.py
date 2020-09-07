@@ -1,6 +1,7 @@
 import abc
 import json
 from datetime import datetime
+import os
 
 import numpy as np
 import pandas as pd
@@ -34,9 +35,18 @@ class Explorer(abc.ABC):
 
     def _log(self, metadata, sequences, preds, true_score, current_round, verbose):
         if self.log_file is not None:
+
+            # Create directory for `self.log_file` if necessary
+            directory = os.path.split(self.log_file)[0]
+            if directory != "" and not os.path.exists(directory):
+                os.mkdir(directory)
+
             with open(self.log_file, "w") as f:
+                # First write metadata
                 json.dump(metadata, f)
                 f.write("\n")
+
+                # Then write pandas dataframe
                 sequences.to_csv(f, index=False)
 
         if verbose:
