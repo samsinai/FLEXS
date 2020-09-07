@@ -27,7 +27,7 @@ class Explorer(abc.ABC):
         self.run_id = datetime.now().strftime("%H:%M:%S-%m/%d/%Y")
 
     @abc.abstractmethod
-    def propose_sequences(self, batches):
+    def propose_sequences(self, measured_sequences):
         pass
 
     def run(self, verbose=True):
@@ -42,6 +42,8 @@ class Explorer(abc.ABC):
                 "round": 0,
                 "model_cost": self.model.cost,
                 "measurement_cost": len(self.initial_sequence_data),
+                "landscape": self.landscape.name,
+                "model": self.model.name,
             }
         )
 
@@ -67,6 +69,8 @@ class Explorer(abc.ABC):
                         "round": r,
                         "model_cost": self.model.cost,
                         "measurement_cost": len(sequences) + len(seqs),
+                        "landscape": self.landscape.name,
+                        "model": self.model.name,
                     }
                 )
             )

@@ -2,19 +2,19 @@
 
 ![FLEX](LOGO.png)
 
-FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. 
+FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. This project was developed with support from [Dyno Therapeutics](https://www.dynotx.com).
 
 - [Installation](#installation)
 - [Overview](#overview)
-	- [Quickstart](Tutorial.ipynb) 
-- [Major components](#major-components)
+	- [Quickstart](Tutorial.ipynb)
+- [Contribution and credits](#contributions-and-credits) 
+- [Components](#components)
   - [Ground truth landscapes](#ground-truth-landscapes)
   - [Noisy oracles](#noisy-oracles)
   - [Exploration algorithms](#exploration-algorithms)
+     - [Bring your own explorer](#bring-your-own-explorer) 
 
-Your PR and contributions to this sandbox are most welcome. If you make use of it, please ensure that you cite the relevant original articles upon which this work was made possible (we provide links in this readme). 
 
-This work was done with support from [Dyno Therapeutics](https://www.dynotx.com).
 
 ## Installation
 
@@ -91,9 +91,14 @@ We also implement a suite of [evaluation modules](evaluators/Evaluator.py) that 
 
 See the [tutorial](Tutorial.ipynb) for an example of how these can be run. 
 
-# Major components
+## Contributions and credits
+Your PR and contributions to this sandbox are most welcome. If you make use of data or algorithms in this sandbox, please ensure that you cite the relevant original articles upon which this work was made possible (we provide links in this readme).
 
-### Ground truth Landscapes
+FLEXS 0.2.0 was developed by Sam Sinai, Richard Wang, Alexander Whatley, Elina Locane, and Stewart Slocum.  
+
+# Components
+
+### Ground Truth Landscapes
 
 #### Transcription Factor Binding
 
@@ -186,7 +191,45 @@ All noisy models can be ensembled using the [ensemble class](Noisy_models/Ensemb
 
 
 ### Exploration Algorithms
--[Base Explorer](explorers/base_explorer.py): Base class from which you can inherit to implement your algorithm.
+
+#### Bring your own explorer
+Exploration algorithms are search methods that use noisy oracles to select the next batch of samples from the landscape. This is the main service of this sandbox, you can implement your own explorer by simply inheriting from the [Base Explorer](explorer.py), and implementing a single method:
+
+
+~~~
+class myExplorer(flexs.Explorer):
+    """Your explorer here"""
+      def __init__(self,
+        model,
+        landscape,
+        rounds,
+        initial_sequence_data,
+        experiment_budget,
+        query_budget,
+        **kwargs)
+
+        super().__init__(
+            model,
+            landscape,
+            name,
+            rounds,
+            experiment_budget,
+            query_budget,
+            initial_sequence_data,
+            **kwargs
+        )
+        "Your custom attributes here"
+
+    def propose_sequences(self, batches):
+        """
+        Your method implementation overriding the main explorer.
+        It is allowed to make *query_budget* queries to the model
+        and make *experiment_budget* proposals in return.
+        """
+
+~~~
+
+#### Baseline Explorers
 
 -[Random Explorer](explorers/random_explorer.py): A baseline random explorer.
 
