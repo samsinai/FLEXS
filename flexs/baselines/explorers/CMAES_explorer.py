@@ -1,5 +1,4 @@
 """CMAES explorer."""
-
 import numpy as np
 from explorers.base_explorer import Base_explorer
 from utils.sequence_utils import (

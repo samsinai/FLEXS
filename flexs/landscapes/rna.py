@@ -1,9 +1,10 @@
 import random
 
-import flexs
 import numpy as np
 import RNA
 import yaml
+
+import flexs
 
 
 class RNAFolding(flexs.Landscape):

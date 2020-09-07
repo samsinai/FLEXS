@@ -1,8 +1,9 @@
 import abc
+import json
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from datetime import datetime
 
 
 class Explorer(abc.ABC):
@@ -15,6 +16,7 @@ class Explorer(abc.ABC):
         experiment_budget,
         query_budget,
         initial_sequence_data,
+        log_file=None,
     ):
         self.model = model
         self.landscape = landscape
@@ -24,16 +26,39 @@ class Explorer(abc.ABC):
         self.experiment_budget = experiment_budget
         self.query_budget = query_budget
         self.initial_sequence_data = initial_sequence_data
-        self.run_id = datetime.now().strftime("%H:%M:%S-%m/%d/%Y")
+        self.log_file = log_file
 
     @abc.abstractmethod
     def propose_sequences(self, measured_sequences):
         pass
 
+    def _log(self, metadata, sequences, preds, true_score, current_round, verbose):
+        if self.log_file is not None:
+            with open(self.log_file, "w") as f:
+                json.dumps(metadata, f)
+                f.write("\n")
+                sequences.to_csv(f, index=False)
+
+        if verbose:
+            print(f"round: {current_round}, top: {true_score.max()}")
+
     def run(self, verbose=True):
         """Run the exporer."""
 
-        metadata = {"run_id": self.run_id}
+        self.model.cost = 0
+
+        # Metadata about run that will be used for logging purposes
+        metadata = {
+            "run_id": datetime.now().strftime("%H:%M:%S-%m/%d/%Y"),
+            "exp_name": self.name,
+            "model_name": self.model.name,
+            "landscape_name": self.landscape.name,
+            "rounds": self.rounds,
+            "experiment_budget": self.experiment_budget,
+            "query_budget": self.query_budget,
+        }
+
+        # Initial sequences and their scores
         sequences = pd.DataFrame(
             {
                 "sequence": self.initial_sequence_data,
@@ -46,7 +71,17 @@ class Explorer(abc.ABC):
                 "model": self.model.name,
             }
         )
+        self._log(
+            metadata,
+            sequences,
+            sequences["model_score"],
+            sequences["true_score"],
+            0,
+            verbose,
+        )
 
+        # For each round, train model on available data, propose sequences,
+        # measure them on the true landscape, add to available data, and repeat.
         for r in range(1, self.rounds + 1):
             self.model.train(
                 sequences["sequence"].to_numpy(), sequences["true_score"].to_numpy()
@@ -74,8 +109,6 @@ class Explorer(abc.ABC):
                     }
                 )
             )
-
-            if verbose:
-                print(f"round: {r}, top: {true_score.max()}")
+            self._log(metadata, sequences, preds, true_score, r, verbose)
 
         return sequences, metadata

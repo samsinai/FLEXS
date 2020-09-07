@@ -1,9 +1,10 @@
-import flexs
 import numpy as np
 import pyrosetta as prs
 # Initialize pyrosetta and suppress output messages
 prs.init("-mute all")
 
+
+import flexs
 
 # Some pyrosetta methods take three letter aa representations
 # so we need to convert our single letter representations

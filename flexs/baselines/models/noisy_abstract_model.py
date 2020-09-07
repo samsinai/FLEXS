@@ -1,10 +1,11 @@
 import random
 
 import editdistance
-import flexs
 import numpy as np
 from scipy.stats import pearsonr
 from sklearn.metrics import explained_variance_score, r2_score
+
+import flexs
 
 
 class NoisyAbstractModel(flexs.Model):

@@ -1,6 +1,7 @@
-import flexs
-import flexs.utils.sequence_utils as s_utils
 import numpy as np
+
+import flexs
+from flexs.utils import sequence_utils as s_utils
 
 
 class Random(flexs.Explorer):
@@ -14,6 +15,7 @@ class Random(flexs.Explorer):
         experiment_budget,
         query_budget,
         alphabet,
+        log_file=None,
         seed=None,
     ):
         name = f"Random_mu={mu}"
@@ -26,6 +28,7 @@ class Random(flexs.Explorer):
             experiment_budget,
             query_budget,
             initial_sequence_data,
+            log_file,
         )
         self.mu = mu
         self.rng = np.random.default_rng(seed)

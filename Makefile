@@ -1,7 +1,7 @@
 format:
 	python -m black flexs
-	python -m isort -rc flexs
+	python -m isort --profile black flexs
 
 lint:
-	python -m pylint --reports=n --rcfile=pylintrc flexs
+	python -m pylint --reports=n flexs
 	python -m pydocstyle flexs

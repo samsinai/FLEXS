@@ -7,7 +7,10 @@ from pathlib import Path
 
 from models.Noisy_models.Ensemble import Ensemble_models
 from models.Noisy_models.Neural_network_models import GPR_model, NN_model
-from models.Noisy_models.Noisy_abstract_model import Noisy_abstract_model, Null_model
+from models.Noisy_models.Noisy_abstract_model import (
+    Noisy_abstract_model,
+    Null_model,
+)
 from utils.model_architectures import (
     NLNN,
     SKBR,

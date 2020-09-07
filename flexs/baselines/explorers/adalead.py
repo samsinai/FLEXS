@@ -1,9 +1,10 @@
 """Elitist explorers."""
 import random
 
-import flexs
-import flexs.utils.sequence_utils as s_utils
 import numpy as np
+
+import flexs
+from flexs.utils import sequence_utils as s_utils
 
 
 class Adalead(flexs.Explorer):
@@ -26,6 +27,7 @@ class Adalead(flexs.Explorer):
         batch_size=100,
         virtual_screen=10,
         rho=1,
+        log_file=None,
     ):
         name = f"Adalead_mu={mu}_threshold={threshold}"
 
@@ -37,6 +39,7 @@ class Adalead(flexs.Explorer):
             experiment_budget,
             query_budget,
             initial_sequence_data,
+            log_file,
         )
         self.threshold = threshold
         self.recomb_rate = recomb_rate
@@ -73,9 +76,7 @@ class Adalead(flexs.Explorer):
     def propose_sequences(self, measured_sequences):
         """Generate."""
 
-        measured_sequence_dict = dict(
-            zip(measured_sequences["sequence"], measured_sequences["true_score"])
-        )
+        measured_sequence_set = set(measured_sequences["sequence"])
 
         top_fitness = measured_sequences["true_score"].max()
         top_inds = measured_sequences["true_score"] >= top_fitness * (
@@ -103,7 +104,7 @@ class Adalead(flexs.Explorer):
                     )
 
                     # Skip if child has been already been generated before
-                    if child in measured_sequence_dict or child in sequences:
+                    if child in measured_sequence_set or child in sequences:
                         continue
 
                     # Stop the rollout once the child has worse predicted

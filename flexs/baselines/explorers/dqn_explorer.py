@@ -1,15 +1,14 @@
 """DQN explorer."""
-
 import copy
 import random
 from collections import Counter
 
 import numpy as np
 import torch
-import torch.nn.functional as F
-import torch.optim as optim
 from explorers.base_explorer import Base_explorer
 from torch import nn
+from torch import optim as optim
+from torch.nn import functional as F
 from torch.nn.utils import clip_grad_norm_
 from utils.replay_buffers import PrioritizedReplayBuffer
 from utils.sequence_utils import (

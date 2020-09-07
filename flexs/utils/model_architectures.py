@@ -3,7 +3,7 @@ import sys
 
 import numpy as np
 import tensorflow
-import tensorflow.keras.backend as K
+import tensorflow as tf
 from scipy.special import logsumexp
 from sklearn.ensemble import (
     ExtraTreesRegressor,
@@ -19,9 +19,7 @@ from sklearn.linear_model import (
 )
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import normalize
-
-import tensorflow as tf
-import tensorflow.keras.backend as K
+from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import (
     Activation,
