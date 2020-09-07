@@ -15,7 +15,7 @@ class GeneticAlgorithm(flexs.Explorer):
            genetic algorithm where the top-k scoring sequences in the
            population become parents.
 
-        2. If `parent_selection_strategy == 'softmax-sampling'`, we have a
+        2. If `parent_selection_strategy == 'wright-fisher'`, we have a
            genetic algorithm based off of the Wright-Fisher model of evolution,
            where members of the population become parents with a probability
            exponential to their fitness (softmax the scores then sample).
@@ -42,7 +42,7 @@ class GeneticAlgorithm(flexs.Explorer):
         children_proportion: float,
         log_file=None,
         parent_selection_proportion: float = None,
-        softmax_temperature: float = None,
+        beta: float = None,
         recombination_strategy: str = None,
         avg_crossovers: int = None,
         num_crossover_tiles: int = None,
@@ -64,7 +64,7 @@ class GeneticAlgorithm(flexs.Explorer):
         self.population_size = population_size
 
         # Validate parent_selection_strategy
-        valid_parent_selection_strategies = ["top-proportion", "softmax-sampling"]
+        valid_parent_selection_strategies = ["top-proportion", "wright-fisher"]
         if parent_selection_strategy not in valid_parent_selection_strategies:
             raise ValueError(
                 f"parent_selection_strategy must be one of {valid_parent_selection_strategies}"
@@ -76,13 +76,10 @@ class GeneticAlgorithm(flexs.Explorer):
             raise ValueError(
                 "if top-proportion, parent_selection_proportion cannot be None"
             )
-        if (
-            parent_selection_strategy == "softmax-sampling"
-            and softmax_temperature is None
-        ):
-            raise ValueError("if softmax-sampling, softmax_temperature cannot be None")
+        if parent_selection_strategy == "wright-fisher" and beta is None:
+            raise ValueError("if wright-fisher, beta cannot be None")
         self.parent_selection_strategy = parent_selection_strategy
-        self.softmax_temperature = softmax_temperature
+        self.beta = beta
 
         self.children_proportion = children_proportion
         self.parent_selection_proportion = parent_selection_proportion
@@ -112,8 +109,8 @@ class GeneticAlgorithm(flexs.Explorer):
             k = int(self.parent_selection_proportion * self.population_size)
             return self.rng.choice(np.argsort(scores)[-k:], num_parents)
 
-        elif self.parent_selection_strategy == "softmax-sampling":
-            fitnesses = np.exp(scores / self.softmax_temperature)
+        elif self.parent_selection_strategy == "wright-fisher":
+            fitnesses = np.exp(scores / self.beta)
             probs = torch.Tensor(fitnesses / np.sum(fitnesses))
             return torch.multinomial(probs, num_parents, replacement=True).numpy()
 
