@@ -3,9 +3,10 @@ import copy
 from bisect import bisect_left
 
 import numpy as np
-from explorers.base_explorer import Base_explorer
-from utils.replay_buffers import PrioritizedReplayBuffer
-from utils.sequence_utils import (
+import flexs
+import flexs 
+from flexs.utils.replay_buffers import PrioritizedReplayBuffer
+from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
     generate_random_sequences,
     translate_one_hot_to_string,
@@ -13,16 +14,20 @@ from utils.sequence_utils import (
 )
 
 
-class BO_Explorer(Base_explorer):
+class BO_Explorer(flexs.Explorer):
     """Explorer using Bayesian Optimization."""
 
     def __init__(
         self,
+        model,
+        landscape,
+        rounds,
+        initial_sequence_data,
+        experiment_budget,
+        query_budget,
+        alphabet,
         batch_size=100,
-        alphabet="UCGA",
         virtual_screen=10,
-        path="./simulations/",
-        debug=False,
         method="EI",
         recomb_rate=0,
     ):
@@ -45,14 +50,17 @@ class BO_Explorer(Base_explorer):
                         sequence
                     Thompson sample another starting sequence
         """
-        super(BO_Explorer, self).__init__(
-            batch_size=batch_size,
-            alphabet=alphabet,
-            virtual_screen=virtual_screen,
-            path=path,
-            debug=debug,
+        name="BO_Explorer_method={method}"
+        super().__init__(
+            model,
+            landscape,
+            name,
+            rounds,
+            experiment_budget,
+            query_budget,
+            initial_sequence_data,
         )
-        self.explorer_type = "BO_Explorer"
+        self.alphabet = alphabet 
         self.method = method
         self.recomb_rate = recomb_rate
         self.best_fitness = 0
@@ -60,7 +68,6 @@ class BO_Explorer(Base_explorer):
         self.num_actions = 0
         # use PER buffer, same as in DQN
         self.model_type = "blank"
-
         self.state = None
         self.seq_len = None
         self.memory = None

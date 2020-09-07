@@ -1,8 +1,8 @@
 """CMAES explorer."""
 
 import numpy as np
-from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import (
+from flexs.baselines.explorers.base_explorer import Base_explorer
+from flexs.utils.sequence_utils import (
     generate_random_sequences,
     translate_one_hot_to_string,
     translate_string_to_one_hot,

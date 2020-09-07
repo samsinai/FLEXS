@@ -2,8 +2,8 @@
 import random
 
 import numpy as np
-from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import generate_random_mutant
+from flexs.baselines.explorers.base_explorer import Base_explorer
+from flexs.utils.sequence_utils import generate_random_mutant
 
 
 class Evolution(Base_explorer):

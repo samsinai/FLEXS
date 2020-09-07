@@ -5,8 +5,6 @@ from functools import partial
 
 import numpy as np
 import tensorflow as tf
-from environments.DynaPPO_environment import DynaPPOEnvironment as DynaPPOEnv
-from explorers.base_explorer import Base_explorer
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from tf_agents.agents.ppo import ppo_agent
@@ -14,7 +12,9 @@ from tf_agents.drivers import dynamic_episode_driver
 from tf_agents.environments import tf_py_environment
 from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
-from utils.model_architectures import (
+from flexs.baselines.explorers.base_explorer import Base_explorer
+from flexs.baselines.explorers.environments.PPO_environment import DynaPPOEnvironment as DynaPPOEnv
+from flexs.utils.model_architectures import (
     NLNN,
     SKBR,
     SKGB,
@@ -27,7 +27,7 @@ from utils.model_architectures import (
     SKLinear,
     SKNeighbors,
 )
-from utils.sequence_utils import (
+from flexs.utils.sequence_utils import (
     generate_random_sequences,
     translate_one_hot_to_string,
     translate_string_to_one_hot,

@@ -3,10 +3,8 @@ import os.path
 import uuid
 from abc import abstractmethod
 
-from meta.explorer import Explorer
 
-
-class Base_explorer(Explorer):
+class Base_explorer():
     """Base explorer."""
 
     def __init__(
