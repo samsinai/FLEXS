@@ -58,7 +58,9 @@ class RosettaFolding(flexs.Landscape):
         # Pyrosetta is an optional dependency, so import lazily and inform the
         # user if pyrosetta is not available.
         try:
-            import pyrosetta as prs
+            import pyrosetta
+
+            self.prs = pyrosetta
         except ImportError as e:
             raise ImportError(
                 f"{e}.\n"
@@ -67,22 +69,22 @@ class RosettaFolding(flexs.Landscape):
             )
 
         # Initialize pyrosetta and suppress output messages
-        prs.init("-mute all")
+        self.prs.init("-mute all")
 
         # We will reuse this pose over and over, mutating it to match
         # whatever sequence we are given to measure.
         # This is necessary since sequence identity can only be mutated
         # one residue at a time in Rosetta, because the atom coords of the
         # backbone of the previous residue are copied into the new one.
-        self.pose = prs.pose_from_pdb(pdb_file)
+        self.pose = self.prs.pose_from_pdb(pdb_file)
         self.wt_pose = self.pose.clone()
 
         # Change self.pose from full-atom to centroid representation
-        to_centroid_mover = prs.SwitchResidueTypeSetMover("centroid")
+        to_centroid_mover = self.prs.SwitchResidueTypeSetMover("centroid")
         to_centroid_mover.apply(self.pose)
 
         # Use 1 - sigmoid(centroid energy / norm_value) as the fitness score
-        self.score_function = prs.create_score_function("cen_std")
+        self.score_function = self.prs.create_score_function("cen_std")
         self.norm_value = norm_value
 
     def _mutate_pose(self, mut_aa, mut_pos):
@@ -94,12 +96,12 @@ class RosettaFolding(flexs.Landscape):
         conformation = self.pose.conformation()
 
         # Get ResidueType for new residue
-        new_restype = prs.rosetta.core.pose.get_restype_for_pose(
+        new_restype = self.prs.rosetta.core.pose.get_restype_for_pose(
             self.pose, aa_single_to_three_letter_code[mut_aa]
         )
 
         # Create the new residue using current_residue backbone
-        new_res = prs.rosetta.core.conformation.ResidueFactory.create_residue(
+        new_res = self.prs.rosetta.core.conformation.ResidueFactory.create_residue(
             new_restype,
             current_residue,
             conformation,
@@ -108,7 +110,7 @@ class RosettaFolding(flexs.Landscape):
         )
 
         # Make sure we retain as much info from the previous res as possible
-        prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
+        self.prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
             current_residue,
             new_res,
             conformation,
