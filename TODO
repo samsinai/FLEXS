@@ -1,4 +1,7 @@
 9/7/20
-- DynaPPO is potentially flaky
-- Need clarity on whether landscapes accept sequence strings or sequence arrays
-- Need clarity on return type of `propose_sequences`; what is `preds`?
+- DynaPPO
+    - Running is potentially flaky
+    - Make import statements shorter
+- General
+    - Need clarity on whether landscapes accept sequence strings or sequence arrays
+    - Need clarity on return type of `propose_sequences`; what is `preds`?

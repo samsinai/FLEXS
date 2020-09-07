@@ -451,7 +451,7 @@ class VAE(Architecture):
             weights = weights[:compatible_len]
 
         x_train = np.array(
-            [s_utils.translate_string_to_one_hot(sample, self.KEY_LIST) for sample in samples]
+            [s_utils.string_to_one_hot(sample, self.KEY_LIST) for sample in samples]
         )
         x_train = x_train.astype("float32")
         x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
@@ -517,7 +517,7 @@ class VAE(Architecture):
         probabilities = []
         for sequence in proposals:
             sequence_one_hot = np.array(
-                s_utils.translate_string_to_one_hot(sequence, self.KEY_LIST)
+                s_utils.string_to_one_hot(sequence, self.KEY_LIST)
             )
             sequence_one_hot_flattened = sequence_one_hot.flatten()
             sequence_one_hot_flattened_batch = np.array(

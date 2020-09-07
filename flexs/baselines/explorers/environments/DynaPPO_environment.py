@@ -154,7 +154,6 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 reward = self.ensemble_fitness(state_string)
 
             reward = reward - self.lam * self.sequence_density(state_string)
-            print(reward, self.sequence_density(state_string))
 
             # if my reward is not increasing, then terminate
             if reward < self.previous_fitness:
