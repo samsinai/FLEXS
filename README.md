@@ -1,5 +1,7 @@
 ![FLEX](LOGO.png)
 
+[![build status](https://github.com/retagaine/FLSD-Sandbox/workflows/build/badge.svg)](https://github.com/retagaine/FLSD-Sandbox/actions)
+
 FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. This project was developed with support from [Dyno Therapeutics](https://www.dynotx.com).
 
 - [Installation](#installation)
