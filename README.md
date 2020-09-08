@@ -1,5 +1,3 @@
-# FLEXS: Fitness Landscape Exploration Sandbox
-
 ![FLEX](LOGO.png)
 
 FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. This project was developed with support from [Dyno Therapeutics](https://www.dynotx.com).
