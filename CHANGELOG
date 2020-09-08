@@ -1,0 +1,15 @@
+9/7/20
+- DynaPPO
+    - Now inherits from `flexs.Explorer`
+    - Replaced `model_architectures` and `sequences_utils` with flexs versions
+    - Changed `virtual_screen` to `model_queries_per_round`
+    - Changed `self.model.evals` to `self.model.cost`
+    - Now gets measured sequences from `measured_sequences["sequence"]` rather than `self.model.measured_sequences`
+    - Environment
+        - Swapped order of `seq_len` and `alphabet_len`
+- AdaLead
+    - Moved order of `initial_sequence_data` to be consistent with `flsd.Explorer`
+- Sequence utils
+    - Swapped one-hot indexing of `construct_mutant_from_sample` to be consistent with `(seq_len, alphabet_len)` shape of `string_to_one_hot`
+- Testing
+    - Added preliminary tests for AdaLead and DynaPPO

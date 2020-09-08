@@ -7,11 +7,7 @@ import numpy as np
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
-from utils.sequence_utils import (
-    construct_mutant_from_sample,
-    translate_one_hot_to_string,
-    translate_string_to_one_hot,
-)
+from flexs.utils import sequence_utils as s_utils
 
 module_path = os.path.abspath(os.path.join(".."))
 if module_path not in sys.path:
@@ -61,7 +57,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         # sequence
         self.seq = starting_seq
         self.seq_len = len(self.seq)
-        self._state = translate_string_to_one_hot(self.seq, self.alphabet)
+        self._state = s_utils.string_to_one_hot(self.seq, self.alphabet)
         self.all_seqs = {}
         self.episode_seqs = {}
         self.lam = 0.1
@@ -71,7 +67,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             shape=(1, 2), dtype=np.float32, minimum=0, maximum=1, name="action_x"
         )
         self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(self.alphabet_len, self.seq_len),
+            shape=(self.seq_len, self.alphabet_len),
             dtype=np.float32,
             minimum=0,
             maximum=1,
@@ -85,7 +81,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def _reset(self):
         self.previous_fitness = -float("inf")
-        self._state = translate_string_to_one_hot(self.seq, self.alphabet)
+        self._state = s_utils.string_to_one_hot(self.seq, self.alphabet)
         self.num_steps = 0
         self.episode_seqs = {}
         return ts.restart(np.array(self._state, dtype=np.float32))
@@ -104,7 +100,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def get_state_string(self):
         """Get sequence representing current state."""
-        return translate_one_hot_to_string(self._state, self.alphabet)
+        return s_utils.translate_one_hot_to_string(self._state, self.alphabet)
 
     def sequence_density(self, seq):
         """Get average distance to `seq` out of all observed sequences."""
@@ -123,7 +119,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         """
         if self.num_steps < self.max_num_steps:
             self.num_steps += 1
-            action_one_hot = np.zeros((self.alphabet_len, self.seq_len))
+            action_one_hot = np.zeros((self.seq_len, self.alphabet_len))
 
             # if action is invalid,
             # terminate episode and punish
@@ -131,7 +127,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 return ts.termination(np.array(self._state, dtype=np.float32), -1)
 
             x, y = action[0]
-            x, y = int(self.alphabet_len * x), int(self.seq_len * y)
+            x, y = int(self.seq_len * x), int(self.alphabet_len * y)
             action_one_hot[x, y] = 1
 
             # if we are trying to modify the sequence with a no-op, then stop
@@ -142,8 +138,8 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 # then give it a small reward
                 return ts.termination(np.array(self._state, dtype=np.float32), 1)
 
-            self._state = construct_mutant_from_sample(action_one_hot, self._state)
-            state_string = translate_one_hot_to_string(self._state, self.alphabet)
+            self._state = s_utils.construct_mutant_from_sample(action_one_hot, self._state)
+            state_string = s_utils.translate_one_hot_to_string(self._state, self.alphabet)
 
             # if we have seen the sequence this episode,
             # terminate episode and punish
