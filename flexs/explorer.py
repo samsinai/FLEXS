@@ -30,7 +30,22 @@ class Explorer(abc.ABC):
         self.log_file = log_file
 
     @abc.abstractmethod
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(self, measured_sequences: pd.DataFrame):
+        """
+        Proposes a list of sequences to be measured in the next round.
+
+        This method will be overriden to contain the explorer logic for each explorer.
+
+        Args:
+            measured_sequences: A pandas dataframe of all sequences that have been
+            measured by the ground truth so far. Has columns "sequence",
+            "true_score", "model_score", and "round".
+
+        Returns:
+        (np.ndarray(string), np.ndarray(float)): a tuple containing the proposed
+        sequences and their scores (according to the model)
+
+        """
         pass
 
     def _log(self, metadata, sequences, preds, true_score, current_round, verbose):

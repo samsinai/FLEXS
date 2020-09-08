@@ -1,4 +1,11 @@
 9/7/20
+- All explorers
+    - Instead of taking `initial_sequence_data`, explorers take one
+    `starting_sequence` (suggestions on how to handle initial data appreciated!)
+- Evaluation
+    - Moved to `flexs.evaluate` and are now just a set of methods
+    instead of a class
+
 - DynaPPO
     - Now inherits from `flexs.Explorer`
     - Replaced `model_architectures` and `sequences_utils` with flexs versions
