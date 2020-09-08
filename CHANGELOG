@@ -1,4 +1,9 @@
 9/7/20
+- Landscapes
+    - Pre-existing landscapes now can be loaded through their registry. RNA,
+    Rosetta, and TF binding landscapes have their own registry. Examples
+    are in `Tutorial.ipynb`
+    - RNA landscape now also handles conserved regions
 - All explorers
     - Instead of taking `initial_sequence_data`, explorers take one
     `starting_sequence` (suggestions on how to handle initial data appreciated!)
@@ -10,6 +15,8 @@
     - Now inherits from `flexs.Explorer`
     - Replaced `model_architectures` and `sequences_utils` with flexs versions
     - Changed `virtual_screen` to `model_queries_per_round`
+    (`model_queries_per_round` is the absolute number of model queries allowed
+    per round, not a fraction with respect to `experiment_budget_per_round`)
     - Changed `self.model.evals` to `self.model.cost`
     - Now gets measured sequences from `measured_sequences["sequence"]` rather than `self.model.measured_sequences`
     - Environment

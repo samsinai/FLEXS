@@ -109,7 +109,7 @@ class GeneticAlgorithm(flexs.Explorer):
             k = int(self.parent_selection_proportion * self.population_size)
             return self.rng.choice(np.argsort(scores)[-k:], num_parents)
 
-        elif self.parent_selection_strategy == "wright-fisher":
+        if self.parent_selection_strategy == "wright-fisher":
             fitnesses = np.exp(scores / self.beta)
             probs = torch.Tensor(fitnesses / np.sum(fitnesses))
             return torch.multinomial(probs, num_parents, replacement=True).numpy()
@@ -209,7 +209,8 @@ class GeneticAlgorithm(flexs.Explorer):
 
             sequences.update(zip(children, child_scores))
 
-        # We propose the top `self.ground_truth_measurements_per_round` new sequences we have generated
+        # We propose the top `self.ground_truth_measurements_per_round`
+        # new sequences we have generated
         new_seqs = np.array(list(sequences.keys()))
         preds = np.array(list(sequences.values()))
         sorted_order = np.argsort(preds)[

@@ -44,9 +44,6 @@ class Adalead(flexs.Explorer):
         self.alphabet = alphabet
         self.mu = mu  # number of mutations per *sequence*.
         self.rho = rho
-        self.explorer_type = (
-            f"Adalead_mu{self.mu}_tr{self.threshold}_r{self.recomb_rate}_rho{self.rho}"
-        )
 
     def _recombine_population(self, gen):
         # @TODO this returns an empty array if len(gen) = 1; for example if gen=[wt]

@@ -1,14 +1,11 @@
 """CMAES explorer."""
 import numpy as np
-from explorers.base_explorer import Base_explorer
-from utils.sequence_utils import (
-    generate_random_sequences,
-    translate_one_hot_to_string,
-    translate_string_to_one_hot,
-)
+
+import flexs
+import flexs.utils.sequence_utils as s_utils
 
 
-class CMAES_explorer(Base_explorer):
+class CMAES(flexs.Explorer):
     """An explorer which implements the covariance matrix adaptation evolution strategy.
 
     http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful guide
@@ -16,19 +13,30 @@ class CMAES_explorer(Base_explorer):
 
     def __init__(
         self,
-        batch_size=100,
-        alphabet="UCGA",
-        virtual_screen=10,
-        path="./simulations/",
-        debug=False,
+        model,
+        landscape,
+        rounds,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
+        starting_sequence,
+        alphabet,
+        log_file=None,
     ):
-        """Initialize the explorer."""
-        super().__init__(batch_size, alphabet, virtual_screen, path, debug)
-        self.explorer_type = "CMAES"
+        name = f"CMAES"
 
-        self.has_been_initialized = False
-        self.seq_len = None
-        self.alphabet_len = None
+        super().__init__(
+            model,
+            landscape,
+            name,
+            rounds,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
+            starting_sequence,
+            log_file,
+        )
+
+        self.seq_len = len(self.starting_sequence)
+        self.alphabet = alphabet
         self.N = None
         self.mu = None
         self.weights = None
@@ -46,27 +54,18 @@ class CMAES_explorer(Base_explorer):
         self.chiN = None
         self.old_mean = None
 
-        self.reset()
-
-    def reset(self):
-        """Reset the explorer."""
-        self.lam = self.batch_size
         self.round = 0
 
-        self.has_been_initialized = False
-
-        self.seen_sequences = {}
-        self.batches = {-1: ""}
+        self.initialize_params()
 
     def initialize_params(self):
         """Initialize all parameters."""
         # to be called after set_model
-        seq = list(self.model.measured_sequences.keys())[0]
-        self.seq_len = len(seq)
-        self.alphabet_len = len(self.alphabet)
+
+        self.lam = self.ground_truth_measurements_per_round
 
         # we'll be working with one-hots
-        N = self.seq_len * self.alphabet_len
+        N = self.seq_len * len(self.alphabet)
         self.N = N
         self.mu = self.lam // 2
         self.weights = np.array(
@@ -92,54 +91,57 @@ class CMAES_explorer(Base_explorer):
 
         self.chiN = np.sqrt(N) * (1 - 1 / (4 * N) + 1 / (21 * N ** 2))
 
-        self.has_been_initialized = True
-
     def convert_mvn_to_seq(self, mvn):
         """Convert a multivariate normal sample to a one-hot representation."""
-        mvn = mvn.reshape((self.alphabet_len, self.seq_len))
-        one_hot = np.zeros((self.alphabet_len, self.seq_len))
+        mvn = mvn.reshape((len(self.alphabet), self.seq_len))
+        one_hot = np.zeros((len(self.alphabet), self.seq_len))
         amax = np.argmax(mvn, axis=0)
 
         for i in range(self.seq_len):
             one_hot[amax[i]][i] = 1
 
-        return translate_one_hot_to_string(one_hot, self.alphabet)
+        return s_utils.translate_one_hot_to_string(one_hot, self.alphabet)
 
-    def _sample(self):
+    def _sample(self, measured_sequences):
         samples = []
+        sequences = {}
+
+        measured_sequence_set = set(measured_sequences["sequence"])
 
         new_sequences = 0
         attempts = 0
 
         # Terminate if all we see are old sequences.
-        while (new_sequences < self.lam * self.virtual_screen) and (
-            attempts < self.lam * self.virtual_screen * 3
+        while (new_sequences < self.model_queries_per_round) and (
+            attempts < self.model_queries_per_round * 3
         ):
             attempts += 1
             x = np.random.multivariate_normal(self.mean, (self.sigma ** 2) * self.cov)
             seq = self.convert_mvn_to_seq(x)
 
-            if seq in self.seen_sequences:
+            if seq in measured_sequence_set or sequences:
                 continue
 
-            self.seen_sequences[seq] = 1
-            fitness = self.model.get_fitness(seq)
+            fitness = self.model.get_fitness([seq])
+            sequences[seq] = fitness
             new_sequences += 1
 
             samples.append((x, fitness))
 
         # If we only saw old sequences, randomly generate to fill the batch.
-        while len(samples) < self.batch_size:
-            seqs = generate_random_sequences(
-                self.seq_len, self.batch_size - len(samples), alphabet=self.alphabet
+        while len(samples) < self.ground_truth_measurements_per_round:
+            seqs = s_utils.generate_random_sequences(
+                self.seq_len,
+                self.ground_truth_measurements_per_round - len(samples),
+                alphabet=self.alphabet,
             )
             for seq in seqs:
-                if seq in self.sequences:
+                if seq in measured_sequence_set or sequences:
                     continue
-                self.seen_sequences[seq] = 1
-                fitness = self.model.get_fitness(seq)
+                fitness = self.model.get_fitness([seq])
+                sequences[seq] = fitness
                 samples.append(
-                    (translate_string_to_one_hot(seq, self.alphabet), fitness)
+                    (s_utils.translate_string_to_one_hot(seq, self.alphabet), fitness)
                 )
 
         return samples
@@ -206,15 +208,11 @@ class CMAES_explorer(Base_explorer):
             + self.cmu * weighted_sum
         )
 
-    def propose_samples(self):
-        """Propose `batch_size` samples."""
-        if not self.has_been_initialized:
-            self.initialize_params()
-
+    def propose_sequences(self, measured_sequences):
         # in CMAES we _minimize_ an objective, so we'll conveniently reverse
-        samples = sorted(self._sample(), key=lambda s: s[1], reverse=True)[
-            : self.batch_size
-        ]
+        """samples = sorted(
+            self._sample(measured_sequences), key=lambda s: s[1], reverse=True
+        )[: self.ground_truth_measurements_per_round]
 
         self.old_mean = self.mean
         self.compute_new_mean(samples)
@@ -225,4 +223,4 @@ class CMAES_explorer(Base_explorer):
 
         self.round += 1
 
-        return [self.convert_mvn_to_seq(sample[0]) for sample in samples]
+        return [self.convert_mvn_to_seq(sample[0]) for sample in samples]"""

@@ -1,4 +1,10 @@
 9/7/20
+- Landscapes
+    - Are there too many RNA and TF binding landscapes? Additionally,
+    the RNA starts are bad for conserved regions -- should find new
+    ones.
+- CMAES
+    - Port over to new interface
 - DynaPPO
     - Running is potentially flaky
     - Make import statements shorter

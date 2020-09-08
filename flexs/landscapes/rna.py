@@ -1,5 +1,15 @@
 import numpy as np
-import RNA
+
+# ViennaRNA is not available through pip, so give a warning message if not installed
+try:
+    import RNA
+except ImportError as e:
+    raise ImportError(
+        f"{e}.\n"
+        "Hint: ViennaRNA not installed.\n"
+        "      Source and binary installations available at https://www.tbi.univie.ac.at/RNA/#download.\n"
+        "      Conda installation available at https://anaconda.org/bioconda/viennarna."
+    ) from e
 
 import flexs
 

@@ -159,7 +159,7 @@ def generate_random_mutant(sequence, mu, alphabet=AAS):
 
 def generate_all_binary_combos(K):
     variants = [["0"], ["1"]]
-    for i in range(K):
+    for _ in range(K):
         variants = expand_tree(variants)
     return variants
 
@@ -169,17 +169,3 @@ def expand_tree(list_of_nodes):
     for node in list_of_nodes:
         expanded_tree.extend([node + ["0"], node + ["1"]])
     return expanded_tree
-
-
-def get_set_column_entropy(sequences, alphabet):
-    seqs_int_array = []
-    for seq in sequences:
-        row = [i for i in list(seq)]
-        seqs_int_array.append(row)
-    count_matrix = np.zeros((len(alphabet), len(seq)))
-    seqs_int_array = np.array(seqs_int_array)
-    for j in range(len(seq)):
-        for i in range(len(alphabet)):
-            count_matrix[i][j] = list(seqs_int_array[:, j]).count(alphabet[i])
-
-    return entropy(count_matrix, base=2)
