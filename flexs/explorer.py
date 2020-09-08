@@ -16,7 +16,7 @@ class Explorer(abc.ABC):
         rounds,
         ground_truth_measurements_per_round,
         model_queries_per_round,
-        initial_sequence_data,
+        starting_sequence,
         log_file,
     ):
         self.model = model
@@ -26,7 +26,7 @@ class Explorer(abc.ABC):
         self.rounds = rounds
         self.ground_truth_measurements_per_round = ground_truth_measurements_per_round
         self.model_queries_per_round = model_queries_per_round
-        self.initial_sequence_data = initial_sequence_data
+        self.starting_sequence = starting_sequence
         self.log_file = log_file
 
     @abc.abstractmethod
@@ -71,17 +71,17 @@ class Explorer(abc.ABC):
         # Initial sequences and their scores
         sequences = pd.DataFrame(
             {
-                "sequence": self.initial_sequence_data,
+                "sequence": self.starting_sequence,
                 "model_score": np.nan,
-                "true_score": self.landscape.get_fitness(self.initial_sequence_data),
+                "true_score": self.landscape.get_fitness([self.starting_sequence]),
                 "round": 0,
                 "model_cost": self.model.cost,
-                "measurement_cost": len(self.initial_sequence_data),
+                "measurement_cost": 1,
             }
         )
         self._log(
-            metadata,
             sequences,
+            metadata,
             sequences["model_score"],
             sequences["true_score"],
             0,
@@ -115,6 +115,6 @@ class Explorer(abc.ABC):
                     }
                 )
             )
-            self._log(metadata, sequences, preds, true_score, r, verbose)
+            self._log(sequences, metadata, preds, true_score, r, verbose)
 
         return sequences, metadata

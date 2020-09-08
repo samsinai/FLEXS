@@ -19,7 +19,7 @@ class Adalead(flexs.Explorer):
         rounds,
         ground_truth_measurements_per_round,
         model_queries_per_round,
-        initial_sequence_data,
+        starting_sequence,
         alphabet,
         mu=1,
         recomb_rate=0,
@@ -36,7 +36,7 @@ class Adalead(flexs.Explorer):
             rounds,
             ground_truth_measurements_per_round,
             model_queries_per_round,
-            initial_sequence_data,
+            starting_sequence,
             log_file,
         )
         self.threshold = threshold

@@ -203,7 +203,7 @@ class myExplorer(flexs.Explorer):
         model,
         landscape,
         rounds,
-        initial_sequence_data,
+        starting_sequence,
         ground_truth_measurements_per_round,
         model_queries_per_round,
         **kwargs)
@@ -215,7 +215,7 @@ class myExplorer(flexs.Explorer):
             rounds,
             ground_truth_measurements_per_round,
             model_queries_per_round,
-            initial_sequence_data,
+            starting_sequence,
             **kwargs
         )
         "Your custom attributes here"

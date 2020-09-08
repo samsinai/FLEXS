@@ -33,7 +33,7 @@ class GeneticAlgorithm(flexs.Explorer):
         model,
         landscape,
         rounds,
-        initial_sequence_data,
+        starting_sequence,
         ground_truth_measurements_per_round,
         model_queries_per_round,
         alphabet,
@@ -57,7 +57,7 @@ class GeneticAlgorithm(flexs.Explorer):
             rounds,
             ground_truth_measurements_per_round,
             model_queries_per_round,
-            initial_sequence_data,
+            starting_sequence,
             log_file,
         )
         self.alphabet = alphabet

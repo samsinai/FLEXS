@@ -11,9 +11,9 @@ def robustness(landscape, make_explorer, signal_strengths=[0, 0.5, 0.8, 0.9, 1])
 
         model = baselines.models.NoisyAbstractModel(landscape, signal_strength=ss)
         explorer = make_explorer(model, ss)
-        sequences = explorer.run()
+        res = explorer.run()
 
-        results.append((ss, sequences))
+        results.append((ss, res))
 
     return results
 
@@ -37,10 +37,10 @@ def efficiency(
         explorer = make_explorer(
             ground_truth_measurements_per_round, model_queries_per_round
         )
-        sequences = explorer.run()
+        res = explorer.run()
 
         results.append(
-            ((ground_truth_measurements_per_round, model_queries_per_round), sequences)
+            ((ground_truth_measurements_per_round, model_queries_per_round), res)
         )
 
     return results
@@ -61,8 +61,8 @@ def adaptivity(
             int(total_ground_truth_measurements / rounds),
             int(total_model_queries / rounds),
         )
-        sequences = explorer.run()
+        res = explorer.run()
 
-        results.append((rounds, sequences))
+        results.append((rounds, res))
 
     return results

@@ -13,7 +13,9 @@ from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 import flexs
-from flexs.baselines.explorers.environments.DynaPPO_environment import DynaPPOEnvironment as DynaPPOEnv
+from flexs.baselines.explorers.environments.DynaPPO_environment import (
+    DynaPPOEnvironment as DynaPPOEnv,
+)
 from flexs.utils import sequence_utils as s_utils
 from flexs.utils.model_architectures import (
     NLNN,
@@ -29,6 +31,7 @@ from flexs.utils.model_architectures import (
     SKNeighbors,
 )
 
+
 class DynaPPO(flexs.Explorer):
     """Explorer for DyNA-PPO."""
 
@@ -39,7 +42,7 @@ class DynaPPO(flexs.Explorer):
         rounds,
         ground_truth_measurements_per_round,
         model_queries_per_round,
-        initial_sequence_data,
+        starting_sequence,
         alphabet,
         batch_size,
         log_file=None,
@@ -74,7 +77,7 @@ class DynaPPO(flexs.Explorer):
             agent: PPO TF Agent.
             tf_env: Environment in which `agent` operates.
         """
-        
+
         name = f"DynaPPO_Agent_{threshold}_{num_experiment_rounds}_{num_model_rounds}"
 
         super().__init__(
@@ -84,7 +87,7 @@ class DynaPPO(flexs.Explorer):
             rounds,
             ground_truth_measurements_per_round,
             model_queries_per_round,
-            initial_sequence_data,
+            starting_sequence,
             log_file,
         )
 

@@ -11,7 +11,7 @@ class Random(flexs.Explorer):
         landscape,
         rounds,
         mu,
-        initial_sequence_data,
+        starting_sequence,
         ground_truth_measurements_per_round,
         model_queries_per_round,
         alphabet,
@@ -27,7 +27,7 @@ class Random(flexs.Explorer):
             rounds,
             ground_truth_measurements_per_round,
             model_queries_per_round,
-            initial_sequence_data,
+            starting_sequence,
             log_file,
         )
         self.mu = mu
