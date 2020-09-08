@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 import flexs
@@ -66,7 +68,7 @@ class RosettaFolding(flexs.Landscape):
                 f"{e}.\n"
                 "Hint: Pyrosetta not installed. "
                 "Source, binary, and conda installations available at http://www.pyrosetta.org/dow"
-            )
+            ) from e
 
         # Initialize pyrosetta and suppress output messages
         self.prs.init("-mute all")
@@ -134,9 +136,9 @@ class RosettaFolding(flexs.Landscape):
             )
 
         # Mutate `self.pose` where necessary to have the same sequence identity as `sequence`
-        for i in range(len(sequence)):
-            if sequence[i] != pose_sequence[i]:
-                self._mutate_pose(sequence[i], i)
+        for i, aa in enumerate(sequence):
+            if aa != pose_sequence[i]:
+                self._mutate_pose(aa, i)
 
         return self.score_function(self.pose)
 
@@ -145,3 +147,29 @@ class RosettaFolding(flexs.Landscape):
 
         energies = np.array([-self.get_folding_energy(seq) for seq in sequences])
         return energies / self.norm_value
+
+
+def registry():
+    """
+    Returns a dictionary of problems of the form:
+    `{
+        "problem name": {
+            "params": ...,
+        },
+        ...
+    }`
+
+    where `flexs.landscapes.RosettaFolding(**problem["params"])` instantiates the
+    rosetta folding landscape for the given set of parameters.
+
+    Returns:
+        dict: Problems in the registry.
+
+    """
+
+    rosetta_data_dir = os.path.join(os.path.dirname(__file__), "data/rosetta")
+
+    return {
+        pdb_file: {"params": {"pdb_file": os.path.join(rosetta_data_dir, pdb_file)}}
+        for pdb_file in os.listdir(rosetta_data_dir)
+    }

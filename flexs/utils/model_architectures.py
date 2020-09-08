@@ -83,26 +83,6 @@ class SKBR(Architecture):
         return BayesianRidge()
 
 
-class SKLinear(Architecture):
-    def __init__(
-        self,
-        seq_len,
-        batch_size=10,
-        validation_split=0.0,
-        epochs=20,
-        alphabet="UCGA",
-        filters=50,
-        hidden_dims=100,
-    ):
-        super(SKLinear, self).__init__(
-            seq_len, batch_size, validation_split, epochs, alphabet
-        )
-        self.architecture_name = f"SKLinear"
-
-    def get_model(self):
-        return LinearRegression()
-
-
 class SKLasso(Architecture):
     def __init__(
         self,
@@ -121,26 +101,6 @@ class SKLasso(Architecture):
 
     def get_model(self):
         return Lasso()
-
-
-class SKRF(Architecture):
-    def __init__(
-        self,
-        seq_len,
-        batch_size=10,
-        validation_split=0.0,
-        epochs=20,
-        alphabet="UCGA",
-        filters=50,
-        hidden_dims=100,
-    ):
-        super(SKRF, self).__init__(
-            seq_len, batch_size, validation_split, epochs, alphabet
-        )
-        self.architecture_name = f"SKRF"
-
-    def get_model(self):
-        return RandomForestRegressor()
 
 
 class SKNeighbors(Architecture):
@@ -221,112 +181,6 @@ class SKGP(Architecture):
 
     def get_model(self):
         return GaussianProcessRegressor()
-
-
-class Linear(Architecture):
-    def get_model(self):
-        lin_model = Sequential()
-        lin_model.add(Flatten())
-        lin_model.add(
-            Dense(1, input_shape=(self.seq_len * self.alphabet_len,), use_bias=False)
-        )
-        lin_model.add(Activation("linear"))
-        lin_model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mse"])
-        return lin_model
-
-
-class NLNN(Architecture):
-    """Global epistasis model."""
-
-    def __init__(
-        self,
-        seq_len,
-        batch_size=10,
-        validation_split=0.0,
-        epochs=20,
-        alphabet="UCGA",
-        hidden_dims=50,
-    ):
-        super(NLNN, self).__init__(
-            seq_len, batch_size, validation_split, epochs, alphabet
-        )
-        self.hidden_dims = hidden_dims
-        self.architecture_name = f"NLNN_hd{self.hidden_dims}"
-
-    def get_model(self):
-        non_lin_model = Sequential()
-        non_lin_model.add(Flatten())
-        non_lin_model.add(
-            Dense(1, input_shape=(self.seq_len * self.alphabet_len,), use_bias=False)
-        )
-        non_lin_model.add(Activation("linear"))
-        non_lin_model.add(Dense(self.hidden_dims))
-        non_lin_model.add(Activation("relu"))
-        non_lin_model.add(Dense(self.hidden_dims))
-        non_lin_model.add(Activation("relu"))
-        non_lin_model.add(Dense(1))
-        non_lin_model.add(Activation("linear"))
-        non_lin_model.compile(
-            loss="mean_squared_error", optimizer="adam", metrics=["mse"]
-        )
-        return non_lin_model
-
-
-class CNNa(Architecture):
-    def __init__(
-        self,
-        seq_len,
-        batch_size=10,
-        validation_split=0.0,
-        epochs=20,
-        alphabet="UCGA",
-        filters=50,
-        hidden_dims=100,
-    ):
-        super(CNNa, self).__init__(
-            seq_len, batch_size, validation_split, epochs, alphabet
-        )
-        self.filters = filters
-        self.hidden_dims = hidden_dims
-        self.architecture_name = f"CNNa_hd{self.hidden_dims}_f{self.filters}"
-
-    def get_model(self):
-        filters = self.filters
-        hidden_dims = self.hidden_dims
-
-        model = Sequential()
-        model.add(
-            Conv1D(
-                filters,
-                self.alphabet_len - 1,
-                padding="valid",
-                strides=1,
-                input_shape=(self.alphabet_len, self.seq_len),
-            )
-        )
-
-        model.add(Conv1D(filters, 20, padding="same", activation="relu", strides=1))
-
-        model.add(MaxPooling1D(1))
-        model.add(
-            Conv1D(
-                filters,
-                self.alphabet_len - 1,
-                padding="same",
-                activation="relu",
-                strides=1,
-            )
-        )
-        model.add(GlobalMaxPooling1D())
-        model.add(Dense(hidden_dims))
-        model.add(Activation("relu"))
-        model.add(Dense(hidden_dims))
-        model.add(Dropout(0.25))
-        model.add(Activation("relu"))
-        model.add(Dense(1))
-        model.add(Activation("linear"))
-        model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mse"])
-        return model
 
 
 class VAE(Architecture):
@@ -551,13 +405,3 @@ def pwm_to_boltzmann_weights(prob_weight_matrix, temp):
             weights[i, j] = np.exp(weights[i, j] / temp - cols_logsumexp[j])
 
     return weights
-
-
-class Logistic(Architecture):
-    def get_model(self):
-        model = Sequential()
-        model.add(Flatten())
-        model.add(Dense(1, input_shape=(self.seq_len * self.alphabet_len,)))
-        model.add(Activation("softmax"))
-        model.compile(loss="mean_squared_error", optimizer="adam", metrics=["mse"])
-        return model

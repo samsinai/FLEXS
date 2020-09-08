@@ -73,14 +73,6 @@ def translate_one_hot_to_string(one_hot, order_list):
     return "".join(out)
 
 
-def translate_aa_to_index(aa):
-    return AAS.index(aa.upper())
-
-
-def translate_index_to_aa(i):
-    return AAS[i]
-
-
 def break_down_sequence_to_singles(sequence_mask):
     """Currently only handles substitutions; can handle full sequences (not just masks)."""
     singles = []
