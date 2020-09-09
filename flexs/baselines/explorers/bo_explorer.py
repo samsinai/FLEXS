@@ -23,8 +23,8 @@ class BO_Explorer(flexs.Explorer):
         landscape,
         rounds,
         starting_sequence,
-        ground_truth_measurements_per_round,
-        model_queries_per_round,
+        sequences_batch_size,
+        model_queries_per_batch,
         alphabet,
         batch_size=100,
         virtual_screen=10,
@@ -56,8 +56,8 @@ class BO_Explorer(flexs.Explorer):
             landscape,
             name,
             rounds,
-            ground_truth_measurements_per_round,
-            model_queries_per_round,
+            sequences_batch_size,
+            model_queries_per_batch,
             starting_sequence,
         )
         self.alphabet = alphabet

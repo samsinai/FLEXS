@@ -34,8 +34,8 @@ class GeneticAlgorithm(flexs.Explorer):
         landscape,
         rounds,
         starting_sequence,
-        ground_truth_measurements_per_round,
-        model_queries_per_round,
+        sequences_batch_size,
+        model_queries_per_batch,
         alphabet,
         population_size: int,
         parent_selection_strategy: str,
@@ -55,8 +55,8 @@ class GeneticAlgorithm(flexs.Explorer):
             landscape,
             name,
             rounds,
-            ground_truth_measurements_per_round,
-            model_queries_per_round,
+            sequences_batch_size,
+            model_queries_per_batch,
             starting_sequence,
             log_file,
         )
@@ -182,7 +182,7 @@ class GeneticAlgorithm(flexs.Explorer):
         initial_cost = self.model.cost
         while (
             self.model.cost - initial_cost + self.population_size
-            < self.model_queries_per_round
+            < self.model_queries_per_batch
         ):
             # Create "children" by recombining parents selected from population
             # according to self.parent_selection_strategy and self.recombination_strategy
@@ -209,12 +209,10 @@ class GeneticAlgorithm(flexs.Explorer):
 
             sequences.update(zip(children, child_scores))
 
-        # We propose the top `self.ground_truth_measurements_per_round`
+        # We propose the top `self.sequences_batch_size`
         # new sequences we have generated
         new_seqs = np.array(list(sequences.keys()))
         preds = np.array(list(sequences.values()))
-        sorted_order = np.argsort(preds)[
-            : -self.ground_truth_measurements_per_round : -1
-        ]
+        sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
 
         return new_seqs[sorted_order], preds[sorted_order]

@@ -14,8 +14,8 @@ class Explorer(abc.ABC):
         landscape,
         name,
         rounds,
-        ground_truth_measurements_per_round,
-        model_queries_per_round,
+        sequences_batch_size,
+        model_queries_per_batch,
         starting_sequence,
         log_file,
     ):
@@ -24,8 +24,8 @@ class Explorer(abc.ABC):
         self.name = name
 
         self.rounds = rounds
-        self.ground_truth_measurements_per_round = ground_truth_measurements_per_round
-        self.model_queries_per_round = model_queries_per_round
+        self.sequences_batch_size = sequences_batch_size
+        self.model_queries_per_batch = model_queries_per_batch
         self.starting_sequence = starting_sequence
         self.log_file = log_file
 
@@ -79,8 +79,8 @@ class Explorer(abc.ABC):
             "model_name": self.model.name,
             "landscape_name": self.landscape.name,
             "rounds": self.rounds,
-            "ground_truth_measurements_per_round": self.ground_truth_measurements_per_round,
-            "model_queries_per_round": self.model_queries_per_round,
+            "sequences_batch_size": self.sequences_batch_size,
+            "model_queries_per_batch": self.model_queries_per_batch,
         }
 
         # Initial sequences and their scores
@@ -113,9 +113,9 @@ class Explorer(abc.ABC):
             seqs, preds = self.propose_sequences(sequences)
             true_score = self.landscape.get_fitness(seqs)
 
-            if len(seqs) > self.ground_truth_measurements_per_round:
+            if len(seqs) > self.sequences_batch_size:
                 raise ValueError(
-                    "Must propose <= `self.ground_truth_measurements_per_round` sequences per round"
+                    "Must propose <= `self.sequences_batch_size` sequences per round"
                 )
 
             sequences = sequences.append(

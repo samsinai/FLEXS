@@ -16,8 +16,8 @@ class CMAES(flexs.Explorer):
         model,
         landscape,
         rounds,
-        ground_truth_measurements_per_round,
-        model_queries_per_round,
+        sequences_batch_size,
+        model_queries_per_batch,
         starting_sequence,
         alphabet,
         log_file=None,
@@ -29,8 +29,8 @@ class CMAES(flexs.Explorer):
             landscape,
             name,
             rounds,
-            ground_truth_measurements_per_round,
-            model_queries_per_round,
+            sequences_batch_size,
+            model_queries_per_batch,
             starting_sequence,
             log_file,
         )
@@ -62,7 +62,7 @@ class CMAES(flexs.Explorer):
         """Initialize all parameters."""
         # to be called after set_model
 
-        self.lam = self.ground_truth_measurements_per_round
+        self.lam = self.sequences_batch_size
 
         # we'll be working with one-hots
         N = self.seq_len * len(self.alphabet)
@@ -112,8 +112,8 @@ class CMAES(flexs.Explorer):
         attempts = 0
 
         # Terminate if all we see are old sequences.
-        while (new_sequences < self.model_queries_per_round) and (
-            attempts < self.model_queries_per_round * 3
+        while (new_sequences < self.model_queries_per_batch) and (
+            attempts < self.model_queries_per_batch * 3
         ):
             attempts += 1
             x = np.random.multivariate_normal(self.mean, (self.sigma ** 2) * self.cov)
@@ -129,10 +129,10 @@ class CMAES(flexs.Explorer):
             samples.append((x, fitness))
 
         # If we only saw old sequences, randomly generate to fill the batch.
-        while len(samples) < self.ground_truth_measurements_per_round:
+        while len(samples) < self.sequences_batch_size:
             seqs = s_utils.generate_random_sequences(
                 self.seq_len,
-                self.ground_truth_measurements_per_round - len(samples),
+                self.sequences_batch_size - len(samples),
                 alphabet=self.alphabet,
             )
             for seq in seqs:
@@ -212,7 +212,7 @@ class CMAES(flexs.Explorer):
         # in CMAES we _minimize_ an objective, so we'll conveniently reverse
         """samples = sorted(
             self._sample(measured_sequences), key=lambda s: s[1], reverse=True
-        )[: self.ground_truth_measurements_per_round]
+        )[: self.sequences_batch_size]
 
         self.old_mean = self.mean
         self.compute_new_mean(samples)

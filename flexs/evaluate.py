@@ -30,18 +30,14 @@ def efficiency(
     """
 
     results = []
-    for ground_truth_measurements_per_round, model_queries_per_round in budgets:
+    for sequences_batch_size, model_queries_per_batch in budgets:
         print(
-            f"Evaluating for ground_truth_measurements_per_round: {ground_truth_measurements_per_round}, model_queries_per_round: {model_queries_per_round}"
+            f"Evaluating for sequences_batch_size: {sequences_batch_size}, model_queries_per_batch: {model_queries_per_batch}"
         )
-        explorer = make_explorer(
-            ground_truth_measurements_per_round, model_queries_per_round
-        )
+        explorer = make_explorer(sequences_batch_size, model_queries_per_batch)
         res = explorer.run()
 
-        results.append(
-            ((ground_truth_measurements_per_round, model_queries_per_round), res)
-        )
+        results.append(((sequences_batch_size, model_queries_per_batch), res))
 
     return results
 
