@@ -1,8 +1,14 @@
 import os
 
-import numpy as np
+import torch
 
 import flexs
+
+# Pyrosetta is an optional dependency
+try:
+    import pyrosetta as prs
+except ImportError:
+    pass
 
 # Some pyrosetta methods take three letter aa representations
 # so we need to convert our single letter representations
@@ -54,40 +60,37 @@ class RosettaFolding(flexs.Landscape):
 
     """
 
-    def __init__(self, pdb_file, norm_value=3):
+    def __init__(self, pdb_file, sigmoid_center, sigmoid_norm_value):
         super().__init__(name="RosettaFolding")
 
-        # Pyrosetta is an optional dependency, so import lazily and inform the
-        # user if pyrosetta is not available.
+        # Inform the user if pyrosetta is not available.
         try:
-            import pyrosetta
-
-            self.prs = pyrosetta
-        except ImportError as e:
+            prs
+        except NameError as e:
             raise ImportError(
-                f"{e}.\n"
-                "Hint: Pyrosetta not installed. "
+                "Error: Pyrosetta not installed. "
                 "Source, binary, and conda installations available at http://www.pyrosetta.org/dow"
             ) from e
 
         # Initialize pyrosetta and suppress output messages
-        self.prs.init("-mute all")
+        prs.init("-mute all")
 
         # We will reuse this pose over and over, mutating it to match
         # whatever sequence we are given to measure.
         # This is necessary since sequence identity can only be mutated
         # one residue at a time in Rosetta, because the atom coords of the
         # backbone of the previous residue are copied into the new one.
-        self.pose = self.prs.pose_from_pdb(pdb_file)
+        self.pose = prs.pose_from_pdb(pdb_file)
         self.wt_pose = self.pose.clone()
 
         # Change self.pose from full-atom to centroid representation
-        to_centroid_mover = self.prs.SwitchResidueTypeSetMover("centroid")
+        to_centroid_mover = prs.SwitchResidueTypeSetMover("centroid")
         to_centroid_mover.apply(self.pose)
 
         # Use 1 - sigmoid(centroid energy / norm_value) as the fitness score
-        self.score_function = self.prs.create_score_function("cen_std")
-        self.norm_value = norm_value
+        self.score_function = prs.create_score_function("cen_std")
+        self.sigmoid_center = sigmoid_center
+        self.sigmoid_norm_value = sigmoid_norm_value
 
     def _mutate_pose(self, mut_aa, mut_pos):
         """ This method mutates `self.pose` to contain `mut_aa` at `mut_pos`. """
@@ -98,12 +101,12 @@ class RosettaFolding(flexs.Landscape):
         conformation = self.pose.conformation()
 
         # Get ResidueType for new residue
-        new_restype = self.prs.rosetta.core.pose.get_restype_for_pose(
+        new_restype = prs.rosetta.core.pose.get_restype_for_pose(
             self.pose, aa_single_to_three_letter_code[mut_aa]
         )
 
         # Create the new residue using current_residue backbone
-        new_res = self.prs.rosetta.core.conformation.ResidueFactory.create_residue(
+        new_res = prs.rosetta.core.conformation.ResidueFactory.create_residue(
             new_restype,
             current_residue,
             conformation,
@@ -112,7 +115,7 @@ class RosettaFolding(flexs.Landscape):
         )
 
         # Make sure we retain as much info from the previous res as possible
-        self.prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
+        prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
             current_residue,
             new_res,
             conformation,
@@ -126,7 +129,7 @@ class RosettaFolding(flexs.Landscape):
         conformation.rebuild_polymer_bond_dependent_atoms_this_residue_only(mut_pos + 1)
 
     def get_folding_energy(self, sequence):
-        """ Return rosetta folding energy (delta G) of the given sequence in `self.pose`'s conformation. """
+        """ Return rosetta folding energy of the given sequence in `self.pose`'s conformation. """
 
         pose_sequence = self.pose.sequence()
 
@@ -145,8 +148,9 @@ class RosettaFolding(flexs.Landscape):
     def _fitness_function(self, sequences):
         """ Negate and normalize folding energy to get maximization objective """
 
-        energies = np.array([-self.get_folding_energy(seq) for seq in sequences])
-        return energies / self.norm_value
+        energies = torch.tensor([self.get_folding_energy(seq) for seq in sequences])
+        scaled_energies = (-energies + self.sigmoid_center) / self.sigmoid_norm_value
+        return torch.sigmoid(scaled_energies).numpy()
 
 
 def registry():

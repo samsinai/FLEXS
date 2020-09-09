@@ -5,3 +5,6 @@ format:
 lint:
 	python -m pylint --reports=n flexs
 	python -m pydocstyle flexs
+
+test:
+	python -m pytest tests

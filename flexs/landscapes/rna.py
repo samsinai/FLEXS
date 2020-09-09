@@ -178,7 +178,7 @@ def registry():
     # Two-target problems
     for t1 in range(len(targets)):
         for t2 in range(t1 + 1, len(targets)):
-            for length, targets in starts.items():
+            for length, start in starts.items():
                 name = f"L{length}_RNA{t1+1}+{t2+1}"
                 problems[name] = {
                     "params": {
