@@ -1,16 +1,15 @@
 """DQN explorer."""
-
 import copy
 import random
 from collections import Counter
 
 import numpy as np
 import torch
-import torch.nn.functional as F
-import torch.optim as optim
 from torch import nn
+from torch import optim as optim
+from torch.nn import functional as F
 from torch.nn.utils import clip_grad_norm_
-import flexs 
+import flexs
 from flexs.utils.replay_buffers import PrioritizedReplayBuffer
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
@@ -62,9 +61,9 @@ class DQN_Explorer(flexs.Explorer):
         model,
         landscape,
         rounds,
-        initial_sequence_data,
-        experiment_budget,
-        query_budget,
+        starting_sequence,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
         alphabet,
         batch_size=100,
         virtual_screen=10,
@@ -98,12 +97,12 @@ class DQN_Explorer(flexs.Explorer):
             landscape,
             name,
             rounds,
-            experiment_budget,
-            query_budget,
-            initial_sequence_data,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
+            starting_sequence,
         )
         self.explorer_type = "DQN_Explorer"
-        self.alphabet = alphabet 
+        self.alphabet = alphabet
         self.alphabet_size = len(alphabet)
         self.memory_size = memory_size
         self.gamma = gamma
@@ -227,8 +226,7 @@ class DQN_Explorer(flexs.Explorer):
         Generates a new string representing the state, along with its associated reward.
         """
         eps = max(
-            self.epsilon_min,
-            (0.5 - self.model.cost / (self.batch_size * self.rounds)),
+            self.epsilon_min, (0.5 - self.model.cost / (self.batch_size * self.rounds)),
         )
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)

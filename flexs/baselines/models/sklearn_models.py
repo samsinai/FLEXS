@@ -1,10 +1,11 @@
 import abc
 
-import flexs
-import flexs.utils.sequence_utils as s_utils
 import numpy as np
 import sklearn.ensemble
 import sklearn.linear_model
+
+import flexs
+from flexs.utils import sequence_utils as s_utils
 
 
 class SklearnModel(flexs.Model, abc.ABC):

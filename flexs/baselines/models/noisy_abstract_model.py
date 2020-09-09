@@ -1,10 +1,11 @@
 import random
 
 import editdistance
-import flexs
 import numpy as np
 from scipy.stats import pearsonr
 from sklearn.metrics import explained_variance_score, r2_score
+
+import flexs
 
 
 class NoisyAbstractModel(flexs.Model):
@@ -16,11 +17,7 @@ class NoisyAbstractModel(flexs.Model):
     """
 
     def __init__(
-        self,
-        landscape,
-        signal_strength=0.9,
-        landscape_id=-1,
-        start_id=-1,
+        self, landscape, signal_strength=0.9, landscape_id=-1, start_id=-1,
     ):
         super().__init__(f"NAMb_ss{signal_strength}")
 

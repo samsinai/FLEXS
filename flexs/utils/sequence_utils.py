@@ -53,7 +53,7 @@ def construct_mutant_from_sample(pwm_sample, one_hot_base):
     one_hot = np.zeros(one_hot_base.shape)
     one_hot += one_hot_base
     i, j = np.nonzero(pwm_sample)  # this can be problematic for non-positive fitnesses
-    one_hot[:, j] = 0
+    one_hot[i, :] = 0
     one_hot[i, j] = 1
     return one_hot
 
@@ -71,14 +71,6 @@ def translate_one_hot_to_string(one_hot, order_list):
         ix = np.argmax(one_hot[:, i])
         out.append(order_list[ix])
     return "".join(out)
-
-
-def translate_aa_to_index(aa):
-    return AAS.index(aa.upper())
-
-
-def translate_index_to_aa(i):
-    return AAS[i]
 
 
 def break_down_sequence_to_singles(sequence_mask):
@@ -167,7 +159,7 @@ def generate_random_mutant(sequence, mu, alphabet=AAS):
 
 def generate_all_binary_combos(K):
     variants = [["0"], ["1"]]
-    for i in range(K):
+    for _ in range(K):
         variants = expand_tree(variants)
     return variants
 
@@ -177,17 +169,3 @@ def expand_tree(list_of_nodes):
     for node in list_of_nodes:
         expanded_tree.extend([node + ["0"], node + ["1"]])
     return expanded_tree
-
-
-def get_set_column_entropy(sequences, alphabet):
-    seqs_int_array = []
-    for seq in sequences:
-        row = [i for i in list(seq)]
-        seqs_int_array.append(row)
-    count_matrix = np.zeros((len(alphabet), len(seq)))
-    seqs_int_array = np.array(seqs_int_array)
-    for j in range(len(seq)):
-        for i in range(len(alphabet)):
-            count_matrix[i][j] = list(seqs_int_array[:, j]).count(alphabet[i])
-
-    return entropy(count_matrix, base=2)

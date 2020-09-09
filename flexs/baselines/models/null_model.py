@@ -1,5 +1,6 @@
-import flexs
 import numpy as np
+
+import flexs
 
 
 class NullModel(flexs.Model):

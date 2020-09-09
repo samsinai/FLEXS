@@ -4,7 +4,7 @@ from bisect import bisect_left
 
 import numpy as np
 import flexs
-import flexs 
+import flexs
 from flexs.utils.replay_buffers import PrioritizedReplayBuffer
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
@@ -22,9 +22,9 @@ class BO_Explorer(flexs.Explorer):
         model,
         landscape,
         rounds,
-        initial_sequence_data,
-        experiment_budget,
-        query_budget,
+        starting_sequence,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
         alphabet,
         batch_size=100,
         virtual_screen=10,
@@ -50,17 +50,17 @@ class BO_Explorer(flexs.Explorer):
                         sequence
                     Thompson sample another starting sequence
         """
-        name="BO_Explorer_method={method}"
+        name = "BO_Explorer_method={method}"
         super().__init__(
             model,
             landscape,
             name,
             rounds,
-            experiment_budget,
-            query_budget,
-            initial_sequence_data,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
+            starting_sequence,
         )
-        self.alphabet = alphabet 
+        self.alphabet = alphabet
         self.method = method
         self.recomb_rate = recomb_rate
         self.best_fitness = 0

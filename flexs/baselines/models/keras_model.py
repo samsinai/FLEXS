@@ -1,7 +1,8 @@
-import flexs
-import flexs.utils.sequence_utils as s_utils
 import numpy as np
 import tensorflow as tf
+
+import flexs
+from flexs.utils import sequence_utils as s_utils
 
 
 class KerasModel(flexs.Model):

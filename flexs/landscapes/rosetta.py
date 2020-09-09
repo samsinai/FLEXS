@@ -1,9 +1,8 @@
-import flexs
-import numpy as np
-import pyrosetta as prs
-# Initialize pyrosetta and suppress output messages
-prs.init("-mute all")
+import os
 
+import numpy as np
+
+import flexs
 
 # Some pyrosetta methods take three letter aa representations
 # so we need to convert our single letter representations
@@ -61,31 +60,33 @@ class RosettaFolding(flexs.Landscape):
         # Pyrosetta is an optional dependency, so import lazily and inform the
         # user if pyrosetta is not available.
         try:
-            import pyrosetta as prs
+            import pyrosetta
+
+            self.prs = pyrosetta
         except ImportError as e:
             raise ImportError(
                 f"{e}.\n"
                 "Hint: Pyrosetta not installed. "
                 "Source, binary, and conda installations available at http://www.pyrosetta.org/dow"
-            )
+            ) from e
 
         # Initialize pyrosetta and suppress output messages
-        prs.init("-mute all")
+        self.prs.init("-mute all")
 
         # We will reuse this pose over and over, mutating it to match
         # whatever sequence we are given to measure.
         # This is necessary since sequence identity can only be mutated
         # one residue at a time in Rosetta, because the atom coords of the
         # backbone of the previous residue are copied into the new one.
-        self.pose = prs.pose_from_pdb(pdb_file)
+        self.pose = self.prs.pose_from_pdb(pdb_file)
         self.wt_pose = self.pose.clone()
 
         # Change self.pose from full-atom to centroid representation
-        to_centroid_mover = prs.SwitchResidueTypeSetMover("centroid")
+        to_centroid_mover = self.prs.SwitchResidueTypeSetMover("centroid")
         to_centroid_mover.apply(self.pose)
 
         # Use 1 - sigmoid(centroid energy / norm_value) as the fitness score
-        self.score_function = prs.create_score_function("cen_std")
+        self.score_function = self.prs.create_score_function("cen_std")
         self.norm_value = norm_value
 
     def _mutate_pose(self, mut_aa, mut_pos):
@@ -97,12 +98,12 @@ class RosettaFolding(flexs.Landscape):
         conformation = self.pose.conformation()
 
         # Get ResidueType for new residue
-        new_restype = prs.rosetta.core.pose.get_restype_for_pose(
+        new_restype = self.prs.rosetta.core.pose.get_restype_for_pose(
             self.pose, aa_single_to_three_letter_code[mut_aa]
         )
 
         # Create the new residue using current_residue backbone
-        new_res = prs.rosetta.core.conformation.ResidueFactory.create_residue(
+        new_res = self.prs.rosetta.core.conformation.ResidueFactory.create_residue(
             new_restype,
             current_residue,
             conformation,
@@ -111,7 +112,7 @@ class RosettaFolding(flexs.Landscape):
         )
 
         # Make sure we retain as much info from the previous res as possible
-        prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
+        self.prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
             current_residue,
             new_res,
             conformation,
@@ -135,9 +136,9 @@ class RosettaFolding(flexs.Landscape):
             )
 
         # Mutate `self.pose` where necessary to have the same sequence identity as `sequence`
-        for i in range(len(sequence)):
-            if sequence[i] != pose_sequence[i]:
-                self._mutate_pose(sequence[i], i)
+        for i, aa in enumerate(sequence):
+            if aa != pose_sequence[i]:
+                self._mutate_pose(aa, i)
 
         return self.score_function(self.pose)
 
@@ -146,3 +147,29 @@ class RosettaFolding(flexs.Landscape):
 
         energies = np.array([-self.get_folding_energy(seq) for seq in sequences])
         return energies / self.norm_value
+
+
+def registry():
+    """
+    Returns a dictionary of problems of the form:
+    `{
+        "problem name": {
+            "params": ...,
+        },
+        ...
+    }`
+
+    where `flexs.landscapes.RosettaFolding(**problem["params"])` instantiates the
+    rosetta folding landscape for the given set of parameters.
+
+    Returns:
+        dict: Problems in the registry.
+
+    """
+
+    rosetta_data_dir = os.path.join(os.path.dirname(__file__), "data/rosetta")
+
+    return {
+        pdb_file: {"params": {"pdb_file": os.path.join(rosetta_data_dir, pdb_file)}}
+        for pdb_file in os.listdir(rosetta_data_dir)
+    }

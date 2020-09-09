@@ -1,6 +1,6 @@
-# FLEXS: Fitness Landscape Exploration Sandbox
-
 ![FLEX](LOGO.png)
+
+[![build status](https://github.com/retagaine/FLSD-Sandbox/workflows/build/badge.svg)](https://github.com/retagaine/FLSD-Sandbox/actions)
 
 FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. This project was developed with support from [Dyno Therapeutics](https://www.dynotx.com).
 
@@ -203,9 +203,9 @@ class myExplorer(flexs.Explorer):
         model,
         landscape,
         rounds,
-        initial_sequence_data,
-        experiment_budget,
-        query_budget,
+        starting_sequence,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
         **kwargs)
 
         super().__init__(
@@ -213,9 +213,9 @@ class myExplorer(flexs.Explorer):
             landscape,
             name,
             rounds,
-            experiment_budget,
-            query_budget,
-            initial_sequence_data,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
+            starting_sequence,
             **kwargs
         )
         "Your custom attributes here"
@@ -223,8 +223,8 @@ class myExplorer(flexs.Explorer):
     def propose_sequences(self, batches):
         """
         Your method implementation overriding the main explorer.
-        It is allowed to make *query_budget* queries to the model
-        and make *experiment_budget* proposals in return.
+        It is allowed to make *model_queries_per_round* queries to the model
+        and make *ground_truth_measurements_per_round* proposals in return.
         """
 
 ~~~

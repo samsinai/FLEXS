@@ -1,6 +1,7 @@
 import operator
 import random
 from typing import Callable, Dict, List, Tuple
+
 import numpy as np
 
 
