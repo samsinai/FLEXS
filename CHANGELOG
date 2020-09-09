@@ -5,7 +5,7 @@
     are in `Tutorial.ipynb`
     - RNA landscape now also handles conserved regions
 - All explorers
-    - Instead of taking `initial_sequence_data`, explorers take one
+    - Instead of taking `starting_sequence`, explorers take one
     `starting_sequence` (suggestions on how to handle initial data appreciated!)
 - Evaluation
     - Moved to `flexs.evaluate` and are now just a set of methods
@@ -16,13 +16,13 @@
     - Replaced `model_architectures` and `sequences_utils` with flexs versions
     - Changed `virtual_screen` to `model_queries_per_round`
     (`model_queries_per_round` is the absolute number of model queries allowed
-    per round, not a fraction with respect to `experiment_budget_per_round`)
+    per round, not a fraction with respect to `ground_truth_measurements_per_round_per_round`)
     - Changed `self.model.evals` to `self.model.cost`
     - Now gets measured sequences from `measured_sequences["sequence"]` rather than `self.model.measured_sequences`
     - Environment
         - Swapped order of `seq_len` and `alphabet_len`
 - AdaLead
-    - Moved order of `initial_sequence_data` to be consistent with `flsd.Explorer`
+    - Moved order of `starting_sequence` to be consistent with `flsd.Explorer`
 - Sequence utils
     - Swapped one-hot indexing of `construct_mutant_from_sample` to be consistent with `(seq_len, alphabet_len)` shape of `string_to_one_hot`
 - Testing

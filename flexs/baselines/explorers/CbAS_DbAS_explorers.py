@@ -3,8 +3,8 @@
 import logging
 
 import numpy as np
-from explorers.base_explorer import Base_explorer
-from utils.model_architectures import VAE
+from flexs.baselines.explorers.base_explorer import Base_explorer
+from flexs.utils.model_architectures import VAE
 
 
 class CbAS_explorer(Base_explorer):

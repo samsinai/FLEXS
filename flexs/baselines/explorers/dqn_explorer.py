@@ -5,13 +5,13 @@ from collections import Counter
 
 import numpy as np
 import torch
-from explorers.base_explorer import Base_explorer
 from torch import nn
 from torch import optim as optim
 from torch.nn import functional as F
 from torch.nn.utils import clip_grad_norm_
-from utils.replay_buffers import PrioritizedReplayBuffer
-from utils.sequence_utils import (
+import flexs
+from flexs.utils.replay_buffers import PrioritizedReplayBuffer
+from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
     generate_random_sequences,
     make_random_action,
@@ -53,19 +53,22 @@ def build_q_network(sequence_len, alphabet_len, device):
     return model
 
 
-class DQN_Explorer(Base_explorer):
+class DQN_Explorer(flexs.Explorer):
     """Explorer for DQN."""
 
     def __init__(
         self,
+        model,
+        landscape,
+        rounds,
+        starting_sequence,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
+        alphabet,
         batch_size=100,
-        alphabet="UCGA",
         virtual_screen=10,
-        path="./simulations/",
-        debug=False,
         memory_size=100000,
         train_epochs=20,
-        generations=10,
         gamma=0.9,
         device="cpu",
         noise_alpha=1,  # pylint: disable=W0613
@@ -88,18 +91,21 @@ class DQN_Explorer(Base_explorer):
             that is, if this were a lab, this would be the number of sequences
             evaluated in a lab trial
         """
-        super(DQN_Explorer, self).__init__(
-            batch_size=batch_size,
-            alphabet=alphabet,
-            virtual_screen=virtual_screen,
-            path=path,
-            debug=debug,
+        name = "DQN_Explorer"
+        super().__init__(
+            model,
+            landscape,
+            name,
+            rounds,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
+            starting_sequence,
         )
         self.explorer_type = "DQN_Explorer"
+        self.alphabet = alphabet
         self.alphabet_size = len(alphabet)
         self.memory_size = memory_size
         self.gamma = gamma
-        self.generations = generations
         self.best_fitness = 0
         self.train_epochs = train_epochs
         self.epsilon_min = 0.1
@@ -220,8 +226,7 @@ class DQN_Explorer(Base_explorer):
         Generates a new string representing the state, along with its associated reward.
         """
         eps = max(
-            self.epsilon_min,
-            (0.5 - self.model.cost / (self.batch_size * self.generations)),
+            self.epsilon_min, (0.5 - self.model.cost / (self.batch_size * self.rounds)),
         )
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)

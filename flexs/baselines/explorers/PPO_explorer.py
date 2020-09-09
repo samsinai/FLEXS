@@ -4,8 +4,6 @@ import collections
 from functools import partial
 
 import tensorflow as tf
-from environments.PPO_environment import PPOEnvironment as PPOEnv
-from explorers.base_explorer import Base_explorer
 from tf_agents.agents.ppo import ppo_agent
 from tf_agents.drivers import dynamic_episode_driver
 from tf_agents.environments import tf_py_environment
@@ -13,7 +11,9 @@ from tf_agents.environments.utils import validate_py_environment
 from tf_agents.metrics import tf_metrics
 from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
-from utils.sequence_utils import translate_one_hot_to_string
+from flexs.baselines.explorers.environments.PPO_environment import PPOEnvironment as PPOEnv
+from flexs.baselines.explorers.base_explorer import Base_explorer
+from flexs.utils.sequence_utils import translate_one_hot_to_string
 
 
 class PPO_explorer(Base_explorer):
