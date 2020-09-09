@@ -109,10 +109,10 @@ class GeneticAlgorithm(flexs.Explorer):
             k = int(self.parent_selection_proportion * self.population_size)
             return self.rng.choice(np.argsort(scores)[-k:], num_parents)
 
-        if self.parent_selection_strategy == "wright-fisher":
-            fitnesses = np.exp(scores / self.beta)
-            probs = torch.Tensor(fitnesses / np.sum(fitnesses))
-            return torch.multinomial(probs, num_parents, replacement=True).numpy()
+        # Then self.parent_selection_strategy == "wright-fisher":
+        fitnesses = np.exp(scores / self.beta)
+        probs = torch.Tensor(fitnesses / np.sum(fitnesses))
+        return torch.multinomial(probs, num_parents, replacement=True).numpy()
 
     def _recombine(self, pop, scores):
         num_children = int(self.children_proportion * self.population_size)
@@ -162,6 +162,8 @@ class GeneticAlgorithm(flexs.Explorer):
                         ]
 
             return children"""
+
+        raise ValueError()
 
     def propose_sequences(self, measured_sequences):
         """Run genetic algorithm explorer."""

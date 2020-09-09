@@ -114,7 +114,7 @@ class RosettaFolding(flexs.Landscape):
             allow_alternate_backbone_matching=True,
         )
 
-        # Make sure we retain as much info from the previous res as possible
+        # Make sure we retain as much info from the previous resdiue as possible
         prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
             current_residue,
             new_res,
