@@ -1,7 +1,8 @@
 import abc
 
-from typing import List
+from typing import List, Union
 import numpy as np
+
 
 class Landscape(abc.ABC):
     def __init__(self, name: str):

@@ -1,7 +1,9 @@
 import abc
+import numpy as np
 
 import flexs
-from typing import Any, List
+from typing import Any, List, Union
+
 
 class Model(flexs.Landscape, abc.ABC):
     """Base structure for all models."""
@@ -10,5 +12,7 @@ class Model(flexs.Landscape, abc.ABC):
     def train(self, sequences: Union[List[str], np.ndarray], labels: List[Any]):
         """Train model.
 
-        This function is called whenever you would want your model to update itself based on the set of sequences it has measurements for."""
+        This function is called whenever you would want your model to update itself based on the set
+        of sequences it has measurements for."""
+
         pass
