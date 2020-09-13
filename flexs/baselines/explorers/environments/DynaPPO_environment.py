@@ -100,7 +100,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def get_state_string(self):
         """Get sequence representing current state."""
-        return s_utils.translate_one_hot_to_string(self._state, self.alphabet)
+        return s_utils.one_hot_to_string(self._state, self.alphabet)
 
     def sequence_density(self, seq):
         """Get average distance to `seq` out of all observed sequences."""
@@ -138,8 +138,10 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 # then give it a small reward
                 return ts.termination(np.array(self._state, dtype=np.float32), 1)
 
-            self._state = s_utils.construct_mutant_from_sample(action_one_hot, self._state)
-            state_string = s_utils.translate_one_hot_to_string(self._state, self.alphabet)
+            self._state = s_utils.construct_mutant_from_sample(
+                action_one_hot, self._state
+            )
+            state_string = s_utils.one_hot_to_string(self._state, self.alphabet)
 
             # if we have seen the sequence this episode,
             # terminate episode and punish

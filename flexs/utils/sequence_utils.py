@@ -65,12 +65,9 @@ def string_to_one_hot(sequence, alphabet):
     return out
 
 
-def translate_one_hot_to_string(one_hot, order_list):
-    out = []
-    for i in range(one_hot.shape[1]):
-        ix = np.argmax(one_hot[:, i])
-        out.append(order_list[ix])
-    return "".join(out)
+def one_hot_to_string(one_hot, alphabet):
+    residue_idxs = np.argmax(one_hot, axis=1)
+    return "".join([alphabet[idx] for idx in residue_idxs])
 
 
 def break_down_sequence_to_singles(sequence_mask):

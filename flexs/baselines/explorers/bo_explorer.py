@@ -9,7 +9,7 @@ from flexs.utils.replay_buffers import PrioritizedReplayBuffer
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
     generate_random_sequences,
-    translate_one_hot_to_string,
+    one_hot_to_string,
     translate_string_to_one_hot,
 )
 
@@ -93,9 +93,7 @@ class BO_Explorer(flexs.Explorer):
         batch = self.memory.sample_batch()
         states = batch["next_obs"]
         state_seqs = [
-            translate_one_hot_to_string(
-                state.reshape((-1, self.seq_len)), self.alphabet
-            )
+            one_hot_to_string(state.reshape((-1, self.seq_len)), self.alphabet)
             for state in states
         ]
         self.model.update_model(state_seqs)
@@ -168,9 +166,7 @@ class BO_Explorer(flexs.Explorer):
                 x[action] = 1
             actions_to_screen.append(x)
             state_to_screen = construct_mutant_from_sample(x, state)
-            states_to_screen.append(
-                translate_one_hot_to_string(state_to_screen, self.alphabet)
-            )
+            states_to_screen.append(one_hot_to_string(state_to_screen, self.alphabet))
         ensemble_preds = [
             self.model.get_fitness_distribution(state) for state in states_to_screen
         ]

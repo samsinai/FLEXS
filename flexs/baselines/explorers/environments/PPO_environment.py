@@ -8,7 +8,7 @@ from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 from utils.sequence_utils import (
     construct_mutant_from_sample,
-    translate_one_hot_to_string,
+    one_hot_to_string,
     translate_string_to_one_hot,
 )
 
@@ -90,7 +90,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def get_state_string(self):
         """Get sequence representing current state."""
-        return translate_one_hot_to_string(self._state, self.alphabet)
+        return one_hot_to_string(self._state, self.alphabet)
 
     def _step(self, action):
         """Progress the agent one step in the environment.
@@ -120,7 +120,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 return ts.termination(np.array(self._state, dtype=np.float32), 1)
 
             self._state = construct_mutant_from_sample(action_one_hot, self._state)
-            state_string = translate_one_hot_to_string(self._state, self.alphabet)
+            state_string = one_hot_to_string(self._state, self.alphabet)
 
             # if we have seen the sequence this episode,
             # terminate episode and punish
