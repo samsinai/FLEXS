@@ -140,10 +140,17 @@ class DynaPPO(flexs.Explorer):
                 sklearn.neighbors.NearestNeighbors(), self.alphabet, "nearest_neighbors"
             ),
             baselines.models.SklearnRegressor(
+<<<<<<< HEAD:flexs/baselines/explorers/dyna_ppo.py
                 sklearn.linear_model.Lasso(), self.alphabet, "lasso"
             ),
             baselines.models.SklearnRegressor(
                 sklearn.linear_model.BayesianRidge(), self.alphabet, "bayesian_ridge"
+=======
+                sklearn.linear_models.Lasso(), self.alphabet, "lasso"
+            ),
+            baselines.models.SklearnRegressor(
+                sklearn.linear_models.BayesianRidge(), self.alphabet, "bayesian_ridge"
+>>>>>>> 65b8dcdb9eafa60670f2a9525fc278c4474b6e03:flexs/baselines/explorers/dyna_ppo.py
             ),
             baselines.models.SklearnRegressor(
                 sklearn.gaussian_process.GaussianProcessRegressor(),

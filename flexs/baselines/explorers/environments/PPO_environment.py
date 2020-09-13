@@ -8,8 +8,8 @@ from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
-    string_to_one_hot,
     one_hot_to_string,
+    translate_string_to_one_hot,
 )
 
 module_path = os.path.abspath(os.path.join(".."))
