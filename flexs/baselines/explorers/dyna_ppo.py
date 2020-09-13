@@ -5,6 +5,10 @@ from functools import partial
 import numpy as np
 import tensorflow as tf
 import sklearn
+import sklearn.linear_model
+import sklearn.gaussian_process
+import sklearn.ensemble
+import sklearn.tree
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from tf_agents.agents.ppo import ppo_agent
@@ -136,10 +140,10 @@ class DynaPPO(flexs.Explorer):
                 sklearn.neighbors.NearestNeighbors(), self.alphabet, "nearest_neighbors"
             ),
             baselines.models.SklearnRegressor(
-                sklearn.linear_models.Lasso(), self.alphabet, "lasso"
+                sklearn.linear_model.Lasso(), self.alphabet, "lasso"
             ),
             baselines.models.SklearnRegressor(
-                sklearn.linear_models.BayesianRidge(), self.alphabet, "bayesian_ridge"
+                sklearn.linear_model.BayesianRidge(), self.alphabet, "bayesian_ridge"
             ),
             baselines.models.SklearnRegressor(
                 sklearn.gaussian_process.GaussianProcessRegressor(),

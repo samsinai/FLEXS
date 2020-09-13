@@ -32,7 +32,6 @@ class PPO(flexs.Explorer):
         model_queries_per_batch,
         starting_sequence,
         alphabet,
-        batch_size,
         log_file=None,
     ):
         """Explorer which uses PPO.
@@ -98,7 +97,7 @@ class PPO(flexs.Explorer):
     def reset_measured_seqs(self):
         """Reset the measured sequences."""
         measured_seqs = [
-            (self.model.get_fitness(seq), seq, self.model.cost)
+            (self.model.get_fitness([seq]), seq, self.model.cost)
             for seq in self.model.measured_sequences
         ]
         measured_seqs = sorted(measured_seqs, key=lambda x: x[0], reverse=True)
@@ -175,7 +174,7 @@ class PPO(flexs.Explorer):
         model_queries_per_batch / 2`).
         """
         measured_seqs = [
-            (self.model.get_fitness(seq), seq, self.model.cost)
+            (self.model.get_fitness([seq]), seq, self.model.cost)
             for seq in measured_sequences["sequence"]
         ]
         measured_seqs = sorted(measured_seqs, key=lambda x: x[0], reverse=True)
@@ -234,7 +233,8 @@ class PPO(flexs.Explorer):
 
             # add new sequences to measured_sequences and sort
             self.meas_seqs += [
-                (self.model.get_fitness(seq), seq, self.model.cost) for seq in new_seqs
+                (self.model.get_fitness([seq]), seq, self.model.cost)
+                for seq in new_seqs
             ]
             self.meas_seqs = sorted(self.meas_seqs, key=lambda x: x[0], reverse=True)
 
@@ -319,7 +319,7 @@ class PPO(flexs.Explorer):
 
         # add new sequences to measured_sequences and sort
         new_meas_seqs = [
-            (self.model.get_fitness(seq), seq, self.model.cost) for seq in new_seqs
+            (self.model.get_fitness([seq]), seq, self.model.cost) for seq in new_seqs
         ]
         new_meas_seqs = sorted(new_meas_seqs, key=lambda x: x[0], reverse=True)
         self.meas_seqs += new_meas_seqs

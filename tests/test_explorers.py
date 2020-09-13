@@ -57,26 +57,22 @@ def test_dynappo():
     sequences, _ = explorer.run()
     print(sequences)
 
+
 def test_ppo():
-    explorer = PPO(
+    explorer = baselines.explorers.PPO(
         model=fakeModel,
         landscape=fakeLandscape,
-        rounds=1,
-        sequences_batch_size=4,
-        model_queries_per_batch=8,
-        starting_sequence="A",
+        rounds=3,
+        sequences_batch_size=5,
+        model_queries_per_batch=20,
+        starting_sequence="ATC",
         alphabet="ATCG",
-        batch_size=1,
     )
 
     sequences, _ = explorer.run()
     print(sequences)
 
-<<<<<<< HEAD
-# test_adalead()
-# test_dynappo()
-test_ppo()
-=======
+
 def test_cmaes():
     explorer = baselines.explorers.CMAES(
         fakeModel,
@@ -93,4 +89,3 @@ def test_cmaes():
 
     sequences, _ = explorer.run()
     print(sequences)
->>>>>>> 07cce18... moved  code to  and worked on porting DynaPPO

@@ -129,7 +129,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 return ts.termination(np.array(self._state, dtype=np.float32), -1)
             self.episode_seqs[state_string] = 1
 
-            reward = self.landscape.get_fitness(state_string)
+            reward = self.landscape.get_fitness([state_string]).item()
 
             # if my reward is not increasing, then terminate
             if reward < self.previous_fitness:
