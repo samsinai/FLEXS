@@ -4,6 +4,7 @@ from functools import partial
 
 import numpy as np
 import tensorflow as tf
+import sklearn
 from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from tf_agents.agents.ppo import ppo_agent
@@ -13,23 +14,11 @@ from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 import flexs
+from flexs import baselines
 from flexs.baselines.explorers.environments.DynaPPO_environment import (
     DynaPPOEnvironment as DynaPPOEnv,
 )
 from flexs.utils import sequence_utils as s_utils
-from flexs.utils.model_architectures import (
-    NLNN,
-    SKBR,
-    SKGB,
-    SKGP,
-    SKRF,
-    CNNa,
-    Linear,
-    SKExtraTrees,
-    SKLasso,
-    SKLinear,
-    SKNeighbors,
-)
 
 
 class DynaPPO(flexs.Explorer):
@@ -44,7 +33,6 @@ class DynaPPO(flexs.Explorer):
         model_queries_per_batch,
         starting_sequence,
         alphabet,
-        batch_size,
         log_file=None,
         threshold=0.5,
         num_experiment_rounds=10,
@@ -67,7 +55,6 @@ class DynaPPO(flexs.Explorer):
                 the event that the model uncertainty is too high.
             ens: All possible models to include in the ensemble.
             ens_archs: Corresponding architectures of `ens`.
-            original_horizon:
             has_learned_policy: Whether or not we have learned a good policy (we need
                 to do so before we can propose samples).
             meas_seqs: All measured sequences.
@@ -92,7 +79,6 @@ class DynaPPO(flexs.Explorer):
         )
 
         self.alphabet = alphabet
-        self.batch_size = batch_size
         self.threshold = threshold
         self.num_experiment_rounds = num_experiment_rounds
         self.num_model_rounds = num_model_rounds
@@ -105,29 +91,16 @@ class DynaPPO(flexs.Explorer):
         self.internal_ensemble_calls = None
 
         self.ens = None
-        self.ens_archs = None
-        self.original_horizon = None
+        self.original_horizon = self.rounds
         self.has_learned_policy = None
 
         self.meas_seqs = []
         self.meas_seqs_it = 0
-        self.top_seqs = collections.deque(maxlen=self.batch_size)
+        self.top_seqs = collections.deque(maxlen=self.sequences_batch_size)
         self.top_seqs_it = 0
 
         self.agent = None
         self.tf_env = None
-
-    def reset(self):
-        """Reset the explorer."""
-        self.batches = {-1: ""}
-
-    def reset_measured_seqs(self, measured_sequences):
-        """Reset the measured sequences."""
-        self.meas_seqs = [
-            (self.model.get_fitness(seq), seq, self.model.cost)
-            for seq in measured_sequences["sequence"]
-        ]
-        self.meas_seqs = sorted(self.meas_seqs, key=lambda x: x[0], reverse=True)
 
     def initialize_env(self):
         """Initialize TF-Agents environment."""
@@ -149,41 +122,43 @@ class DynaPPO(flexs.Explorer):
         initialize every supported model architecture and trim them out based on their
         R^2 score.
         """
+
+        seq_len = len(self.starting_sequence)
+
         ens = [
-            Linear,
-            CNNa,
-            SKLinear,
-            SKLasso,
-            SKRF,
-            SKGB,
-            SKNeighbors,
-            SKBR,
-            SKGP,
-            SKExtraTrees,
-        ]
-        ens_archs = [
-            Linear,
-            CNNa,
-            SKLinear,
-            SKLasso,
-            SKRF,
-            SKGB,
-            SKNeighbors,
-            SKBR,
-            SKGP,
-            SKExtraTrees,
+            baselines.models.LinearRegression(self.alphabet),
+            baselines.models.RandomForest(self.alphabet),
+            baselines.models.GlobalEpistasisModel(seq_len, 100, self.alphabet),
+            baselines.models.MLP(seq_len, 200, self.alphabet),
+            baselines.models.CNN(seq_len, 32, 100, self.alphabet),
+            # Custom sklearn models
+            baselines.models.SklearnRegressor(
+                sklearn.neighbors.NearestNeighbors(), self.alphabet, "nearest_neighbors"
+            ),
+            baselines.models.SklearnRegressor(
+                sklearn.linear_models.Lasso(), self.alphabet, "lasso"
+            ),
+            baselines.models.SklearnRegressor(
+                sklearn.linear_models.BayesianRidge(), self.alphabet, "bayesian_ridge"
+            ),
+            baselines.models.SklearnRegressor(
+                sklearn.gaussian_process.GaussianProcessRegressor(),
+                self.alphabet,
+                "gaussian_process",
+            ),
+            baselines.models.SklearnRegressor(
+                sklearn.ensemble.GradientBoostingRegressor(),
+                self.alphabet,
+                "gradient_boosting",
+            ),
+            baselines.models.SklearnRegressor(
+                sklearn.tree.ExtraTreeRegressor(), self.alphabet, "extra_trees"
+            ),
         ]
 
-        ens_archs = [
-            arch(len(self.meas_seqs[0][1]), alphabet=self.alphabet)
-            for arch in ens_archs
-        ]
-        ens = [arch.get_model() for arch in ens_archs]
         self.ens = ens
-        self.ens_archs = ens_archs
 
         self.internal_ensemble = ens
-        self.internal_ensemble_archs = ens_archs
         self.internal_ensemble_calls = 0
         self.internal_ensemble_uncertainty = None
 
@@ -210,7 +185,7 @@ class DynaPPO(flexs.Explorer):
         )
 
         num_epochs = 10
-        agent = ppo_agent.PPOAgent(
+        self.agent = ppo_agent.PPOAgent(
             self.tf_env.time_step_spec(),
             self.tf_env.action_spec(),
             optimizer=tf.compat.v1.train.AdamOptimizer(learning_rate=1e-5),
@@ -219,9 +194,7 @@ class DynaPPO(flexs.Explorer):
             num_epochs=num_epochs,
             summarize_grads_and_vars=False,
         )
-        agent.initialize()
-
-        self.agent = agent
+        self.agent.initialize()
 
     def add_last_seq_in_trajectory(self, experience, new_seqs):
         """Add the last sequence in an episode's trajectory.
@@ -235,7 +208,7 @@ class DynaPPO(flexs.Explorer):
         are generated from that new sequence.
         """
         if experience.is_boundary():
-            seq = s_utils.translate_one_hot_to_string(
+            seq = s_utils.one_hot_to_string(
                 experience.observation.numpy()[0], self.alphabet
             )
             new_seqs.add(seq)
@@ -379,7 +352,7 @@ class DynaPPO(flexs.Explorer):
             num_episodes=1,
         )
 
-        effective_budget = self.batch_size
+        effective_budget = self.sequences_batch_size
         self.internal_ensemble_calls = 0
         while self.internal_ensemble_calls < effective_budget:
             collect_driver.run()
@@ -423,7 +396,7 @@ class DynaPPO(flexs.Explorer):
         )
 
         effective_budget = (
-            self.original_horizon * self.batch_size * self.model_queries_per_batch / 2
+            self.original_horizon * self.model_queries_per_batch / 2
         ) / (self.num_experiment_rounds)
 
         self.meas_seqs_it = 0
@@ -488,7 +461,7 @@ class DynaPPO(flexs.Explorer):
         self.has_learned_policy = True
 
     def propose_sequences(self, measured_sequences):
-        """Propose `batch_size` samples."""
+        """Propose `self.sequences_batch_size` samples."""
         if self.original_horizon is None:
             self.original_horizon = self.rounds
 
@@ -496,7 +469,10 @@ class DynaPPO(flexs.Explorer):
             self.learn_policy(measured_sequences)
 
         if len(self.meas_seqs) == 0:
-            self.reset_measured_seqs(measured_sequences)
+            meas_seqs = zip(
+                measured_sequences["sequence"], measured_sequences["true_score"]
+            )
+            self.meas_seqs = sorted(meas_seqs, key=lambda x: x[0], reverse=True)
 
         # Need to switch back to using the model.
         self.set_tf_env_reward(is_oracle=True)
@@ -527,7 +503,7 @@ class DynaPPO(flexs.Explorer):
 
         # Since we used part of the total budget for pretraining, amortize this cost.
         effective_budget = (
-            self.original_horizon * self.batch_size * self.model_queries_per_batch / 2
+            self.original_horizon * self.model_queries_per_batch / 2
         ) / self.original_horizon
 
         print("Effective budget:", effective_budget)
@@ -549,9 +525,11 @@ class DynaPPO(flexs.Explorer):
         new_seqs = new_seqs.difference(all_seqs)
 
         # If we only saw old sequences, randomly generate to fill the batch.
-        while len(new_seqs) < self.batch_size:
+        while len(new_seqs) < self.sequences_batch_size:
             seqs = s_utils.generate_random_sequences(
-                self.seq_len, self.batch_size - len(new_seqs), alphabet=self.alphabet
+                self.seq_len,
+                self.sequences_batch_size - len(new_seqs),
+                alphabet=self.alphabet,
             )
             for seq in seqs:
                 if (seq in new_seqs) or (seq in all_seqs):
@@ -570,4 +548,4 @@ class DynaPPO(flexs.Explorer):
         self.agent.train(experience=trajectories)
         replay_buffer.clear()
 
-        return [s[1] for s in new_meas_seqs[: self.batch_size]], None
+        return [s[1] for s in new_meas_seqs[: self.sequences_batch_size]], None

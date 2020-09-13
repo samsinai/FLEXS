@@ -11,14 +11,18 @@ from tf_agents.environments.utils import validate_py_environment
 from tf_agents.metrics import tf_metrics
 from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
+
 import flexs
-from flexs.baselines.explorers.environments.PPO_environment import PPOEnvironment as PPOEnv
+from flexs.baselines.explorers.environments.PPO_environment import (
+    PPOEnvironment as PPOEnv,
+)
 from flexs.baselines.explorers.base_explorer import Base_explorer
-from flexs.utils.sequence_utils import translate_one_hot_to_string
+from flexs.utils.sequence_utils import one_hot_to_string
 
 
 class PPO(flexs.Explorer):
     """Explorer for PPO."""
+
     def __init__(
         self,
         model,
@@ -99,7 +103,9 @@ class PPO(flexs.Explorer):
         ]
         measured_seqs = sorted(measured_seqs, key=lambda x: x[0], reverse=True)
 
-        self.top_seqs = collections.deque(measured_seqs, maxlen=self.sequences_batch_size)
+        self.top_seqs = collections.deque(
+            measured_seqs, maxlen=self.sequences_batch_size
+        )
         self.meas_seqs = measured_seqs
 
     def initialize_env(self):
@@ -155,9 +161,7 @@ class PPO(flexs.Explorer):
         are generated from that new sequence.
         """
         if experience.is_boundary():
-            seq = translate_one_hot_to_string(
-                experience.observation.numpy()[0], self.alphabet
-            )
+            seq = one_hot_to_string(experience.observation.numpy()[0], self.alphabet)
             new_seqs.add(seq)
 
             self.meas_seqs_it = (self.meas_seqs_it + 1) % len(self.meas_seqs)
@@ -176,7 +180,9 @@ class PPO(flexs.Explorer):
         ]
         measured_seqs = sorted(measured_seqs, key=lambda x: x[0], reverse=True)
 
-        self.top_seqs = collections.deque(measured_seqs, maxlen=self.sequences_batch_size)
+        self.top_seqs = collections.deque(
+            measured_seqs, maxlen=self.sequences_batch_size
+        )
         self.meas_seqs = measured_seqs
 
         self.initialize_env()
@@ -294,7 +300,9 @@ class PPO(flexs.Explorer):
 
         # since we used part of the total budget for pretraining, amortize this cost
         effective_budget = (
-            self.original_horizon * self.sequences_batch_size * self.model_queries_per_batch
+            self.original_horizon
+            * self.sequences_batch_size
+            * self.model_queries_per_batch
             - (self.sequences_batch_size * self.model_queries_per_batch / 2)
         ) / self.original_horizon
 

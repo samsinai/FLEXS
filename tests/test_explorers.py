@@ -1,29 +1,22 @@
-from flexs.model import Model
-from flexs.landscape import Landscape
 import numpy as np
 
-from flexs.baselines.explorers.adalead import Adalead
-# from flexs.baselines.explorers.DynaPPO_explorer import DynaPPO
-from flexs.baselines.explorers.PPO_explorer import PPO
+import flexs
+from flexs import baselines
 
 rng = np.random.default_rng()
 
 
-class FakeModel(Model):
+class FakeModel(flexs.Model):
     def _fitness_function(self, sequences):
-        if isinstance(sequences, list) or isinstance(sequences, np.ndarray):
-            return rng.random(size=len(sequences))
-        return rng.random()
+        return rng.random(size=len(sequences))
 
     def train(self, *args, **kwargs):
         pass
 
 
-class FakeLandscape(Landscape):
+class FakeLandscape(flexs.Landscape):
     def _fitness_function(self, sequences):
-        if isinstance(sequences, list) or isinstance(sequences, np.ndarray):
-            return rng.random(size=len(sequences))
-        return rng.random()
+        return rng.random(size=len(sequences))
 
 
 fakeModel = FakeModel(name="FakeModel")
@@ -31,13 +24,13 @@ fakeLandscape = FakeLandscape(name="FakeLandscape")
 
 
 def test_adalead():
-    explorer = Adalead(
+    explorer = baselines.explorers.Adalead(
         model=fakeModel,
         landscape=fakeLandscape,
-        rounds=1,
-        sequences_batch_size=2,
-        model_queries_per_batch=1,
-        starting_sequence="A",
+        rounds=3,
+        sequences_batch_size=5,
+        model_queries_per_batch=20,
+        starting_sequence="ATC",
         alphabet="ATCG",
     )
 
@@ -48,15 +41,14 @@ def test_adalead():
 
 
 def test_dynappo():
-    explorer = DynaPPO(
+    explorer = baselines.explorers.DynaPPO(
         model=fakeModel,
         landscape=fakeLandscape,
-        rounds=1,
-        sequences_batch_size=4,
-        model_queries_per_batch=8,
-        starting_sequence="A",
+        rounds=3,
+        sequences_batch_size=5,
+        model_queries_per_batch=20,
+        starting_sequence="ATC",
         alphabet="ATCG",
-        batch_size=1,
         threshold=0.5,
         num_experiment_rounds=1,
         num_model_rounds=1,
@@ -80,6 +72,25 @@ def test_ppo():
     sequences, _ = explorer.run()
     print(sequences)
 
+<<<<<<< HEAD
 # test_adalead()
 # test_dynappo()
 test_ppo()
+=======
+def test_cmaes():
+    explorer = baselines.explorers.CMAES(
+        fakeModel,
+        fakeLandscape,
+        population_size=15,
+        max_iter=200,
+        initial_variance=0.3,
+        rounds=3,
+        starting_sequence="ATC",
+        sequences_batch_size=5,
+        model_queries_per_batch=20,
+        alphabet="ATCG",
+    )
+
+    sequences, _ = explorer.run()
+    print(sequences)
+>>>>>>> 07cce18... moved  code to  and worked on porting DynaPPO

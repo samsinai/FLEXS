@@ -46,7 +46,10 @@ class Adalead(flexs.Explorer):
         self.rho = rho
 
     def _recombine_population(self, gen):
-        # @TODO this returns an empty array if len(gen) = 1; for example if gen=[wt]
+        # If only one member of population, can't do any recombining
+        if len(gen) == 1:
+            return gen
+
         random.shuffle(gen)
         ret = []
         for i in range(0, len(gen) - 1, 2):
