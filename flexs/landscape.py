@@ -1,16 +1,18 @@
 import abc
 
+from typing import List
+import numpy as np
 
 class Landscape(abc.ABC):
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.cost = 0
         self.name = name
 
     @abc.abstractmethod
-    def _fitness_function(self, sequences):
+    def _fitness_function(self, sequences: List[str]) -> np.ndarray:
         pass
 
-    def get_fitness(self, sequences):
+    def get_fitness(self, sequences: List[str]) -> np.ndarray:
         """
         Args:
             sequences: A list/numpy array of sequence strings to be scored
@@ -21,3 +23,6 @@ class Landscape(abc.ABC):
 
         self.cost += len(sequences)
         return self._fitness_function(sequences)
+
+    def _reset(self) -> None:
+        self.cost = 0
