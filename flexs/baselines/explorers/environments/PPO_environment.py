@@ -6,10 +6,10 @@ import numpy as np
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
-from utils.sequence_utils import (
+from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
     translate_one_hot_to_string,
-    translate_string_to_one_hot,
+    string_to_one_hot,
 )
 
 module_path = os.path.abspath(os.path.join(".."))
@@ -49,7 +49,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         # sequence
         self.seq = starting_seq
         self.seq_len = len(self.seq)
-        self._state = translate_string_to_one_hot(self.seq, self.alphabet)
+        self._state = string_to_one_hot(self.seq, self.alphabet)
         self.episode_seqs = {}  # the sequences seen this episode
 
         # tf_agents environment
@@ -57,7 +57,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             shape=(1, 2), dtype=np.float32, minimum=0, maximum=1, name="action_x"
         )
         self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(self.alphabet_len, self.seq_len),
+            shape=(self.seq_len, self.alphabet_len),
             dtype=np.float32,
             minimum=0,
             maximum=1,
@@ -71,7 +71,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def _reset(self):
         self.previous_fitness = -float("inf")
-        self._state = translate_string_to_one_hot(self.seq, self.alphabet)
+        self._state = string_to_one_hot(self.seq, self.alphabet)
         self.episode_seqs = {}
         self.num_steps = 0
         return ts.restart(np.array(self._state, dtype=np.float32))
@@ -100,7 +100,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         """
         if self.num_steps < self.max_num_steps:
             self.num_steps += 1
-            action_one_hot = np.zeros((self.alphabet_len, self.seq_len))
+            action_one_hot = np.zeros((self.seq_len, self.alphabet_len))
 
             # if action is invalid,
             # terminate episode and punish
@@ -108,7 +108,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 return ts.termination(np.array(self._state, dtype=np.float32), -1)
 
             x, y = action[0]
-            x, y = int(self.alphabet_len * x), int(self.seq_len * y)
+            x, y = int(self.seq_len * x), int(self.alphabet_len * y)
             action_one_hot[x, y] = 1
 
             # if we are trying to modify the sequence with a no-op, then stop

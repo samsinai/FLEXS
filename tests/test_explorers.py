@@ -3,7 +3,8 @@ from flexs.landscape import Landscape
 import numpy as np
 
 from flexs.baselines.explorers.adalead import Adalead
-from flexs.baselines.explorers.DynaPPO_explorer import DynaPPO
+# from flexs.baselines.explorers.DynaPPO_explorer import DynaPPO
+from flexs.baselines.explorers.PPO_explorer import PPO
 
 rng = np.random.default_rng()
 
@@ -64,6 +65,21 @@ def test_dynappo():
     sequences, _ = explorer.run()
     print(sequences)
 
+def test_ppo():
+    explorer = PPO(
+        model=fakeModel,
+        landscape=fakeLandscape,
+        rounds=1,
+        sequences_batch_size=4,
+        model_queries_per_batch=8,
+        starting_sequence="A",
+        alphabet="ATCG",
+        batch_size=1,
+    )
 
-test_adalead()
-test_dynappo()
+    sequences, _ = explorer.run()
+    print(sequences)
+
+# test_adalead()
+# test_dynappo()
+test_ppo()

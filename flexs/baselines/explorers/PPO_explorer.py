@@ -11,21 +11,25 @@ from tf_agents.environments.utils import validate_py_environment
 from tf_agents.metrics import tf_metrics
 from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
+import flexs
 from flexs.baselines.explorers.environments.PPO_environment import PPOEnvironment as PPOEnv
 from flexs.baselines.explorers.base_explorer import Base_explorer
 from flexs.utils.sequence_utils import translate_one_hot_to_string
 
 
-class PPO_explorer(Base_explorer):
+class PPO(flexs.Explorer):
     """Explorer for PPO."""
-
     def __init__(
         self,
-        batch_size=100,
-        alphabet="UCGA",
-        virtual_screen=10,
-        path="./simulations/",
-        debug=False,
+        model,
+        landscape,
+        rounds,
+        sequences_batch_size,
+        model_queries_per_batch,
+        starting_sequence,
+        alphabet,
+        batch_size,
+        log_file=None,
     ):
         """Explorer which uses PPO.
 
@@ -45,10 +49,24 @@ class PPO_explorer(Base_explorer):
             tf_env: TF-Agents environment in which to run the explorer.
             agent: Decision-making agent.
         """
-        super().__init__(batch_size, alphabet, virtual_screen, path, debug)
+
+        name = f"PPO_Agent"
+
+        super().__init__(
+            model,
+            landscape,
+            name,
+            rounds,
+            sequences_batch_size,
+            model_queries_per_batch,
+            starting_sequence,
+            log_file,
+        )
+
+        self.alphabet = alphabet
 
         self.meas_seqs = None
-        self.meas_seqs_it = None
+        self.meas_seqs_it = 0
         self.top_seqs = None
         self.top_seqs_it = None
 
@@ -65,7 +83,7 @@ class PPO_explorer(Base_explorer):
         self.meas_seqs = []
         self.meas_seqs_it = 0
 
-        self.top_seqs = collections.deque(maxlen=self.batch_size)
+        self.top_seqs = collections.deque(maxlen=self.sequences_batch_size)
         self.top_seqs_it = 0
 
         self.has_pretrained_agent = False
@@ -81,7 +99,7 @@ class PPO_explorer(Base_explorer):
         ]
         measured_seqs = sorted(measured_seqs, key=lambda x: x[0], reverse=True)
 
-        self.top_seqs = collections.deque(measured_seqs, maxlen=self.batch_size)
+        self.top_seqs = collections.deque(measured_seqs, maxlen=self.sequences_batch_size)
         self.meas_seqs = measured_seqs
 
     def initialize_env(self):
@@ -90,7 +108,7 @@ class PPO_explorer(Base_explorer):
             alphabet=self.alphabet,
             starting_seq=self.meas_seqs[0][1],
             landscape=self.model,
-            max_num_steps=self.virtual_screen,
+            max_num_steps=self.model_queries_per_batch,
         )
 
         validate_py_environment(env, episodes=1)
@@ -145,29 +163,29 @@ class PPO_explorer(Base_explorer):
             self.meas_seqs_it = (self.meas_seqs_it + 1) % len(self.meas_seqs)
             self.tf_env.pyenv.envs[0].seq = self.meas_seqs[self.meas_seqs_it][1]
 
-    def pretrain_agent(self):
+    def pretrain_agent(self, measured_sequences):
         """Pretrain the agent.
 
         Because of the budget constraint, we can only pretrain the agent on so many
-        sequences (this number is currently set to `self.batch_size * self.
-        virtual_screen / 2`).
+        sequences (this number is currently set to `self.sequences_batch_size * self.
+        model_queries_per_batch / 2`).
         """
         measured_seqs = [
             (self.model.get_fitness(seq), seq, self.model.cost)
-            for seq in self.model.measured_sequences
+            for seq in measured_sequences["sequence"]
         ]
         measured_seqs = sorted(measured_seqs, key=lambda x: x[0], reverse=True)
 
-        self.top_seqs = collections.deque(measured_seqs, maxlen=self.batch_size)
+        self.top_seqs = collections.deque(measured_seqs, maxlen=self.sequences_batch_size)
         self.meas_seqs = measured_seqs
 
         self.initialize_env()
         self.initialize_agent()
 
-        batch_size = self.batch_size
-        max_new_evals = self.batch_size * self.virtual_screen / 2
+        batch_size = self.sequences_batch_size
+        max_new_evals = self.sequences_batch_size * self.model_queries_per_batch / 2
 
-        all_seqs = set(self.model.measured_sequences)
+        all_seqs = set(measured_sequences["sequence"])
         proposed_seqs = set()
         measured_seqs = []
 
@@ -194,14 +212,14 @@ class PPO_explorer(Base_explorer):
         )
 
         print(f"Evaluating {max_new_evals} new sequences for pretraining...")
-        previous_evals = self.model.evals
-        while (self.model.evals - previous_evals) < max_new_evals:
-            print(f"Total evals: {self.model.evals - previous_evals}")
+        previous_evals = self.model.cost
+        while (self.model.cost - previous_evals) < max_new_evals:
+            print(f"Total evals: {self.model.cost - previous_evals}")
 
             # generate new sequences
             for _ in range(batch_size):
                 collect_driver.run()
-                if (self.model.evals - previous_evals) >= max_new_evals:
+                if (self.model.cost - previous_evals) >= max_new_evals:
                     break
 
             # get proposed sequences which have not already been measured
@@ -236,20 +254,20 @@ class PPO_explorer(Base_explorer):
 
         self.has_pretrained_agent = True
 
-    def propose_samples(self):
+    def propose_sequences(self, measured_sequences):
         """Propose `batch_size` samples."""
         if self.original_horizon is None:
-            self.original_horizon = self.horizon
+            self.original_horizon = self.rounds
 
         if not self.has_pretrained_agent:
-            self.pretrain_agent()
+            self.pretrain_agent(measured_sequences)
 
         if len(self.meas_seqs) == 0:
             self.reset_measured_seqs()
 
         print("Proposing samples...")
 
-        all_seqs = set(self.model.measured_sequences)
+        all_seqs = set(measured_sequences["sequence"])
         new_seqs = set()
 
         num_parallel_environments = 1
@@ -276,15 +294,15 @@ class PPO_explorer(Base_explorer):
 
         # since we used part of the total budget for pretraining, amortize this cost
         effective_budget = (
-            self.original_horizon * self.batch_size * self.virtual_screen
-            - (self.batch_size * self.virtual_screen / 2)
+            self.original_horizon * self.sequences_batch_size * self.model_queries_per_batch
+            - (self.sequences_batch_size * self.model_queries_per_batch / 2)
         ) / self.original_horizon
 
-        previous_evals = self.model.evals
-        while (self.model.evals - previous_evals) < effective_budget:
+        previous_evals = self.model.cost
+        while (self.model.cost - previous_evals) < effective_budget:
             collect_driver.run()
-            if (self.model.evals - previous_evals) % 500 == 0:
-                print(self.model.evals - previous_evals)
+            if (self.model.cost - previous_evals) % 500 == 0:
+                print(self.model.cost - previous_evals)
             # we've looped over, found nothing new
             if self.meas_seqs_it == 0:
                 break
@@ -303,4 +321,4 @@ class PPO_explorer(Base_explorer):
         self.agent.train(experience=trajectories)
         replay_buffer.clear()
 
-        return [s[1] for s in new_meas_seqs[: self.batch_size]]
+        return [s[1] for s in new_meas_seqs[: self.sequences_batch_size]], None
