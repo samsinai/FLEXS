@@ -9,10 +9,10 @@ class Landscape(abc.ABC):
         self.name = name
 
     @abc.abstractmethod
-    def _fitness_function(self, sequences: List[str]) -> np.ndarray:
+    def _fitness_function(self, sequences: Union[List[str], np.ndarray]) -> np.ndarray:
         pass
 
-    def get_fitness(self, sequences: List[str]) -> np.ndarray:
+    def get_fitness(self, sequences: Union[List[str], np.ndarray]) -> np.ndarray:
         """
         Args:
             sequences: A list/numpy array of sequence strings to be scored
@@ -23,6 +23,3 @@ class Landscape(abc.ABC):
 
         self.cost += len(sequences)
         return self._fitness_function(sequences)
-
-    def _reset(self) -> None:
-        self.cost = 0

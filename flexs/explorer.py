@@ -70,7 +70,7 @@ class Explorer(abc.ABC):
     def run(self, verbose: bool = True) -> Tuple[pd.DataFrame, Dict]:
         """Run the exporer."""
 
-        self.model.reset()
+        self.model.cost = 0
 
         # Metadata about run that will be used for logging purposes
         metadata = {
