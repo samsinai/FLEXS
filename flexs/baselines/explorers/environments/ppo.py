@@ -6,22 +6,18 @@ import numpy as np
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
+import flexs
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
     one_hot_to_string,
-    translate_string_to_one_hot,
+    string_to_one_hot,
 )
-
-module_path = os.path.abspath(os.path.join(".."))
-if module_path not in sys.path:
-    sys.path.append(module_path)
-
 
 class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """PPO environment based on TF-Agents."""
 
     def __init__(
-        self, alphabet, starting_seq, landscape, max_num_steps
+        self, alphabet: str, starting_seq: str, landscape: flexs.Landscape, max_num_steps: int
     ):  # pylint: disable=W0231
         """Initialize PPO agent environment.
 
@@ -36,7 +32,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 each sequence.
             max_num_steps: Maximum number of steps before
                 episode is forced to terminate. Usually the
-                virtual screening ratio.
+                `model_queries_per_batch`.
         """
         # alphabet
         self.alphabet = alphabet
@@ -50,11 +46,11 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         self.seq = starting_seq
         self.seq_len = len(self.seq)
         self._state = string_to_one_hot(self.seq, self.alphabet)
-        self.episode_seqs = {}  # the sequences seen this episode
+        self.episode_seqs = {}  # the sequences seen in the current episode
 
         # tf_agents environment
         self._action_spec = array_spec.BoundedArraySpec(
-            shape=(1, 2), dtype=np.float32, minimum=0, maximum=1, name="action_x"
+            shape=(1, 2), dtype=np.float32, minimum=0, maximum=1, name="action"
         )
         self._observation_spec = array_spec.BoundedArraySpec(
             shape=(self.seq_len, self.alphabet_len),
@@ -131,7 +127,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
             reward = self.landscape.get_fitness([state_string]).item()
 
-            # if my reward is not increasing, then terminate
+            # if the reward is not increasing, then terminate
             if reward < self.previous_fitness:
                 return ts.termination(
                     np.array(self._state, dtype=np.float32), reward=reward

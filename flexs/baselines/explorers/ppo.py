@@ -13,10 +13,9 @@ from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 import flexs
-from flexs.baselines.explorers.environments.PPO_environment import (
+from flexs.baselines.explorers.environments.ppo import (
     PPOEnvironment as PPOEnv,
 )
-from flexs.baselines.explorers.base_explorer import Base_explorer
 from flexs.utils.sequence_utils import one_hot_to_string
 
 
@@ -25,14 +24,14 @@ class PPO(flexs.Explorer):
 
     def __init__(
         self,
-        model,
-        landscape,
-        rounds,
-        sequences_batch_size,
-        model_queries_per_batch,
-        starting_sequence,
-        alphabet,
-        log_file=None,
+        model: flexs.Model,
+        landscape: flexs.Landscape,
+        rounds: int,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        starting_sequence: str,
+        alphabet: str,
+        log_file: str = None,
     ):
         """Explorer which uses PPO.
 
@@ -90,7 +89,6 @@ class PPO(flexs.Explorer):
         self.top_seqs_it = 0
 
         self.has_pretrained_agent = False
-        self.batches = {-1: ""}
 
         self.original_horizon = None
 
@@ -166,12 +164,11 @@ class PPO(flexs.Explorer):
             self.meas_seqs_it = (self.meas_seqs_it + 1) % len(self.meas_seqs)
             self.tf_env.pyenv.envs[0].seq = self.meas_seqs[self.meas_seqs_it][1]
 
-    def pretrain_agent(self, measured_sequences):
+    def pretrain_agent(self, measured_sequences_data: pd.DataFrame):
         """Pretrain the agent.
 
         Because of the budget constraint, we can only pretrain the agent on so many
-        sequences (this number is currently set to `self.sequences_batch_size * self.
-        model_queries_per_batch / 2`).
+        sequences (this number is currently set to half of all calls made to the model).
         """
         measured_seqs = [
             (self.model.get_fitness([seq]), seq, self.model.cost)
@@ -260,10 +257,8 @@ class PPO(flexs.Explorer):
 
         self.has_pretrained_agent = True
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(self, measured_sequences_data: pd.DataFrame):
         """Propose `batch_size` samples."""
-        if self.original_horizon is None:
-            self.original_horizon = self.rounds
 
         if not self.has_pretrained_agent:
             self.pretrain_agent(measured_sequences)

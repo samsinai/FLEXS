@@ -44,7 +44,7 @@ class Explorer(abc.ABC):
         This method will be overriden to contain the explorer logic for each explorer.
 
         Args:
-            measured_sequences: A pandas dataframe of all sequences that have been
+            measured_sequences_data: A pandas dataframe of all sequences that have been
             measured by the ground truth so far. Has columns "sequence",
             "true_score", "model_score", and "round".
 
@@ -54,7 +54,7 @@ class Explorer(abc.ABC):
         """
         pass
 
-    def _log(self, metadata: Dict, sequences: str, preds: float, true_score: float, current_round: int, verbose: bool) -> None:
+    def _log(self, metadata: Dict, sequences_data: pd.DataFrame, preds: float, true_score: float, current_round: int, verbose: bool) -> None:
         if self.log_file is not None:
             with open(self.log_file, "w") as f:
                 # First write metadata
@@ -62,7 +62,7 @@ class Explorer(abc.ABC):
                 f.write("\n")
 
                 # Then write pandas dataframe
-                sequences.to_csv(f, index=False)
+                sequences_data.to_csv(f, index=False)
 
         if verbose:
             print(f"round: {current_round}, top: {true_score.max()}")
@@ -84,7 +84,7 @@ class Explorer(abc.ABC):
         }
 
         # Initial sequences and their scores
-        sequences = pd.DataFrame(
+        sequences_data = pd.DataFrame(
             {
                 "sequence": self.starting_sequence,
                 "model_score": np.nan,
@@ -95,10 +95,10 @@ class Explorer(abc.ABC):
             }
         )
         self._log(
-            sequences,
+            sequences_data,
             metadata,
-            sequences["model_score"],
-            sequences["true_score"],
+            sequences_data["model_score"],
+            sequences_data["true_score"],
             0,
             verbose,
         )
@@ -107,10 +107,10 @@ class Explorer(abc.ABC):
         # measure them on the true landscape, add to available data, and repeat.
         for r in range(1, self.rounds + 1):
             self.model.train(
-                sequences["sequence"].to_numpy(), sequences["true_score"].to_numpy()
+                sequences_data["sequence"].to_numpy(), sequences_data["true_score"].to_numpy()
             )
 
-            seqs, preds = self.propose_sequences(sequences)
+            seqs, preds = self.propose_sequences(sequences_data)
             true_score = self.landscape.get_fitness(seqs)
 
             if len(seqs) > self.sequences_batch_size:
@@ -118,7 +118,7 @@ class Explorer(abc.ABC):
                     "Must propose <= `self.sequences_batch_size` sequences per round"
                 )
 
-            sequences = sequences.append(
+            sequences_data = sequences_data.append(
                 pd.DataFrame(
                     {
                         "sequence": seqs,
@@ -126,10 +126,10 @@ class Explorer(abc.ABC):
                         "true_score": true_score,
                         "round": r,
                         "model_cost": self.model.cost,
-                        "measurement_cost": len(sequences) + len(seqs),
+                        "measurement_cost": len(sequences_data) + len(seqs),
                     }
                 )
             )
-            self._log(sequences, metadata, preds, true_score, r, verbose)
+            self._log(metadata, sequences_data, preds, true_score, r, verbose)
 
-        return sequences, metadata
+        return sequences_data, metadata
