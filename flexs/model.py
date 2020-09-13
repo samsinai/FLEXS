@@ -1,7 +1,8 @@
 import abc
 
 import flexs
-from typing import Any, List
+from typing import Any, List, Union
+import numpy as np
 
 class Model(flexs.Landscape, abc.ABC):
     """Base structure for all models."""

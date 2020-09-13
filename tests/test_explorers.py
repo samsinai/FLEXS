@@ -89,3 +89,5 @@ def test_cmaes():
 
     sequences, _ = explorer.run()
     print(sequences)
+
+test_ppo()
