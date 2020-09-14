@@ -18,7 +18,7 @@ from flexs.utils.sequence_utils import (
     renormalize_moves,
     sample_greedy,
     sample_random,
-    translate_one_hot_to_string,
+    one_hot_to_string,
     translate_string_to_one_hot,
 )
 
@@ -230,7 +230,7 @@ class DQN_Explorer(flexs.Explorer):
         )
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)
-        new_state_string = translate_one_hot_to_string(new_state, self.alphabet)
+        new_state_string = one_hot_to_string(new_state, self.alphabet)
         reward = self.model.get_fitness(new_state_string)
         if not new_state_string in self.model.measured_sequences:
             if reward >= self.best_fitness:

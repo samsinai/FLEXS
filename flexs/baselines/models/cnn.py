@@ -10,7 +10,7 @@ class CNN(keras_model.KerasModel):
         num_filters,
         hidden_size,
         alphabet,
-        loss,
+        loss="MSE",
         name=None,
         batch_size=256,
         epochs=20,

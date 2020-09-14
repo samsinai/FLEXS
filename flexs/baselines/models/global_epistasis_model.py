@@ -13,7 +13,7 @@ class GlobalEpistasisModel(keras_model.KerasModel):
         seq_len,
         hidden_size,
         alphabet,
-        loss,
+        loss="MSE",
         name=None,
         batch_size=256,
         epochs=20,
