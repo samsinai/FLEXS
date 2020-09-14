@@ -10,7 +10,6 @@ Welcome to FLEXS's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   reference/setup
    reference/modules
 
 Indices and tables
