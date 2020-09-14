@@ -37,8 +37,6 @@ def test_adalead():
     sequences, _ = explorer.run()
     print(sequences)
 
-    # See @TODOs in adalead.py
-
 
 def test_dynappo():
     explorer = baselines.explorers.DynaPPO(
@@ -90,4 +88,4 @@ def test_cmaes():
     sequences, _ = explorer.run()
     print(sequences)
 
-test_ppo()
+test_dynappo()
