@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 from scipy.stats import entropy
+from typing import List, Union
 
 AAS = "ILVAGMFYWEDQNHCRKSTP"  # protein alphabet
 RNAA = "UGCA"  # RNA alphabet
@@ -58,14 +59,16 @@ def construct_mutant_from_sample(pwm_sample, one_hot_base):
     return one_hot
 
 
-def string_to_one_hot(sequence, alphabet):
+def string_to_one_hot(sequence: str, alphabet: str):
+    """Create a one-hot representation of a sequence string according to alphabet."""
     out = np.zeros((len(sequence), len(alphabet)))
     for i in range(len(sequence)):
         out[i, alphabet.index(sequence[i])] = 1
     return out
 
 
-def one_hot_to_string(one_hot, alphabet):
+def one_hot_to_string(one_hot: Union[List[List[int]], np.ndarray], alphabet: str):
+    """Create a sequence string from a one-hot vector according to alphabet."""
     residue_idxs = np.argmax(one_hot, axis=1)
     return "".join([alphabet[idx] for idx in residue_idxs])
 
