@@ -1,5 +1,5 @@
-flexs.landscape module
-======================
+flexs.landscape
+===============
 
 .. automodule:: flexs.landscape
    :members:

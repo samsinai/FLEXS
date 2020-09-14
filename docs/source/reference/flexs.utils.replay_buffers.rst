@@ -1,5 +1,5 @@
-flexs.utils.replay\_buffers module
-==================================
+flexs.utils.replay_buffers
+==========================
 
 .. automodule:: flexs.utils.replay_buffers
    :members:

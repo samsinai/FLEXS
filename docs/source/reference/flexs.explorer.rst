@@ -1,5 +1,5 @@
-flexs.explorer module
-=====================
+flexs.explorer
+==============
 
 .. automodule:: flexs.explorer
    :members:

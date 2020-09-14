@@ -1,5 +1,5 @@
-flexs.ensemble module
-=====================
+flexs.ensemble
+==============
 
 .. automodule:: flexs.ensemble
    :members:

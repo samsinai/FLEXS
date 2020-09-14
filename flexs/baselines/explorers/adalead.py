@@ -1,4 +1,3 @@
-"""Elitist explorers."""
 import random
 
 import numpy as np

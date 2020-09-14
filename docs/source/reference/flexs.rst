@@ -1,19 +1,14 @@
-flexs package
-=============
+flexs
+=====
 
-Subpackages
------------
+.. automodule:: flexs
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. toctree::
-
-   flexs.baselines
-   flexs.landscapes
-   flexs.utils
-
-Submodules
-----------
 
 .. toctree::
+   :maxdepth: 3
 
    flexs.ensemble
    flexs.evaluate
@@ -21,10 +16,9 @@ Submodules
    flexs.landscape
    flexs.model
 
-Module contents
----------------
+.. toctree::
+   :maxdepth: 3
 
-.. automodule:: flexs
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   flexs.baselines
+   flexs.landscapes
+   flexs.utils

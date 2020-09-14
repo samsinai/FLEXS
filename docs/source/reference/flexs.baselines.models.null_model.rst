@@ -1,5 +1,5 @@
-flexs.baselines.models.null\_model module
-=========================================
+flexs.baselines.models.null_model
+=================================
 
 .. automodule:: flexs.baselines.models.null_model
    :members:

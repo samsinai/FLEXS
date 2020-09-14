@@ -1,5 +1,5 @@
-flexs.baselines.explorers.random module
-=======================================
+flexs.baselines.explorers.random
+================================
 
 .. automodule:: flexs.baselines.explorers.random
    :members:

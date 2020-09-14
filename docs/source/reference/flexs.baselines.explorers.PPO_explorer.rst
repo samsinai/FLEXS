@@ -1,5 +1,5 @@
-flexs.baselines.explorers.PPO\_explorer module
-==============================================
+flexs.baselines.explorers.PPO_explorer
+======================================
 
 .. automodule:: flexs.baselines.explorers.PPO_explorer
    :members:

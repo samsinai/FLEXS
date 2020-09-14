@@ -1,5 +1,5 @@
-flexs.baselines.explorers.dyna\_ppo module
-==========================================
+flexs.baselines.explorers.dyna_ppo
+==================================
 
 .. automodule:: flexs.baselines.explorers.dyna_ppo
    :members:

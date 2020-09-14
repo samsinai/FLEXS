@@ -1,5 +1,5 @@
-flexs.baselines.models.cnn module
-=================================
+flexs.baselines.models.cnn
+==========================
 
 .. automodule:: flexs.baselines.models.cnn
    :members:

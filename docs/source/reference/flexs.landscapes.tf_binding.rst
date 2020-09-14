@@ -1,5 +1,5 @@
-flexs.landscapes.tf\_binding module
-===================================
+flexs.landscapes.tf_binding
+===========================
 
 .. automodule:: flexs.landscapes.tf_binding
    :members:

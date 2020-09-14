@@ -1,5 +1,5 @@
-flexs.baselines.models.mlp module
-=================================
+flexs.baselines.models.mlp
+==========================
 
 .. automodule:: flexs.baselines.models.mlp
    :members:

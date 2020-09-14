@@ -1,5 +1,5 @@
-flexs.baselines.explorers.bo\_explorer module
-=============================================
+flexs.baselines.explorers.bo_explorer
+=====================================
 
 .. automodule:: flexs.baselines.explorers.bo_explorer
    :members:

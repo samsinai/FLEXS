@@ -1,5 +1,5 @@
-flexs.baselines.explorers.adalead module
-========================================
+flexs.baselines.explorers.adalead
+=================================
 
 .. automodule:: flexs.baselines.explorers.adalead
    :members:

@@ -1,5 +1,5 @@
-flexs.baselines.explorers.genetic\_algorithm module
-===================================================
+flexs.baselines.explorers.genetic_algorithm
+===========================================
 
 .. automodule:: flexs.baselines.explorers.genetic_algorithm
    :members:

@@ -1,10 +1,14 @@
-flexs.baselines.models package
-==============================
+flexs.baselines.models
+======================
 
-Submodules
-----------
+.. automodule:: flexs.baselines.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 .. toctree::
+   :maxdepth: 3
 
    flexs.baselines.models.adaptive_ensemble
    flexs.baselines.models.cnn
@@ -14,11 +18,3 @@ Submodules
    flexs.baselines.models.noisy_abstract_model
    flexs.baselines.models.null_model
    flexs.baselines.models.sklearn_models
-
-Module contents
----------------
-
-.. automodule:: flexs.baselines.models
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -1,5 +1,5 @@
-flexs.baselines.explorers.dqn\_explorer module
-==============================================
+flexs.baselines.explorers.dqn_explorer
+======================================
 
 .. automodule:: flexs.baselines.explorers.dqn_explorer
    :members:

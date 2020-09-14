@@ -1,5 +1,5 @@
-flexs.baselines.explorers.cmaes module
-======================================
+flexs.baselines.explorers.cmaes
+===============================
 
 .. automodule:: flexs.baselines.explorers.cmaes
    :members:

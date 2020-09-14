@@ -1,5 +1,5 @@
-flexs.landscapes.rna module
-===========================
+flexs.landscapes.rna
+====================
 
 .. automodule:: flexs.landscapes.rna
    :members:

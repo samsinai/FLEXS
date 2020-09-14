@@ -1,5 +1,5 @@
-flexs.landscapes.rosetta module
-===============================
+flexs.landscapes.rosetta
+========================
 
 .. automodule:: flexs.landscapes.rosetta
    :members:

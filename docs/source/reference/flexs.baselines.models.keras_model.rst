@@ -1,5 +1,5 @@
-flexs.baselines.models.keras\_model module
-==========================================
+flexs.baselines.models.keras_model
+==================================
 
 .. automodule:: flexs.baselines.models.keras_model
    :members:

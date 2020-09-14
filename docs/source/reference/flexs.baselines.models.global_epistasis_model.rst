@@ -1,5 +1,5 @@
-flexs.baselines.models.global\_epistasis\_model module
-======================================================
+flexs.baselines.models.global_epistasis_model
+=============================================
 
 .. automodule:: flexs.baselines.models.global_epistasis_model
    :members:

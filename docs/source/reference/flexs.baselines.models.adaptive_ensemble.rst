@@ -1,5 +1,5 @@
-flexs.baselines.models.adaptive\_ensemble module
-================================================
+flexs.baselines.models.adaptive_ensemble
+========================================
 
 .. automodule:: flexs.baselines.models.adaptive_ensemble
    :members:

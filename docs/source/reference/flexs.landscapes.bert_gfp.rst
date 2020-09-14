@@ -1,5 +1,5 @@
-flexs.landscapes.bert\_gfp module
-=================================
+flexs.landscapes.bert_gfp
+=========================
 
 .. automodule:: flexs.landscapes.bert_gfp
    :members:

@@ -1,5 +1,5 @@
-flexs.utils.sequence\_utils module
-==================================
+flexs.utils.sequence_utils
+==========================
 
 .. automodule:: flexs.utils.sequence_utils
    :members:

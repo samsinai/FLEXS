@@ -1,22 +1,40 @@
 import numpy as np
+import pandas as pd
 
 import flexs
 from flexs.utils import sequence_utils as s_utils
 
+from typing import Tuple
+
 
 class Random(flexs.Explorer):
+    """
+    A simple random explorer. Chooses a random previously measured sequence
+    and mutates it.
+
+    A good baseline to compare other search strategies against.
+
+    Since random search is not data-driven, the model is only used to score
+    sequences, but not to guide the search strategy.
+
+    Args:
+        model: The model to score generated sequences with.
+        landscape: The ground truth landscape.
+
+    """
+
     def __init__(
         self,
-        model,
-        landscape,
-        rounds,
-        mu,
-        starting_sequence,
-        sequences_batch_size,
-        model_queries_per_batch,
-        alphabet,
-        log_file=None,
-        seed=None,
+        model: flexs.Model,
+        landscape: flexs.Landscape,
+        rounds: int,
+        mu: float,
+        starting_sequence: str,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        alphabet: str,
+        log_file: str = None,
+        seed: int = None,
     ):
         name = f"Random_mu={mu}"
 
@@ -35,7 +53,10 @@ class Random(flexs.Explorer):
         self.alphabet = alphabet
         self.name = f"Random_mu{self.mu}"
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
+
         """Propose `sequences_batch_size` samples."""
 
         old_sequences = measured_sequences["sequence"]

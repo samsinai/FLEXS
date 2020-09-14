@@ -1,5 +1,5 @@
-flexs.model module
-==================
+flexs.model
+===========
 
 .. automodule:: flexs.model
    :members:

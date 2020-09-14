@@ -1,5 +1,5 @@
-flexs.landscapes.Additive\_models module
-========================================
+flexs.landscapes.Additive_models
+================================
 
 .. automodule:: flexs.landscapes.Additive_models
    :members:

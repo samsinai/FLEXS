@@ -1,5 +1,5 @@
-flexs.baselines.models.sklearn\_models module
-=============================================
+flexs.baselines.models.sklearn_models
+=====================================
 
 .. automodule:: flexs.baselines.models.sklearn_models
    :members:
