@@ -40,8 +40,8 @@ class DynaPPO(flexs.Explorer):
         model,
         landscape,
         rounds,
-        ground_truth_measurements_per_round,
-        model_queries_per_round,
+        sequences_batch_size,
+        model_queries_per_batch,
         starting_sequence,
         alphabet,
         batch_size,
@@ -85,8 +85,8 @@ class DynaPPO(flexs.Explorer):
             landscape,
             name,
             rounds,
-            ground_truth_measurements_per_round,
-            model_queries_per_round,
+            sequences_batch_size,
+            model_queries_per_batch,
             starting_sequence,
             log_file,
         )
@@ -135,7 +135,7 @@ class DynaPPO(flexs.Explorer):
             alphabet=self.alphabet,
             starting_seq=self.meas_seqs[0][1],
             landscape=self.model,
-            max_num_steps=self.model_queries_per_round,
+            max_num_steps=self.model_queries_per_batch,
             ensemble_fitness=self.get_internal_ensemble_fitness,
             oracle_reward=False,
         )
@@ -423,7 +423,7 @@ class DynaPPO(flexs.Explorer):
         )
 
         effective_budget = (
-            self.original_horizon * self.batch_size * self.model_queries_per_round / 2
+            self.original_horizon * self.batch_size * self.model_queries_per_batch / 2
         ) / (self.num_experiment_rounds)
 
         self.meas_seqs_it = 0
@@ -527,7 +527,7 @@ class DynaPPO(flexs.Explorer):
 
         # Since we used part of the total budget for pretraining, amortize this cost.
         effective_budget = (
-            self.original_horizon * self.batch_size * self.model_queries_per_round / 2
+            self.original_horizon * self.batch_size * self.model_queries_per_batch / 2
         ) / self.original_horizon
 
         print("Effective budget:", effective_budget)

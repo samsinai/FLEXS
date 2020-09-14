@@ -14,9 +14,9 @@
 - DynaPPO
     - Now inherits from `flexs.Explorer`
     - Replaced `model_architectures` and `sequences_utils` with flexs versions
-    - Changed `virtual_screen` to `model_queries_per_round`
-    (`model_queries_per_round` is the absolute number of model queries allowed
-    per round, not a fraction with respect to `ground_truth_measurements_per_round_per_round`)
+    - Changed `virtual_screen` to `model_queries_per_batch`
+    (`model_queries_per_batch` is the absolute number of model queries allowed
+    per round, not a fraction with respect to `sequences_batch_size_per_round`)
     - Changed `self.model.evals` to `self.model.cost`
     - Now gets measured sequences from `measured_sequences["sequence"]` rather than `self.model.measured_sequences`
     - Environment

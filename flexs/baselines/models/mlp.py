@@ -1,8 +1,6 @@
-import numpy as np
 import tensorflow as tf
 
 import flexs
-from flexs.utils import sequence_utils as s_utils
 
 from . import keras_model
 
@@ -36,9 +34,5 @@ class MLP(keras_model.KerasModel):
             name = f"MLP_hidden_size_{hidden_size}"
 
         super().__init__(
-            model,
-            alphabet=alphabet,
-            name=name,
-            batch_size=batch_size,
-            epochs=epochs,
+            model, alphabet=alphabet, name=name, batch_size=batch_size, epochs=epochs,
         )

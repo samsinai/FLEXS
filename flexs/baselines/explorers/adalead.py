@@ -17,8 +17,8 @@ class Adalead(flexs.Explorer):
         model,
         landscape,
         rounds,
-        ground_truth_measurements_per_round,
-        model_queries_per_round,
+        sequences_batch_size,
+        model_queries_per_batch,
         starting_sequence,
         alphabet,
         mu=1,
@@ -34,8 +34,8 @@ class Adalead(flexs.Explorer):
             landscape,
             name,
             rounds,
-            ground_truth_measurements_per_round,
-            model_queries_per_round,
+            sequences_batch_size,
+            model_queries_per_batch,
             starting_sequence,
             log_file,
         )
@@ -81,11 +81,11 @@ class Adalead(flexs.Explorer):
 
         parents = np.resize(
             measured_sequences["sequence"][top_inds].to_numpy(),
-            self.ground_truth_measurements_per_round,
+            self.sequences_batch_size,
         )
 
         sequences = {}
-        while len(sequences) < self.model_queries_per_round:
+        while len(sequences) < self.model_queries_per_batch:
             # generate recombinant mutants
             for i in range(self.rho):
                 # @TODO if parents=[], the outer while loops infinitely
@@ -96,7 +96,7 @@ class Adalead(flexs.Explorer):
                 root_fitness = self.model.get_fitness([root]).item()
                 node = root
 
-                while len(sequences) < self.model_queries_per_round:
+                while len(sequences) < self.model_queries_per_batch:
                     child = s_utils.generate_random_mutant(
                         node, self.mu * 1 / len(node), self.alphabet
                     )
@@ -117,11 +117,9 @@ class Adalead(flexs.Explorer):
                     else:
                         break
 
-        # We propose the top `self.ground_truth_measurements_per_round` new sequences we have generated
+        # We propose the top `self.sequences_batch_size` new sequences we have generated
         new_seqs = np.array(list(sequences.keys()))
         preds = np.array(list(sequences.values()))
-        sorted_order = np.argsort(preds)[
-            : -self.ground_truth_measurements_per_round : -1
-        ]
+        sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
 
         return new_seqs[sorted_order], preds[sorted_order]

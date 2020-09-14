@@ -16,10 +16,12 @@ class CMAES(flexs.Explorer):
         model,
         landscape,
         rounds,
-        ground_truth_measurements_per_round,
-        model_queries_per_round,
+        sequences_batch_size,
+        model_queries_per_batch,
         starting_sequence,
         alphabet,
+        population_size,
+        elite_proportion,
         log_file=None,
     ):
         name = f"CMAES"
@@ -29,8 +31,8 @@ class CMAES(flexs.Explorer):
             landscape,
             name,
             rounds,
-            ground_truth_measurements_per_round,
-            model_queries_per_round,
+            sequences_batch_size,
+            model_queries_per_batch,
             starting_sequence,
             log_file,
         )
@@ -54,15 +56,15 @@ class CMAES(flexs.Explorer):
         self.chiN = None
         self.old_mean = None
 
+        self.population_size = population_size
+        self.elite_proportion = elite_proportion
         self.round = 0
-
-        self.initialize_params()
 
     def initialize_params(self):
         """Initialize all parameters."""
         # to be called after set_model
 
-        self.lam = self.ground_truth_measurements_per_round
+        self.lam = self.sequences_batch_size
 
         # we'll be working with one-hots
         N = self.seq_len * len(self.alphabet)
@@ -102,56 +104,50 @@ class CMAES(flexs.Explorer):
 
         return s_utils.translate_one_hot_to_string(one_hot, self.alphabet)
 
-    def _sample(self, measured_sequences):
-        samples = []
+    def _sample(self, previous_sequences):
         sequences = {}
-
-        measured_sequence_set = set(measured_sequences["sequence"])
 
         new_sequences = 0
         attempts = 0
 
         # Terminate if all we see are old sequences.
-        while (new_sequences < self.model_queries_per_round) and (
-            attempts < self.model_queries_per_round * 3
+        while (
+            len(sequences) < self.population_size
+            and attempts < self.population_size * 3
         ):
             attempts += 1
             x = np.random.multivariate_normal(self.mean, (self.sigma ** 2) * self.cov)
             seq = self.convert_mvn_to_seq(x)
 
-            if seq in measured_sequence_set or sequences:
+            if seq in previous_sequences or seq in sequences:
                 continue
 
-            fitness = self.model.get_fitness([seq])
-            sequences[seq] = fitness
+            fitness = self.model.get_fitness([seq]).item()
             new_sequences += 1
 
-            samples.append((x, fitness))
+            sequences[seq] = fitness
 
         # If we only saw old sequences, randomly generate to fill the batch.
-        while len(samples) < self.ground_truth_measurements_per_round:
+        while len(sequences) < self.population_size:
             seqs = s_utils.generate_random_sequences(
                 self.seq_len,
-                self.ground_truth_measurements_per_round - len(samples),
+                self.ground_truth_measurements_per_round - len(sequences),
                 alphabet=self.alphabet,
             )
             for seq in seqs:
-                if seq in measured_sequence_set or sequences:
+                if seq in previous_sequences or seq in sequences:
                     continue
-                fitness = self.model.get_fitness([seq])
+                fitness = self.model.get_fitness([seq]).item()
                 sequences[seq] = fitness
-                samples.append(
-                    (s_utils.translate_string_to_one_hot(seq, self.alphabet), fitness)
-                )
 
-        return samples
+        return list(sequences.items())
 
     def compute_new_mean(self, samples):
         """Helper function to recompute mean."""
         s = np.zeros(self.mean.shape)
 
         for i in range(self.mu):
-            s += self.weights[i - 1] * samples[i][0]
+            s += self.weights[i - 1] * samples[i][1]
 
         # THIS NORMALIZATION IS NON-STANDARD
         self.mean = s / np.linalg.norm(s)
@@ -210,17 +206,36 @@ class CMAES(flexs.Explorer):
 
     def propose_sequences(self, measured_sequences):
         # in CMAES we _minimize_ an objective, so we'll conveniently reverse
-        """samples = sorted(
-            self._sample(measured_sequences), key=lambda s: s[1], reverse=True
-        )[: self.ground_truth_measurements_per_round]
 
-        self.old_mean = self.mean
-        self.compute_new_mean(samples)
-        self.update_isotropic_evolution_path()
-        self.update_anisotropic_evolution_path()
-        self.update_covariance_matrix(samples)
-        self.update_step_size()
+        measured_sequence_dict = dict(
+            zip(measured_sequences["sequence"], measured_sequences["true_score"])
+        )
+        self.initialize_params()
 
+        sequences = {}
+        for _ in range(int(self.model_queries_per_round / self.population_size)):
+            samples = sorted(
+                self._sample({**measured_sequence_dict, **sequences}),
+                key=lambda s: s[1],
+                reverse=True,
+            )
+            sequences.update(samples)
+
+            elite_size = int(self.elite_proportion * self.population_size)
+
+            self.old_mean = self.mean
+            self.compute_new_mean(samples[:elite_size])
+            self.update_isotropic_evolution_path()
+            self.update_anisotropic_evolution_path()
+            self.update_covariance_matrix(samples[:elite_size])
+            self.update_step_size()
+
+        # We propose the top `self.ground_truth_measurements_per_round` new sequences we have generated
+        new_seqs = np.array(list(sequences.keys()))
+        preds = np.array(list(sequences.values()))
+        sorted_order = np.argsort(preds)[
+            : -self.ground_truth_measurements_per_round : -1
+        ]
         self.round += 1
 
-        return [self.convert_mvn_to_seq(sample[0]) for sample in samples]"""
+        return new_seqs[sorted_order], preds[sorted_order]
