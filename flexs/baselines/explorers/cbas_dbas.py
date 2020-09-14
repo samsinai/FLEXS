@@ -23,10 +23,11 @@ class VAE:
         epsilon_std=1.0,
         beta=1,
         validation_split=0.05,
-        min_training_size=100,
         mutation_rate=0.1,
         verbose=True,
     ):
+        tf.config.experimental_run_functions_eagerly(True)
+
         self.batch_size = batch_size
         self.latent_dim = latent_dim
         self.intermediate_dim = intermediate_dim
@@ -34,7 +35,6 @@ class VAE:
         self.epsilon_std = epsilon_std
         self.beta = beta
         self.validation_split = validation_split
-        self.min_training_size = min_training_size
         self.mutation_rate = mutation_rate
         self.verbose = verbose
         self.name = "VAE"
@@ -42,11 +42,11 @@ class VAE:
         self.alphabet = alphabet
         self.seq_length = seq_length
         self.original_dim = len(self.alphabet) * self.seq_length
-        self.output_dim = len(self.alphabet) * self.seq_length
 
         # encoding layers
-        x = keras.layers.Input(batch_shape=(self.batch_size, self.original_dim))
-        h = keras.layers.Dense(self.intermediate_dim, activation="elu",)(x)
+        x = keras.layers.Flatten()
+        x = keras.layers.Input(shape=(self.original_dim))
+        h = keras.layers.Dense(self.intermediate_dim, activation="elu")(x)
         h = keras.layers.Dropout(0.7)(h)
         h = keras.layers.Dense(self.intermediate_dim, activation="elu")(h)
         h = keras.layers.BatchNormalization()(h)
@@ -64,7 +64,7 @@ class VAE:
         decoder_2 = keras.layers.Dense(self.intermediate_dim, activation="elu")
         decoder_2d = keras.layers.Dropout(0.7)
         decoder_3 = keras.layers.Dense(self.intermediate_dim, activation="elu")
-        decoder_out = keras.layers.Dense(self.output_dim, activation="sigmoid")
+        decoder_out = keras.layers.Dense(self.original_dim, activation="sigmoid")
         x_decoded_mean = decoder_out(decoder_3(decoder_2d(decoder_2(decoder_1(z)))))
 
         self.vae = keras.models.Model(x, x_decoded_mean)
@@ -96,23 +96,10 @@ class VAE:
         return xent_loss + self.beta * kl_loss
 
     def train_model(self, samples, weights):
-        # generate random seqs around the input seq if the sample size is too small
-        samples = list(samples)
-        weights = list(weights)
-        sequences = set()
-        while len(sequences) < self.min_training_size:
-            sample = random.choice(samples)
-            sample = s_utils.generate_random_mutant(sample, 3, alphabet=self.alphabet)
-
-            if sample not in sequences:
-                samples.append(sample)
-                weights.append(1)
-                sequences.add(sample)
-
         x_train = np.array(
-            [s_utils.string_to_one_hot(sample, self.alphabet) for sample in samples]
+            [s_utils.string_to_one_hot(sample, self.alphabet) for sample in samples],
+            dtype="float32",
         )
-        x_train = x_train.astype("float32")
         x_train = x_train.reshape((len(x_train), self.seq_length * len(self.alphabet)))
 
         early_stop = keras.callbacks.EarlyStopping(monitor="loss", patience=3)
@@ -222,6 +209,7 @@ class CbAS(flexs.Explorer):
         starting_sequence,
         sequences_batch_size,
         model_queries_per_batch,
+        alphabet,
         Q=0.9,
         n_convergence=10,
         backfill=True,
@@ -255,12 +243,29 @@ class CbAS(flexs.Explorer):
             log_file,
         )
         self.generator = generator
+        self.alphabet = alphabet
         self.Q = Q  # percentile used as the fitness threshold
         self.n_new_proposals = self.sequences_batch_size
         self.backfill = backfill
         self.mutation_rate = mutation_rate
         self.all_proposals_ranked = []
         self.n_convergence = n_convergence
+
+    def extend_samples(self, samples, weights):
+        # generate random seqs around the input seq if the sample size is too small
+        samples = list(samples)
+        weights = list(weights)
+        sequences = set(samples)
+        while len(sequences) < 100:
+            sample = random.choice(samples)
+            sample = s_utils.generate_random_mutant(sample, 3, alphabet=self.alphabet)
+
+            if sample not in sequences:
+                samples.append(sample)
+                weights.append(1)
+                sequences.add(sample)
+
+        return samples, weights
 
     def propose_sequences(self, measured_sequences):
         """Propose `batch_size` samples."""
@@ -275,8 +280,11 @@ class CbAS(flexs.Explorer):
         initial_batch = last_round_sequences["sequence"][
             last_round_sequences["true_score"] >= gamma
         ].to_numpy()
-
         initial_weights = np.ones(len(initial_batch))
+
+        initial_batch, initial_weights = self.extend_samples(
+            initial_batch, initial_weights
+        )
         all_samples_and_weights = tuple((initial_batch, initial_weights))
 
         # this will be the current state of the generator
@@ -296,7 +304,6 @@ class CbAS(flexs.Explorer):
             epsilon_std=self.generator.epsilon_std,
             beta=self.generator.beta,
             validation_split=self.generator.validation_split,
-            min_training_size=self.generator.min_training_size,
             mutation_rate=self.generator.mutation_rate,
             verbose=False,
         )
