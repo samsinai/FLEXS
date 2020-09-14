@@ -1,8 +1,11 @@
+import flexs 
 from flexs.model import Model
 from flexs.landscape import Landscape
 import numpy as np
 
 from flexs.baselines.explorers.adalead import Adalead
+from flexs.baselines.explorers.bo_explorer import BO_Explorer, GPR_BO_Explorer 
+from flexs.baselines.explorers.dqn_explorer import DQN_Explorer
 from flexs.baselines.explorers.DynaPPO_explorer import DynaPPO
 
 rng = np.random.default_rng()
@@ -45,6 +48,33 @@ def test_adalead():
 
     # See @TODOs in adalead.py
 
+def test_bo():
+    explorer = BO_Explorer(
+        model=fakeModel,
+        landscape=fakeLandscape,
+        rounds=1,
+        ground_truth_measurements_per_round=2,
+        model_queries_per_round=1,
+        starting_sequence="A",
+        alphabet="ATCG",
+    )
+
+    sequences, _ = explorer.run()
+    print(sequences)
+
+def test_dqn():
+    explorer = DQN_Explorer(
+        model=fakeModel,
+        landscape=fakeLandscape,
+        rounds=1,
+        ground_truth_measurements_per_round=2,
+        model_queries_per_round=1,
+        starting_sequence="A",
+        alphabet="ATCG",
+    )
+
+    sequences, _ = explorer.run()
+    print(sequences)
 
 def test_dynappo():
     explorer = DynaPPO(

@@ -22,13 +22,14 @@ class BO_Explorer(flexs.Explorer):
         model,
         landscape,
         rounds,
-        starting_sequence,
         ground_truth_measurements_per_round,
         model_queries_per_round,
+        starting_sequence,
         alphabet,
+        log_file=None,
         batch_size=100,
         virtual_screen=10,
-        method="EI",
+        optimizaton_method="EI",
         recomb_rate=0,
     ):
         """Bayesian Optimization (BO) explorer.
@@ -50,7 +51,7 @@ class BO_Explorer(flexs.Explorer):
                         sequence
                     Thompson sample another starting sequence
         """
-        name = "BO_Explorer_method={method}"
+        name = "BO_Explorer-optimization_method={optimization_method}"
         super().__init__(
             model,
             landscape,
@@ -59,6 +60,7 @@ class BO_Explorer(flexs.Explorer):
             ground_truth_measurements_per_round,
             model_queries_per_round,
             starting_sequence,
+            log_file,
         )
         self.alphabet = alphabet
         self.method = method
@@ -204,16 +206,18 @@ class BO_Explorer(flexs.Explorer):
         sequences = [x[1] for x in measured_batch]
         return sequences[index]
 
-    def propose_samples(self):
+    def propose_samples(self, measured_sequences):
         """Propose `batch_size` samples."""
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
         else:
             # set state to best measured sequence from prior batch
-            last_batch = self.batches[self.get_last_batch()]
+            last_round_num = measured_sequences['round'].max()
+            last_batch = measured_sequences[measured_sequences['round'] == last_round_num]
+            last_batch_seqs = last_batch['sequence'].values
             if self.recomb_rate > 0 and len(last_batch) > 1:
-                last_batch = self._recombine_population(list(last_batch))
+                last_batch_seqs = self._recombine_population(list(last_batch_seqs))
             measured_batch = sorted(
                 [(self.model.get_fitness(seq), seq) for seq in last_batch]
             )
@@ -244,13 +248,15 @@ class BO_Explorer(flexs.Explorer):
                 self.seq_len, self.batch_size - len(samples), self.alphabet
             )
             samples.update(random_sequences)
+        # get predicted fitnesses of samples 
+        preds = [self.model.get_fitness(sample) for sample in samples]
         # train ensemble model before returning samples
         self.train_models()
 
-        return list(samples)
+        return list(samples), preds 
 
 
-class GPR_BO_Explorer(Base_explorer):
+class GPR_BO_Explorer(flexs.Explorer):
     """Explorer using Bayesian Optimization.
 
     Uses Gaussian process with RBF kernel on black box function.
@@ -262,24 +268,34 @@ class GPR_BO_Explorer(Base_explorer):
 
     def __init__(
         self,
+        model,
+        landscape,
+        rounds,
+        ground_truth_measurements_per_round,
+        model_queries_per_round,
+        starting_sequence,
+        alphabet,
+        log_file=None,
         batch_size=100,
-        alphabet="UCGA",
         virtual_screen=10,
-        path="./simulations/",
-        debug=False,
-        method="EI",
+        optimizaton_method="EI",
+        seq_proposal_method="Thompson",
     ):
         """Initialize the explorer."""
+        name = "GPR_BO_Explorer-optimization_method={optimization_method}-seq_proposal_method={seq_proposal_method}"
         super(GPR_BO_Explorer, self).__init__(
-            batch_size=batch_size,
-            alphabet=alphabet,
-            virtual_screen=virtual_screen,
-            path=path,
-            debug=debug,
+            model,
+            landscape,
+            name,
+            rounds,
+            ground_truth_measurements_per_round,
+            model_queries_per_round,
+            starting_sequence,
+            log_file,
         )
-        self.explorer_type = "GPR_BO_Explorer"
         self.alphabet_len = len(alphabet)
         self.method = method
+        self.seq_proposal_method = seq_proposal_method
         self.best_fitness = 0
         self.top_sequence = []
 
@@ -376,7 +392,13 @@ class GPR_BO_Explorer(Base_explorer):
 
         samples = set()
 
-        new_seqs = self.propose_sequences_via_thompson()
+        seq_proposal_funcs = {
+            "Thompson": self.propose_sequences_via_thompson,
+            "Greedy": self.propose_sequences_via_greedy,
+            "UCB": self.propose_sequences_via_ucb
+        }
+        seq_proposal_func = seq_proposal_funcs[self.seq_proposal_method]
+        new_seqs = seq_proposal_func()
         new_states = []
         new_fitnesses = []
         i = 0
@@ -394,4 +416,4 @@ class GPR_BO_Explorer(Base_explorer):
 
         print("Current best fitness:", self.best_fitness)
 
-        return list(samples)
+        return list(samples), new_fitnesses 

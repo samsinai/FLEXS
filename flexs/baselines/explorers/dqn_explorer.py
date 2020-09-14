@@ -254,18 +254,19 @@ class DQN_Explorer(flexs.Explorer):
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
-        samples = set()
+        seq_preds = set()
         prev_cost = copy.deepcopy(self.model.cost)
         total_evals = 0
         while (self.model.cost - prev_cost < self.batch_size) and (
             total_evals < self.batch_size * self.virtual_screen
         ):
-            new_state_string, _ = self.pick_action()
-            samples.add(new_state_string)
+            new_state_string, pred = self.pick_action()
+            seq_preds.add((new_state_string, pred))
             total_evals += 1
-        if len(samples) < self.batch_size:
+        if len(seq_preds) < self.batch_size:
             random_sequences = generate_random_sequences(
-                self.seq_len, self.batch_size - len(samples), self.alphabet
+                self.seq_len, self.batch_size - len(seq_preds), self.alphabet
             )
-            samples.update(random_sequences)
-        return list(samples)
+            seq_preds.update(random_sequences)
+        samples, preds = zip(*seq_preds)
+        return list(samples), list(preds)
