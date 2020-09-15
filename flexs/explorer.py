@@ -3,12 +3,13 @@ import json
 from datetime import datetime
 import os
 from pathlib import Path
+from typing import Dict, Tuple
+import warnings
 
 import numpy as np
 import pandas as pd
 
 import flexs
-from typing import Dict, Tuple
 
 
 class Explorer(abc.ABC):
@@ -38,7 +39,9 @@ class Explorer(abc.ABC):
             self.log_file.mkdir(parents=True, exist_ok=True)
 
     @abc.abstractmethod
-    def propose_sequences(self, measured_sequences_data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+    def propose_sequences(
+        self, measured_sequences_data: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose a list of sequences to be measured in the next round.
 
         This method will be overriden to contain the explorer logic for each explorer.
@@ -54,7 +57,15 @@ class Explorer(abc.ABC):
         """
         pass
 
-    def _log(self, metadata: Dict, sequences_data: pd.DataFrame, preds: float, true_score: float, current_round: int, verbose: bool) -> None:
+    def _log(
+        self,
+        metadata: Dict,
+        sequences_data: pd.DataFrame,
+        preds: float,
+        true_score: float,
+        current_round: int,
+        verbose: bool,
+    ) -> None:
         if self.log_file is not None:
             with open(self.log_file, "w") as f:
                 # First write metadata
@@ -107,14 +118,15 @@ class Explorer(abc.ABC):
         # measure them on the true landscape, add to available data, and repeat.
         for r in range(1, self.rounds + 1):
             self.model.train(
-                sequences_data["sequence"].to_numpy(), sequences_data["true_score"].to_numpy()
+                sequences_data["sequence"].to_numpy(),
+                sequences_data["true_score"].to_numpy(),
             )
 
             seqs, preds = self.propose_sequences(sequences_data)
             true_score = self.landscape.get_fitness(seqs)
 
             if len(seqs) > self.sequences_batch_size:
-                raise ValueError(
+                warnings.warn(
                     "Must propose <= `self.sequences_batch_size` sequences per round"
                 )
 

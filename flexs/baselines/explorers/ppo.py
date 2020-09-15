@@ -1,6 +1,5 @@
 """PPO explorer."""
 
-import collections
 from functools import partial
 
 import tensorflow as tf
@@ -13,13 +12,12 @@ from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 import flexs
-from flexs.baselines.explorers.environments.ppo import (
-    PPOEnvironment as PPOEnv,
-)
+from flexs.baselines.explorers.environments.ppo import PPOEnvironment as PPOEnv
 from flexs.utils.sequence_utils import one_hot_to_string
 
 import pandas as pd
 from typing import Set, Tuple, Type
+
 
 class PPO(flexs.Explorer):
     """Explorer for PPO."""
@@ -77,16 +75,13 @@ class PPO(flexs.Explorer):
 
         self.explorer_type = "PPO_Agent"
 
-    def reset(self):
-        """Reset the explorer."""
-        self.agent_sequences_data = pd.DataFrame(columns=["sequence", "model_score"])
-        self.agent_sequences_data_iter = 0
-
-        self.has_pretrained_agent = False
-
     def reset_agent_sequences_data(self, measured_sequence_data: pd.DataFrame):
-        self.agent_sequences_data = measured_sequences_data[["sequence", "model_score"]].copy()
-        self.agent_sequences_data = self.agent_sequences_data.sort_values(by="model_score", ascending=False)
+        self.agent_sequences_data = measured_sequence_data[
+            ["sequence", "model_score"]
+        ].copy()
+        self.agent_sequences_data = self.agent_sequences_data.sort_values(
+            by="model_score", ascending=False
+        )
 
     def initialize_env(self):
         """Initialize TF-Agents environment."""
@@ -119,7 +114,7 @@ class PPO(flexs.Explorer):
         agent = ppo_agent.PPOAgent(
             self.tf_env.time_step_spec(),
             self.tf_env.action_spec(),
-            optimizer=tf.compat.v1.train.AdamOptimizer(learning_rate=1e-5),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5),
             actor_net=actor_net,
             value_net=value_net,
             num_epochs=num_epochs,
@@ -144,10 +139,19 @@ class PPO(flexs.Explorer):
             seq = one_hot_to_string(experience.observation.numpy()[0], self.alphabet)
             new_seqs.add(seq)
 
-            self.agent_sequences_data_iter = (self.agent_sequences_data_iter + 1) % len(self.agent_sequences_data)
-            self.tf_env.pyenv.envs[0].seq = self.agent_sequences_data.iloc[self.agent_sequences_data_iter]["sequence"]
-    
-    def get_replay_buffer_and_driver(self, new_sequence_bucket: Set[str]) -> Tuple[Type[tf_uniform_replay_buffer.TFUniformReplayBuffer], Type[dynamic_episode_driver.DynamicEpisodeDriver]]:
+            self.agent_sequences_data_iter = (self.agent_sequences_data_iter + 1) % len(
+                self.agent_sequences_data
+            )
+            self.tf_env.pyenv.envs[0].seq = self.agent_sequences_data.iloc[
+                self.agent_sequences_data_iter
+            ]["sequence"]
+
+    def get_replay_buffer_and_driver(
+        self, new_sequence_bucket: Set[str]
+    ) -> Tuple[
+        Type[tf_uniform_replay_buffer.TFUniformReplayBuffer],
+        Type[dynamic_episode_driver.DynamicEpisodeDriver],
+    ]:
         num_parallel_environments = 1
         env_steps_metric = tf_metrics.EnvironmentSteps()
         step_metrics = [tf_metrics.NumberOfEpisodes(), env_steps_metric]
@@ -176,20 +180,26 @@ class PPO(flexs.Explorer):
         """Pretrain the agent.
 
         Because of the budget constraint, we can only pretrain the agent on so many
-        sequences (this number is currently set to `self.sequences_batch_size * self.model_queries_per_batch / 2`).
+        sequences (this number is currently set to `self.model_queries_per_batch / 2`).
         """
-        self.agent_sequences_data = measured_sequences_data[["sequence", "model_score"]].copy()
-        self.agent_sequences_data = self.agent_sequences_data.sort_values(by="model_score", ascending=False)
+        self.agent_sequences_data = measured_sequences_data[
+            ["sequence", "model_score"]
+        ].copy()
+        self.agent_sequences_data = self.agent_sequences_data.sort_values(
+            by="model_score", ascending=False
+        )
 
         self.initialize_env()
         self.initialize_agent()
 
-        max_model_cost = self.sequences_batch_size * self.model_queries_per_batch / 2
+        max_model_cost = self.model_queries_per_batch / 2
 
         seen_seqs = set(self.agent_sequences_data["sequence"])
         proposed_seqs = set()
 
-        replay_buffer, collect_driver = self.get_replay_buffer_and_driver(new_sequence_bucket=proposed_seqs)
+        replay_buffer, collect_driver = self.get_replay_buffer_and_driver(
+            new_sequence_bucket=proposed_seqs
+        )
 
         print(f"Evaluating {max_model_cost} new sequences for pretraining...")
         previous_model_cost = self.model.cost
@@ -208,12 +218,16 @@ class PPO(flexs.Explorer):
 
             # add new sequences to agent_sequences_data and sort
             self.agent_sequences_data = self.agent_sequences_data.append(
-                pd.DataFrame({
-                    "sequence": new_proposed_seqs,
-                    "model_score": self.model.get_fitness(new_proposed_seqs),
-                })
+                pd.DataFrame(
+                    {
+                        "sequence": new_proposed_seqs,
+                        "model_score": self.model.get_fitness(new_proposed_seqs),
+                    }
+                )
             )
-            self.agent_sequences_data = self.agent_sequences_data.sort_values(by="model_score", ascending=False)
+            self.agent_sequences_data = self.agent_sequences_data.sort_values(
+                by="model_score", ascending=False
+            )
 
             print(f"Number of measured sequences: {len(self.agent_sequences_data)}")
 
@@ -247,17 +261,17 @@ class PPO(flexs.Explorer):
         seen_seqs = set(self.agent_sequences_data["sequence"])
         proposed_seqs = set()
 
-        replay_buffer, collect_driver = self.get_replay_buffer_and_driver(new_sequence_bucket=proposed_seqs)
+        replay_buffer, collect_driver = self.get_replay_buffer_and_driver(
+            new_sequence_bucket=proposed_seqs
+        )
 
         # reset counter?
         self.agent_sequences_data_iter = 0
 
         # since we used part of the total budget for pretraining, amortize this cost
         effective_budget = (
-            self.rounds
-            * self.sequences_batch_size
-            * self.model_queries_per_batch
-            - (self.sequences_batch_size * self.model_queries_per_batch / 2)
+            self.rounds * self.model_queries_per_batch
+            - self.model_queries_per_batch / 2
         ) / self.rounds
 
         previous_model_cost = self.model.cost
@@ -270,17 +284,30 @@ class PPO(flexs.Explorer):
                 break
 
         proposed_seqs = list(proposed_seqs.difference(seen_seqs))
-        measured_proposed_seqs = pd.DataFrame({
-            "sequence": proposed_seqs,
-            "model_score": self.model.get_fitness(proposed_seqs),
-        })
-        measured_proposed_seqs = measured_proposed_seqs.sort_values(by="model_score", ascending=False)
+        measured_proposed_seqs = pd.DataFrame(
+            {
+                "sequence": proposed_seqs,
+                "model_score": self.model.get_fitness(proposed_seqs),
+            }
+        )
+        measured_proposed_seqs = measured_proposed_seqs.sort_values(
+            by="model_score", ascending=False
+        )
 
-        self.agent_sequences_data = pd.concat([self.agent_sequences_data, measured_proposed_seqs])
-        self.agent_sequences_data = self.agent_sequences_data.sort_values(by="model_score", ascending=False)
+        self.agent_sequences_data = pd.concat(
+            [self.agent_sequences_data, measured_proposed_seqs]
+        )
+        self.agent_sequences_data = self.agent_sequences_data.sort_values(
+            by="model_score", ascending=False
+        )
 
         trajectories = replay_buffer.gather_all()
         self.agent.train(experience=trajectories)
         replay_buffer.clear()
 
-        return measured_proposed_seqs["sequence"].tolist()[:self.sequences_batch_size], measured_proposed_seqs["model_score"].tolist()[:self.sequences_batch_size]
+        return (
+            measured_proposed_seqs["sequence"].to_numpy()[: self.sequences_batch_size],
+            measured_proposed_seqs["model_score"].to_numpy()[
+                : self.sequences_batch_size
+            ],
+        )
