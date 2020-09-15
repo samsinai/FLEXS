@@ -40,7 +40,7 @@ def test_adalead():
     # See @TODOs in adalead.py
 
 def test_bo():
-    explorer = baselines.explorers.BO_Explorer(
+    explorer = baselines.explorers.BO(
         model=fakeModel,
         landscape=fakeLandscape,
         rounds=1,
@@ -53,13 +53,26 @@ def test_bo():
     sequences, _ = explorer.run()
     print(sequences)
 
-def test_dqn():
-    explorer = baselines.explorers.DQN_Explorer(
+def test_gpr_bo():
+    explorer = baselines.explorers.GPR_BO(
         model=fakeModel,
         landscape=fakeLandscape,
         rounds=1,
-        ground_truth_measurements_per_round=2,
         model_queries_per_round=1,
+        starting_sequence="A",
+        alphabet="ATCG",
+    )
+
+    sequences, _ = explorer.run()
+    print(sequences)
+
+def test_dqn():
+    explorer = baselines.explorers.DQN(
+        model=fakeModel,
+        landscape=fakeLandscape,
+        rounds=1,
+        sequences_batch_size=5,
+        model_queries_per_batch=1,
         starting_sequence="A",
         alphabet="ATCG",
     )
