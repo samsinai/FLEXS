@@ -3,6 +3,7 @@
 import random
 
 import numpy as np
+import scipy.special
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
@@ -16,7 +17,7 @@ class VAE:
         self,
         seq_length,
         alphabet,
-        batch_size=100,
+        batch_size=10,
         latent_dim=2,
         intermediate_dim=250,
         epochs=10,
@@ -26,7 +27,7 @@ class VAE:
         mutation_rate=0.1,
         verbose=True,
     ):
-        tf.config.experimental_run_functions_eagerly(True)
+        tf.config.run_functions_eagerly(True)
 
         self.batch_size = batch_size
         self.latent_dim = latent_dim
@@ -44,7 +45,6 @@ class VAE:
         self.original_dim = len(self.alphabet) * self.seq_length
 
         # encoding layers
-        x = keras.layers.Flatten()
         x = keras.layers.Input(shape=(self.original_dim))
         h = keras.layers.Dense(self.intermediate_dim, activation="elu")(x)
         h = keras.layers.Dropout(0.7)(h)
@@ -81,8 +81,10 @@ class VAE:
 
     def _sampling(self, args):  # reparameterization
         z_mean, z_log_var = args
-        epsilon = K.random_normal(
-            shape=(self.batch_size, self.latent_dim), mean=0.0, stddev=self.epsilon_std
+        epsilon = tf.random.normal(
+            shape=(z_mean.shape[0] or 1, self.latent_dim),
+            mean=0.0,
+            stddev=self.epsilon_std,
         )
         return z_mean + tf.math.exp(z_log_var / 2) * epsilon
 
@@ -155,32 +157,32 @@ class VAE:
 
         return proposals
 
-    def calculate_log_probability(self, proposals, vae=None):
+    def calculate_log_probability(self, sequences, vae=None):
         if not vae:
             vae = self.vae
-        probabilities = []
-        for sequence in proposals:
-            sequence_one_hot = np.array(
-                s_utils.string_to_one_hot(sequence, self.alphabet)
-            )
-            sequence_one_hot_flattened = sequence_one_hot.flatten()
-            sequence_one_hot_flattened_batch = np.array(
-                [sequence_one_hot_flattened for i in range(self.batch_size)]
-            )
-            sequence_decoded_flattened = vae.predict(
-                sequence_one_hot_flattened_batch, batch_size=self.batch_size
-            )
-            sequence_decoded = np.reshape(
-                sequence_decoded_flattened,
-                (self.batch_size, len(self.alphabet), self.seq_length),
-            )[0]
-            sequence_decoded = normalize(sequence_decoded, axis=0, norm="l1")
-            log_prob = np.sum(
-                np.log(10e-10 + np.sum(sequence_one_hot * sequence_decoded, axis=0))
-            )
-            probabilities.append(log_prob)
-        probabilities = np.nan_to_num(probabilities)
-        return probabilities
+
+        one_hots = np.array(
+            [s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences],
+            dtype="int",
+        )
+        flattened_one_hots = one_hots.reshape(len(sequences), -1)
+
+        flattened_decoded = vae.predict(flattened_one_hots)
+        decoded = flattened_decoded.reshape(
+            (len(sequences), self.seq_length, len(self.alphabet))
+        )
+
+        # Get the (normalized) probability of reconstructing each
+        # particular residue of the original sequence
+        per_res_probs = (decoded * one_hots).max(axis=2) / decoded.sum(axis=2)
+
+        # log(prob of reconstructing a sequence)
+        #   = log(product of reconstructing each residue in sequence)
+        #   = sum(log(product of reconstructing each residue in sequence))
+        # We calculate this product as a sum of logs for numerical stability
+        log_probs = np.log(1e-9 + per_res_probs).sum(axis=1)
+
+        return np.nan_to_num(log_probs)
 
 
 def pwm_to_boltzmann_weights(prob_weight_matrix, temp):
@@ -188,7 +190,7 @@ def pwm_to_boltzmann_weights(prob_weight_matrix, temp):
     cols_logsumexp = []
 
     for i in range(weights.shape[1]):
-        cols_logsumexp.append(logsumexp(weights.T[i] / temp))
+        cols_logsumexp.append(scipy.special.logsumexp(weights.T[i] / temp))
 
     for i in range(weights.shape[0]):
         for j in range(weights.shape[1]):
@@ -245,10 +247,8 @@ class CbAS(flexs.Explorer):
         self.generator = generator
         self.alphabet = alphabet
         self.Q = Q  # percentile used as the fitness threshold
-        self.n_new_proposals = self.sequences_batch_size
         self.backfill = backfill
         self.mutation_rate = mutation_rate
-        self.all_proposals_ranked = []
         self.n_convergence = n_convergence
 
     def extend_samples(self, samples, weights):
@@ -265,7 +265,7 @@ class CbAS(flexs.Explorer):
                 weights.append(1)
                 sequences.add(sample)
 
-        return samples, weights
+        return np.array(samples), np.array(weights)
 
     def propose_sequences(self, measured_sequences):
         """Propose `batch_size` samples."""
@@ -295,8 +295,8 @@ class CbAS(flexs.Explorer):
         # so we have to recompile it
         self.generator.vae.save("vae_initial_weights.h5")
         generator_0 = VAE(
-            seq_length=self.generator.vae.seq_length,
-            alphabet=self.generator.vae.alphabet,
+            seq_length=self.generator.seq_length,
+            alphabet=self.generator.alphabet,
             batch_size=self.generator.batch_size,
             latent_dim=self.generator.latent_dim,
             intermediate_dim=self.generator.intermediate_dim,
@@ -307,9 +307,6 @@ class CbAS(flexs.Explorer):
             mutation_rate=self.generator.mutation_rate,
             verbose=False,
         )
-        generator_0.get_model(
-            seq_length=len(self.starting_sequence), alphabet=self.alphabet
-        )
         vae_0 = generator_0.vae
         vae_0.load_weights("vae_initial_weights.h5")
 
@@ -319,57 +316,37 @@ class CbAS(flexs.Explorer):
         not_converged = True
         count = 0  # total count of proposed sequences
 
+        sequences = {}
         while (not_converged) and (count < self.model_queries_per_batch):
-
             # generate new samples using the generator (second argument is a list of all
             # existing measured and proposed seqs)
             proposals = []
-            while len(proposals) == 0:
-                try:
-                    proposals = self.generator.generate(
-                        self.sequences_batch_size,
-                        all_samples_and_weights[0],
-                        all_samples_and_weights[1],
-                    )
-                    # print(f'Proposed {len(proposals)} new samples')
-                    count += len(proposals)
-                except ValueError as e:
-                    print(e.message)
-                    print("Ending the CbAS cycle, returning existing proposals...")
-                    return self.all_proposals_ranked[-self.n_new_proposals :]
+            proposals = self.generator.generate(
+                self.sequences_batch_size,
+                all_samples_and_weights[0],
+                all_samples_and_weights[1],
+            )
+            count += len(proposals)
 
             # calculate the scores of the new samples using the oracle
-            scores = []
-            for proposal in proposals:
-                f = self.model.get_fitness(proposal)
-                try:
-                    f = f[0]
-                except:
-                    pass
-                scores.append(f)
-            # print('Top score in proposed samples: ', np.max(scores))
+            scores = self.model.get_fitness(proposals)
 
             # set a new fitness threshold if the new percentile is
             # higher than the current
-            gamma_new = np.percentile(scores, self.Q * 100)
-            if gamma_new > gamma:
-                gamma = gamma_new
+            gamma = max(np.percentile(scores, self.Q * 100), gamma)
 
             # calculate the weights for the proposed batch
             log_probs_0 = self.generator.calculate_log_probability(proposals, vae=vae_0)
             log_probs_t = self.generator.calculate_log_probability(proposals)
-            weights_probs = [
-                np.exp(logp0 - logpt)
-                for (logp0, logpt) in list(zip(log_probs_0, log_probs_t))
-            ]
-            weights_probs = np.nan_to_num(weights_probs)
-            weights_cdf = [1 if score >= gamma else 0 for score in scores]
-            weights = list(np.array(weights_cdf) * np.array(weights_probs))
+
+            weights = np.exp(log_probs_0 - log_probs_t)
+            weights = np.nan_to_num(weights)
+            weights[scores < gamma] = 0
 
             # add proposed samples to the total sample pool
-            all_samples = all_samples_and_weights[0] + proposals
-            all_weights = all_samples_and_weights[1] + weights
-            all_samples_and_weights = tuple((all_samples, all_weights))
+            all_samples = np.append(all_samples_and_weights[0], proposals)
+            all_weights = np.append(all_samples_and_weights[1], weights)
+            all_samples_and_weights = (all_samples, all_weights)
 
             # update the generator
             # print('New training set size: ', len(all_samples_and_weights[0]))
@@ -377,17 +354,7 @@ class CbAS(flexs.Explorer):
                 all_samples_and_weights[0], all_samples_and_weights[1]
             )
 
-            scores_dict = dict(zip(proposals, scores))
-            self.all_proposals_ranked.extend(
-                [
-                    proposal
-                    for proposal, score in sorted(
-                        scores_dict.items(), key=lambda item: item[1]
-                    )
-                ]
-            )
-            # all_proposals_ranked are in an increasing order or fitness,
-            # starting with the first batch
+            sequences.update(zip(proposals, scores))
 
             # check if converged
             max_fitnesses.append(np.max(scores))
@@ -396,12 +363,12 @@ class CbAS(flexs.Explorer):
                     not_converged = False
                     print("CbAS converged")
 
-        self.all_proposals_ranked.reverse()
+        # We propose the top `self.sequences_batch_size` new sequences we have generated
+        new_seqs = np.array(list(sequences.keys()))
+        preds = np.array(list(sequences.values()))
+        sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
 
-        if self.backfill:
-            return self.all_proposals_ranked[: self.n_new_proposals]
-
-        return [proposal for proposal in proposals if scores_dict[proposal] >= gamma]
+        return new_seqs[sorted_order], preds[sorted_order]
 
 
 '''class DbAS(Base_explorer):

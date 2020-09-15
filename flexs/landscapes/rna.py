@@ -105,7 +105,7 @@ class RNABinding(flexs.Landscape):
             if self.threshold:
                 fitness = int(-energy > self.threshold)
             else:
-                fitness = -energy / (self.norm_value * len(seq) / total_target_lengths)
+                fitness = -energy / (self.norm_value * len(seq) / len(self.targets[0]))
 
             fitnesses.append(fitness)
 
