@@ -49,7 +49,7 @@ class PPO(flexs.Explorer):
             agent: Decision-making agent.
         """
 
-        name = f"PPO_Agent"
+        name = "PPO_Agent"
 
         super().__init__(
             model,
@@ -67,51 +67,37 @@ class PPO(flexs.Explorer):
         self.agent_sequences_data = None
         self.agent_sequences_data_iter = 0
 
-        self.tf_env = None
-        self.agent = None
-
         self.explorer_type = "PPO_Agent"
 
-    def initialize_env(self):
-        """Initialize TF-Agents environment."""
+        # Initialize tf_environment
         env = PPOEnv(
             alphabet=self.alphabet,
-            starting_seq=self.agent_sequences_data.iloc[0]["sequence"],
+            starting_seq=starting_sequence,
             landscape=self.model,
             max_num_steps=self.model_queries_per_batch,
         )
-
         validate_py_environment(env, episodes=1)
-
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
 
-    def initialize_agent(self):
-        """Initialize agent."""
-        actor_fc_layers = [128]
-        value_fc_layers = [128]
-
+        # Initialize agent
         actor_net = actor_distribution_network.ActorDistributionNetwork(
             self.tf_env.observation_spec(),
             self.tf_env.action_spec(),
-            fc_layer_params=actor_fc_layers,
+            fc_layer_params=[128],
         )
         value_net = value_network.ValueNetwork(
-            self.tf_env.observation_spec(), fc_layer_params=value_fc_layers
+            self.tf_env.observation_spec(), fc_layer_params=[128]
         )
-
-        num_epochs = 10
-        agent = ppo_agent.PPOAgent(
+        self.agent = ppo_agent.PPOAgent(
             self.tf_env.time_step_spec(),
             self.tf_env.action_spec(),
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5),
             actor_net=actor_net,
             value_net=value_net,
-            num_epochs=num_epochs,
+            num_epochs=10,
             summarize_grads_and_vars=False,
         )
-        agent.initialize()
-
-        self.agent = agent
+        self.agent.initialize()
 
     def add_last_seq_in_trajectory(self, experience, new_seqs):
         """Add the last sequence in an episode's trajectory.
@@ -173,16 +159,10 @@ class PPO(flexs.Explorer):
         self.agent_sequences_data = measured_sequences_data[
             ["sequence", "model_score"]
         ].copy()
-        self.agent_sequences_data = self.agent_sequences_data.sort_values(
-            by="model_score", ascending=False
-        )
-
-        self.initialize_env()
-        self.initialize_agent()
 
         max_model_cost = self.model_queries_per_batch / 2
 
-        seen_seqs = set(self.agent_sequences_data["sequence"])
+        seen_seqs = set(measured_sequences_data["sequence"])
         proposed_seqs = set()
 
         replay_buffer, collect_driver = self.get_replay_buffer_and_driver(
@@ -213,11 +193,6 @@ class PPO(flexs.Explorer):
                     }
                 )
             )
-            self.agent_sequences_data = self.agent_sequences_data.sort_values(
-                by="model_score", ascending=False
-            )
-
-            print(f"Number of measured sequences: {len(self.agent_sequences_data)}")
 
             # add proposed sequences to set of all sequences
             seen_seqs.update(proposed_seqs)
