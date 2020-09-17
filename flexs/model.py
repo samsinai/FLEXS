@@ -28,7 +28,7 @@ class Model(flexs.Landscape, abc.ABC):
         pass
 
 
-class LandscapeAsModel(flexs.Model):
+class LandscapeAsModel(Model):
     """
     This simple class wraps a `flexs.Landscape` in a `flexs.Model` to allow
     running experiments against a perfect model.

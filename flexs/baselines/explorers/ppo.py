@@ -43,7 +43,6 @@ class PPO(flexs.Explorer):
         Attributes:
             meas_seqs: All measured sequences.
             meas_seqs_it: Iterator through `meas_seqs`.
-            has_pretrained_agent: Whether or not the agent has been trained already.
             original_horizon: Total number of rounds. Used to compute proposal
                 budget and distribute this budget between rounds.
             tf_env: TF-Agents environment in which to run the explorer.
@@ -65,23 +64,13 @@ class PPO(flexs.Explorer):
 
         self.alphabet = alphabet
 
-        self.agent_sequences_data = pd.DataFrame(columns=["sequence", "model_score"])
+        self.agent_sequences_data = None
         self.agent_sequences_data_iter = 0
-
-        self.has_pretrained_agent = None
 
         self.tf_env = None
         self.agent = None
 
         self.explorer_type = "PPO_Agent"
-
-    def reset_agent_sequences_data(self, measured_sequence_data: pd.DataFrame):
-        self.agent_sequences_data = measured_sequence_data[
-            ["sequence", "model_score"]
-        ].copy()
-        self.agent_sequences_data = self.agent_sequences_data.sort_values(
-            by="model_score", ascending=False
-        )
 
     def initialize_env(self):
         """Initialize TF-Agents environment."""
@@ -153,8 +142,6 @@ class PPO(flexs.Explorer):
         Type[dynamic_episode_driver.DynamicEpisodeDriver],
     ]:
         num_parallel_environments = 1
-        env_steps_metric = tf_metrics.EnvironmentSteps()
-        step_metrics = [tf_metrics.NumberOfEpisodes(), env_steps_metric]
 
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
@@ -169,8 +156,9 @@ class PPO(flexs.Explorer):
             observers=[
                 replay_buffer.add_batch,
                 partial(self.add_last_seq_in_trajectory, new_seqs=new_sequence_bucket),
-            ]
-            + step_metrics,
+                tf_metrics.NumberOfEpisodes(),
+                tf_metrics.EnvironmentSteps(),
+            ],
             num_episodes=1,
         )
 
@@ -245,18 +233,11 @@ class PPO(flexs.Explorer):
             self.agent.train(experience=trajectories)
             replay_buffer.clear()
 
-        self.has_pretrained_agent = True
-
     def propose_sequences(self, measured_sequences_data: pd.DataFrame):
         """Propose `batch_size` samples."""
 
-        if not self.has_pretrained_agent:
+        if measured_sequences_data["round"].max() == 0:
             self.pretrain_agent(measured_sequences_data)
-
-        if len(self.agent_sequences_data) == 0:
-            self.reset_agent_sequences_data()
-
-        print("Proposing samples...")
 
         seen_seqs = set(self.agent_sequences_data["sequence"])
         proposed_seqs = set()
