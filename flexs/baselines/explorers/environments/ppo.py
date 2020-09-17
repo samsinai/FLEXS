@@ -13,11 +13,16 @@ from flexs.utils.sequence_utils import (
     string_to_one_hot,
 )
 
+
 class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """PPO environment based on TF-Agents."""
 
     def __init__(
-        self, alphabet: str, starting_seq: str, landscape: flexs.Landscape, max_num_steps: int
+        self,
+        alphabet: str,
+        starting_seq: str,
+        landscape: flexs.Landscape,
+        max_num_steps: int,
     ):  # pylint: disable=W0231
         """Initialize PPO agent environment.
 
@@ -36,7 +41,6 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         """
         # alphabet
         self.alphabet = alphabet
-        self.alphabet_len = len(self.alphabet)
 
         # landscape/model/measurements
         self.landscape = landscape
@@ -45,15 +49,20 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         # sequence
         self.seq = starting_seq
         self.seq_len = len(self.seq)
-        self._state = string_to_one_hot(self.seq, self.alphabet)
-        self.episode_seqs = {}  # the sequences seen in the current episode
+        self._state = string_to_one_hot(self.seq, self.alphabet).astype(np.float32)
+        print(self._state.dtype)
+        self.episode_seqs = set()  # the sequences seen in the current episode
 
         # tf_agents environment
         self._action_spec = array_spec.BoundedArraySpec(
-            shape=(1, 2), dtype=np.float32, minimum=0, maximum=1, name="action"
+            shape=(1,),
+            dtype=np.integer,
+            minimum=0,
+            maximum=self.seq_len * len(self.alphabet) - 1,
+            name="action",
         )
         self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(self.seq_len, self.alphabet_len),
+            shape=(self.seq_len, len(self.alphabet)),
             dtype=np.float32,
             minimum=0,
             maximum=1,
@@ -67,10 +76,10 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def _reset(self):
         self.previous_fitness = -float("inf")
-        self._state = string_to_one_hot(self.seq, self.alphabet)
-        self.episode_seqs = {}
+        self._state = string_to_one_hot(self.seq, self.alphabet).astype(np.float32)
+        self.episode_seqs = set()
         self.num_steps = 0
-        return ts.restart(np.array(self._state, dtype=np.float32))
+        return ts.restart(self._state)
 
     def time_step_spec(self):
         """Define time steps."""
@@ -96,46 +105,40 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         """
         if self.num_steps < self.max_num_steps:
             self.num_steps += 1
-            action_one_hot = np.zeros((self.seq_len, self.alphabet_len))
 
-            # if action is invalid,
-            # terminate episode and punish
-            if np.amax(action) >= 1 or np.amin(action) < 0:
-                return ts.termination(np.array(self._state, dtype=np.float32), -1)
-
-            x, y = action[0]
-            x, y = int(self.seq_len * x), int(self.alphabet_len * y)
-            action_one_hot[x, y] = 1
+            # `action` is an integer representing which residue to mutate to 1
+            # along the flattened one-hot representation of the sequence
+            pos = action // len(self.alphabet)
+            res = action % len(self.alphabet)
 
             # if we are trying to modify the sequence with a no-op, then stop
-            if self._state[x, y] == 1:
+            if self._state[pos, res] == 1:
                 self._episode_ended = True
 
                 # if the next best move is to stay at the current state,
                 # then give it a small reward
-                return ts.termination(np.array(self._state, dtype=np.float32), 1)
+                return ts.termination(self._state, 1)
 
-            self._state = construct_mutant_from_sample(action_one_hot, self._state)
+            self._state[pos] = 0
+            self._state[pos, res] = 1
             state_string = one_hot_to_string(self._state, self.alphabet)
 
             # if we have seen the sequence this episode,
             # terminate episode and punish
             # (to prevent going in loops)
             if state_string in self.episode_seqs:
-                return ts.termination(np.array(self._state, dtype=np.float32), -1)
-            self.episode_seqs[state_string] = 1
+                return ts.termination(self._state, -1)
+            self.episode_seqs.add(state_string)
 
             reward = self.landscape.get_fitness([state_string]).item()
 
             # if the reward is not increasing, then terminate
             if reward < self.previous_fitness:
-                return ts.termination(
-                    np.array(self._state, dtype=np.float32), reward=reward
-                )
+                return ts.termination(self._state, reward=reward)
 
             self.previous_fitness = reward
-            return ts.transition(np.array(self._state, dtype=np.float32), reward=reward)
+            return ts.transition(self._state, reward=reward)
 
         # if we've exceeded the maximum number of steps, terminate
         self._episode_ended = True
-        return ts.termination(np.array(self._state, dtype=np.float32), 0)
+        return ts.termination(self._state, 0)

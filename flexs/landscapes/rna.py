@@ -64,24 +64,24 @@ class RNABinding(flexs.Landscape):
         self.seq_length = seq_length
         self.threshold = threshold
         self.conserved_region = conserved_region
-        self.norm_value = self.compute_maximum_binding_possible()
+        self.norm_values = self.compute_min_binding_energies()
 
         self.sequences = {}
 
-    def compute_maximum_binding_possible(self):
-        map1 = {"A": "U", "C": "G", "G": "C", "U": "A"}
+    def compute_min_binding_energies(self):
+        complements = {"A": "U", "C": "G", "G": "C", "U": "A"}
 
-        total_energy = 0
+        min_energies = []
         for target in self.targets:
-            match = "".join(map1[x] for x in target)[::-1]
-            total_energy += RNA.duplexfold(match, target).energy
+            complement = "".join(complements[x] for x in target)[::-1]
+            energy = RNA.duplexfold(complement, target).energy
+            min_energies.append(energy * self.seq_length / len(target))
 
-        return -total_energy
+        return np.array(min_energies)
 
     def _fitness_function(self, sequences):
         fitnesses = []
 
-        total_target_lengths = sum(len(t) for t in self.targets)
         for seq in sequences:
 
             # Check that sequence is of correct length
@@ -101,11 +101,13 @@ class RNABinding(flexs.Landscape):
                     continue
 
             # Energy is sum of binding energies across all targets
-            energy = sum(RNA.duplexfold(target, seq).energy for target in self.targets)
+            energies = np.array(
+                [RNA.duplexfold(target, seq).energy for target in self.targets]
+            )
             if self.threshold:
-                fitness = int(-energy > self.threshold)
+                fitness = int(energies.sum() < self.threshold)
             else:
-                fitness = -energy / (self.norm_value * len(seq) / total_target_lengths)
+                fitness = (energies / self.norm_values).mean()
 
             fitnesses.append(fitness)
 
