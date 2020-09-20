@@ -79,14 +79,19 @@ class PPO(flexs.Explorer):
         validate_py_environment(env, episodes=1)
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
 
+        encoder_layer = tf.keras.layers.Lambda(lambda obs: obs["sequence"])
+
         # Initialize agent
         actor_net = actor_distribution_network.ActorDistributionNetwork(
             self.tf_env.observation_spec(),
             self.tf_env.action_spec(),
+            preprocessing_combiner=encoder_layer,
             fc_layer_params=[128],
         )
         value_net = value_network.ValueNetwork(
-            self.tf_env.observation_spec(), fc_layer_params=[128]
+            self.tf_env.observation_spec(),
+            preprocessing_combiner=encoder_layer,
+            fc_layer_params=[128],
         )
         self.agent = ppo_agent.PPOAgent(
             self.tf_env.time_step_spec(),
@@ -111,7 +116,9 @@ class PPO(flexs.Explorer):
         are generated from that new sequence.
         """
         if experience.is_boundary():
-            seq = one_hot_to_string(experience.observation.numpy()[0], self.alphabet)
+            seq = one_hot_to_string(
+                experience.observation["sequence"].numpy()[0], self.alphabet
+            )
             new_seqs.add(seq)
 
             self.agent_sequences_data_iter = (self.agent_sequences_data_iter + 1) % len(
