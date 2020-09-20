@@ -59,7 +59,7 @@ def construct_mutant_from_sample(pwm_sample, one_hot_base):
     return one_hot
 
 
-def string_to_one_hot(sequence: str, alphabet: str):
+def string_to_one_hot(sequence: str, alphabet: str, seq_length: int = None):
     """Create a one-hot representation of a sequence string according to alphabet."""
     out = np.zeros((len(sequence), len(alphabet)))
     for i in range(len(sequence)):

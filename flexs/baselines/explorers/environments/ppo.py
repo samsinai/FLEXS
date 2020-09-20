@@ -12,17 +12,14 @@ from flexs.utils.sequence_utils import (
     one_hot_to_string,
     string_to_one_hot,
 )
+from tf_agents.environments.utils import validate_py_environment
 
 
 class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """PPO environment based on TF-Agents."""
 
     def __init__(
-        self,
-        alphabet: str,
-        starting_seq: str,
-        landscape: flexs.Landscape,
-        max_num_steps: int,
+        self, alphabet: str, starting_seq: str, model: flexs.Model, max_num_steps: int,
     ):  # pylint: disable=W0231
         """Initialize PPO agent environment.
 
@@ -33,7 +30,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             alphabet: Usually UCGA.
             starting_seq: When initializing the environment,
                 the sequence which is initially mutated.
-            landscape: Landscape or model which evaluates
+            model: Landscape or model which evaluates
                 each sequence.
             max_num_steps: Maximum number of steps before
                 episode is forced to terminate. Usually the
@@ -42,30 +39,30 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         # alphabet
         self.alphabet = alphabet
 
-        # landscape/model/measurements
-        self.landscape = landscape
+        # model/model/measurements
+        self.model = model
         self.previous_fitness = -float("inf")
 
         # sequence
         self.seq = starting_seq
-        self.seq_len = len(self.seq)
         self._state = {
             "sequence": string_to_one_hot(self.seq, self.alphabet).astype(np.float32),
-            "fitness": self.landscape.get_fitness([starting_seq]).astype(np.float32),
+            "fitness": self.model.get_fitness([starting_seq]).astype(np.float32),
         }
         self.episode_seqs = set()  # the sequences seen in the current episode
+        self.measured_sequences = {}
 
         # tf_agents environment
         self._action_spec = array_spec.BoundedArraySpec(
             shape=(1,),
             dtype=np.integer,
             minimum=0,
-            maximum=self.seq_len * len(self.alphabet) - 1,
+            maximum=len(self.seq) * len(self.alphabet) - 1,
             name="action",
         )
         self._observation_spec = {
             "sequence": array_spec.BoundedArraySpec(
-                shape=(self.seq_len, len(self.alphabet)),
+                shape=(len(self.seq), len(self.alphabet)),
                 dtype=np.float32,
                 minimum=0,
                 maximum=1,
@@ -73,14 +70,16 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             "fitness": array_spec.ArraySpec(shape=(1,), dtype=np.float32),
         }
 
-        self.max_num_steps = max_num_steps
         self.num_steps = 0
+        self.max_num_steps = max_num_steps
+
+        validate_py_environment(self, episodes=1)
 
     def _reset(self):
         self.previous_fitness = -float("inf")
         self._state = {
             "sequence": string_to_one_hot(self.seq, self.alphabet).astype(np.float32),
-            "fitness": self.landscape.get_fitness([self.seq]).astype(np.float32),
+            "fitness": self.model.get_fitness([self.seq]).astype(np.float32),
         }
         self.episode_seqs = set()
         self.num_steps = 0
@@ -122,7 +121,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         self._state["sequence"][pos] = 0
         self._state["sequence"][pos, res] = 1
         state_string = one_hot_to_string(self._state["sequence"], self.alphabet)
-        self._state["fitness"] = self.landscape.get_fitness([state_string]).astype(
+        self._state["fitness"] = self.model.get_fitness([state_string]).astype(
             np.float32
         )
 
