@@ -26,7 +26,6 @@ class Random(flexs.Explorer):
     def __init__(
         self,
         model: flexs.Model,
-        landscape: flexs.Landscape,
         rounds: int,
         mu: float,
         starting_sequence: str,
@@ -40,7 +39,6 @@ class Random(flexs.Explorer):
 
         super().__init__(
             model,
-            landscape,
             name,
             rounds,
             sequences_batch_size,

@@ -6,10 +6,80 @@ import numpy as np
 import scipy.special
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import backend as K
 
 import flexs
 import flexs.utils.sequence_utils as s_utils
+
+
+class Sampling(keras.layers.Layer):
+    """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
+
+    def call(self, inputs):
+        z_mean, z_log_var = inputs
+        batch = tf.shape(z_mean)[0]
+        dim = tf.shape(z_mean)[1]
+        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))
+        return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+
+
+class VAEModel(keras.Model):
+    def __init__(self, original_dim, intermediate_dim, latent_dim, **kwargs):
+        super().__init__(**kwargs)
+
+        self.original_dim = original_dim
+        self.latent_dim = latent_dim
+
+        # encoding layers
+        encoder_inputs = keras.layers.Input(shape=(original_dim))
+        x = keras.layers.Dense(intermediate_dim, activation="elu")(encoder_inputs)
+        x = keras.layers.Dropout(0.7)(x)
+        x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
+        x = keras.layers.BatchNormalization()(x)
+        x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
+        z_mean = keras.layers.Dense(latent_dim, name="z_mean")(x)
+        z_log_var = keras.layers.Dense(latent_dim, name="z_log_var")(x)
+        z = Sampling()([z_mean, z_log_var])
+        self.encoder = keras.Model(
+            encoder_inputs, [z_mean, z_log_var, z], name="encoder"
+        )
+
+        # decoding layers
+        latent_inputs = keras.Input(shape=(latent_dim,))
+        x = keras.layers.Dense(intermediate_dim, activation="elu")(latent_inputs)
+        x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
+        x = keras.layers.Dropout(0.7)(x)
+        x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
+        decoder_outputs = keras.layers.Dense(self.original_dim, activation="sigmoid")(x)
+        self.decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
+
+    def call(self, data):
+        z_mean, z_log_var, z = self.encoder(data)
+        reconstruction = self.decoder(z)
+        return reconstruction
+
+    def generate(self):
+        # sampling from the latent space (normal distribution in this case)
+        z = np.random.randn(1, self.latent_dim)
+        return self.decoder(z)
+
+    def train_step(self, data):
+        with tf.GradientTape() as tape:
+            z_mean, z_log_var, z = self.encoder(data)
+            reconstruction = self.decoder(z)
+            reconstruction_loss = self.original_dim * tf.reduce_mean(
+                keras.losses.binary_crossentropy(data, reconstruction)
+            )
+            kl_loss = -0.5 * tf.reduce_mean(
+                1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var)
+            )
+            total_loss = reconstruction_loss + kl_loss
+        grads = tape.gradient(total_loss, self.trainable_weights)
+        self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
+        return {
+            "loss": total_loss,
+            "reconstruction_loss": reconstruction_loss,
+            "kl_loss": kl_loss,
+        }
 
 
 class VAE:
@@ -42,60 +112,11 @@ class VAE:
 
         self.alphabet = alphabet
         self.seq_length = seq_length
-        self.original_dim = len(self.alphabet) * self.seq_length
 
-        # encoding layers
-        x = keras.layers.Input(shape=(self.original_dim))
-        h = keras.layers.Dense(self.intermediate_dim, activation="elu")(x)
-        h = keras.layers.Dropout(0.7)(h)
-        h = keras.layers.Dense(self.intermediate_dim, activation="elu")(h)
-        h = keras.layers.BatchNormalization()(h)
-        h = keras.layers.Dense(self.intermediate_dim, activation="elu")(h)
-
-        # latent layers
-        self.z_mean = keras.layers.Dense(self.latent_dim)(h)
-        self.z_log_var = keras.layers.Dense(self.latent_dim)(h)
-        z = keras.layers.Lambda(self._sampling, output_shape=(self.latent_dim,))(
-            [self.z_mean, self.z_log_var]
+        self.vae = VAEModel(
+            len(self.alphabet) * self.seq_length, intermediate_dim, latent_dim
         )
-
-        # decoding layers
-        decoder_1 = keras.layers.Dense(self.intermediate_dim, activation="elu")
-        decoder_2 = keras.layers.Dense(self.intermediate_dim, activation="elu")
-        decoder_2d = keras.layers.Dropout(0.7)
-        decoder_3 = keras.layers.Dense(self.intermediate_dim, activation="elu")
-        decoder_out = keras.layers.Dense(self.original_dim, activation="sigmoid")
-        x_decoded_mean = decoder_out(decoder_3(decoder_2d(decoder_2(decoder_1(z)))))
-
-        self.vae = keras.models.Model(x, x_decoded_mean)
-
-        opt = keras.optimizers.Adam(lr=0.0001, clipvalue=0.5)
-
-        self.vae.compile(optimizer=opt, loss=self._vae_loss)
-
-        decoder_input = keras.layers.Input(shape=(self.latent_dim,))
-        _x_decoded_mean = decoder_out(
-            decoder_3(decoder_2d(decoder_2(decoder_1(decoder_input))))
-        )
-        self.decoder = keras.models.Model(decoder_input, _x_decoded_mean)
-
-    def _sampling(self, args):  # reparameterization
-        z_mean, z_log_var = args
-        epsilon = tf.random.normal(
-            shape=(z_mean.shape[0] or 1, self.latent_dim),
-            mean=0.0,
-            stddev=self.epsilon_std,
-        )
-        return z_mean + tf.math.exp(z_log_var / 2) * epsilon
-
-    def _vae_loss(self, x, x_decoded_mean):
-        xent_loss = self.original_dim * tf.losses.categorical_crossentropy(
-            x, x_decoded_mean
-        )
-        kl_loss = -0.5 * K.sum(
-            1 + self.z_log_var - K.square(self.z_mean) - K.exp(self.z_log_var), axis=-1
-        )
-        return xent_loss + self.beta * kl_loss
+        self.vae.compile(optimizer=keras.optimizers.Adam(lr=0.0001, clipvalue=0.5))
 
     def train_model(self, samples, weights):
         x_train = np.array(
@@ -107,7 +128,6 @@ class VAE:
         early_stop = keras.callbacks.EarlyStopping(monitor="loss", patience=3)
 
         self.vae.fit(
-            x_train,
             x_train,
             verbose=self.verbose,
             sample_weight=np.array(weights),
@@ -122,12 +142,9 @@ class VAE:
         """
         Generate `n_samples` new samples such that none of them are in existing_samples.
         """
-        z = np.random.randn(
-            1, self.latent_dim
-        )  # sampling from the latent space (normal distribution in this case)
-        x_reconstructed = self.decoder.predict(z)  # decoding
+
         x_reconstructed_matrix = np.reshape(
-            x_reconstructed, (len(self.alphabet), self.seq_length)
+            self.vae.generate(), (len(self.alphabet), self.seq_length)
         )
 
         if (
@@ -205,15 +222,15 @@ class CbAS(flexs.Explorer):
     def __init__(
         self,
         model,
-        landscape,
         generator,
         rounds,
         starting_sequence,
         sequences_batch_size,
         model_queries_per_batch,
         alphabet,
+        algo="cbas",
         Q=0.9,
-        n_convergence=10,
+        max_cycles_per_batch=30,
         backfill=True,
         mutation_rate=0.2,
         log_file=None,
@@ -236,7 +253,6 @@ class CbAS(flexs.Explorer):
         name = f"CbAS_Q={Q}_generator={generator.name}"
         super().__init__(
             model,
-            landscape,
             name,
             rounds,
             sequences_batch_size,
@@ -244,12 +260,17 @@ class CbAS(flexs.Explorer):
             starting_sequence,
             log_file,
         )
+
+        if algo not in ["cbas", "dbas"]:
+            raise ValueError("`algo` must be on of 'cbas' or 'dbas'")
+        self.algo = algo
+
         self.generator = generator
         self.alphabet = alphabet
         self.Q = Q  # percentile used as the fitness threshold
+        self.max_cycles_per_batch = max_cycles_per_batch
         self.backfill = backfill
         self.mutation_rate = mutation_rate
-        self.n_convergence = n_convergence
 
     def extend_samples(self, samples, weights):
         # generate random seqs around the input seq if the sample size is too small
@@ -267,11 +288,11 @@ class CbAS(flexs.Explorer):
 
         return np.array(samples), np.array(weights)
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(self, measured_sequences_data):
         """Propose `batch_size` samples."""
 
-        last_round_sequences = measured_sequences[
-            measured_sequences["round"] == measured_sequences["round"].max()
+        last_round_sequences = measured_sequences_data[
+            measured_sequences_data["round"] == measured_sequences_data["round"].max()
         ]
 
         # gamma is our threshold (the self.Q-th percentile of sequences from last round)
@@ -293,7 +314,6 @@ class CbAS(flexs.Explorer):
         # save the weights of the initial vae and save it as vae_0:
         # there are issues with keras model saving and loading,
         # so we have to recompile it
-        self.generator.vae.save("vae_initial_weights.h5")
         generator_0 = VAE(
             seq_length=self.generator.seq_length,
             alphabet=self.generator.alphabet,
@@ -305,19 +325,19 @@ class CbAS(flexs.Explorer):
             beta=self.generator.beta,
             validation_split=self.generator.validation_split,
             mutation_rate=self.generator.mutation_rate,
-            verbose=False,
+            verbose=self.generator.verbose,
         )
+        original_weights = self.generator.vae.get_weights()
+        generator_0.vae.set_weights(original_weights)
         vae_0 = generator_0.vae
-        vae_0.load_weights("vae_initial_weights.h5")
 
-        max_fitnesses = (
-            []
-        )  # keep track of max proposed fitnesses to check for convergence
-        not_converged = True
         count = 0  # total count of proposed sequences
 
         sequences = {}
-        while (not_converged) and (count < self.model_queries_per_batch):
+        current_cycle = 0
+        while current_cycle < self.max_cycles_per_batch and (
+            count < self.model_queries_per_batch
+        ):
             # generate new samples using the generator (second argument is a list of all
             # existing measured and proposed seqs)
             proposals = []
@@ -328,19 +348,28 @@ class CbAS(flexs.Explorer):
             )
             count += len(proposals)
 
-            # calculate the scores of the new samples using the oracle
+            # calculate the scores of the new samples using the model
             scores = self.model.get_fitness(proposals)
 
             # set a new fitness threshold if the new percentile is
             # higher than the current
             gamma = max(np.percentile(scores, self.Q * 100), gamma)
 
-            # calculate the weights for the proposed batch
-            log_probs_0 = self.generator.calculate_log_probability(proposals, vae=vae_0)
-            log_probs_t = self.generator.calculate_log_probability(proposals)
+            # cbas and dbas mostly the same except cbas also does an importance sampling step
+            if self.algo == "cbas":
+                # calculate the weights for the proposed batch
+                log_probs_0 = self.generator.calculate_log_probability(
+                    proposals, vae=vae_0
+                )
+                log_probs_t = self.generator.calculate_log_probability(proposals)
 
-            weights = np.exp(log_probs_0 - log_probs_t)
-            weights = np.nan_to_num(weights)
+                weights = np.exp(log_probs_0 - log_probs_t)
+                weights = np.nan_to_num(weights)
+
+            # Otherwise, `self.algo == "dbas"`
+            else:
+                weights = np.ones(len(proposals))
+
             weights[scores < gamma] = 0
 
             # add proposed samples to the total sample pool
@@ -356,165 +385,9 @@ class CbAS(flexs.Explorer):
 
             sequences.update(zip(proposals, scores))
 
-            # check if converged
-            max_fitnesses.append(np.max(scores))
-            if len(max_fitnesses) >= self.n_convergence:
-                if len(set(max_fitnesses[-self.n_convergence :])) == 1:
-                    not_converged = False
-                    print("CbAS converged")
-
         # We propose the top `self.sequences_batch_size` new sequences we have generated
         new_seqs = np.array(list(sequences.keys()))
         preds = np.array(list(sequences.values()))
         sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
 
         return new_seqs[sorted_order], preds[sorted_order]
-
-
-'''class DbAS(Base_explorer):
-    """DbAS explorer."""
-
-    def __init__(
-        self,
-        generator=None,
-        Q=0.9,
-        n_convergence=10,
-        backfill=True,
-        batch_size=100,
-        alphabet="UCGA",
-        virtual_screen=10,
-        mutation_rate=0.2,
-        path="./simulations/",
-        debug=False,
-    ):
-        """Explorer which implements Design by Adaptive Sampling (DbAS).
-
-        Paper: https://arxiv.org/pdf/1810.03714.pdf
-
-        Attributes:
-            generator:
-            Q:
-            n_new_proposals:
-            backfill:
-            mutation_rate:
-            all_proposals_ranked:
-            n_convergence: Assume convergence if max fitness doesn't change for
-                n_convergence cycles.
-            explorer_type:
-        """
-        super().__init__(
-            batch_size, alphabet, virtual_screen, path, debug
-        )  # for Python 3
-        self.generator = generator
-        self.Q = Q  # percentile used as the fitness threshold
-        self.n_new_proposals = self.batch_size
-        self.backfill = backfill
-        self.mutation_rate = mutation_rate
-        self.all_proposals_ranked = []
-        self.n_convergence = n_convergence
-        self.explorer_type = f"DbAS_Q{self.Q}_generator{self.generator.name}"
-
-    def propose_samples(self):
-        """Propose `batch_size` samples."""
-        gamma = np.percentile(
-            list(self.model.measured_sequences.values()), 100 * self.Q
-        )  # Qth percentile of current measured sequences
-        initial_batch = [
-            sequence
-            for sequence in self.model.measured_sequences.keys()
-            if self.model.measured_sequences[sequence] >= gamma
-        ]  # pick all measured sequences with fitness above the Qth percentile
-        initial_weights = [1] * len(initial_batch)
-        all_samples_and_weights = tuple((initial_batch, initial_weights))
-
-        logging.info("Starting a DbAS cycle...")
-        logging.info(f"Initial training set size: {len(initial_batch)}")
-
-        # this will be the current state of the generator
-        self.generator.get_model(
-            seq_length=len(initial_batch[0]), alphabet=self.alphabet
-        )
-        self.generator.train_model(initial_batch, initial_weights)
-
-        max_fitnesses = (
-            []
-        )  # keep track of max proposed fitnesses to check for convergence
-        not_converged = True
-        count = 0  # total count of proposed sequences
-
-        while (not_converged) and (count < self.batch_size * self.virtual_screen):
-
-            # generate new samples using the generator
-            # (second argument is a list of all existing measured and proposed seqs)
-            proposals = []
-            while len(proposals) == 0:
-                try:
-                    proposals = self.generator.generate(
-                        self.batch_size,
-                        all_samples_and_weights[0],
-                        all_samples_and_weights[1],
-                    )
-                    # print(f'Proposed {len(proposals)} new samples')
-                    count += len(proposals)
-                except ValueError as e:
-                    print(e.message)
-                    print("Ending the CbAS cycle, returning existing proposals...")
-                    return self.all_proposals_ranked[-self.n_new_proposals :]
-
-            # calculate the scores of the new samples using the oracle
-            scores = []
-            for proposal in proposals:
-                f = self.model.get_fitness(proposal)
-                try:
-                    f = f[0]
-                except:
-                    pass
-                scores.append(f)
-            # print('Top score in proposed samples: ', np.max(scores))
-
-            # set a new fitness threshold if the new percentile is
-            # higher than the current
-            gamma_new = np.percentile(scores, self.Q * 100)
-            if gamma_new > gamma:
-                gamma = gamma_new
-
-            # calculate the weights for the proposed batch
-            weights = [1 if score >= gamma else 0 for score in scores]
-
-            # add proposed samples to the total sample pool
-            all_samples = all_samples_and_weights[0] + proposals
-            all_weights = all_samples_and_weights[1] + weights
-            all_samples_and_weights = tuple((all_samples, all_weights))
-
-            # update the generator
-            # print('New training set size: ', len(all_samples_and_weights[0]))
-            self.generator.train_model(
-                all_samples_and_weights[0], all_samples_and_weights[1]
-            )
-
-            scores_dict = dict(zip(proposals, scores))
-            self.all_proposals_ranked.extend(
-                [
-                    proposal
-                    for proposal, score in sorted(
-                        scores_dict.items(), key=lambda item: item[1]
-                    )
-                ]
-            )
-            # all_proposals_ranked are in an increasing order or fitness,
-            # starting with the first batch
-
-            # check if converged
-            max_fitnesses.append(np.max(scores))
-            if len(max_fitnesses) >= self.n_convergence:
-                if len(set(max_fitnesses[-self.n_convergence :])) == 1:
-                    not_converged = False
-                    print("DbAS converged")
-
-        self.all_proposals_ranked.reverse()
-
-        if self.backfill:
-            return self.all_proposals_ranked[: self.n_new_proposals]
-
-        return [proposal for proposal in proposals if scores_dict[proposal] >= gamma]
-'''

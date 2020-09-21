@@ -20,7 +20,6 @@ class BO(flexs.Explorer):
     def __init__(
         self,
         model,
-        landscape,
         rounds,
         sequences_batch_size,
         model_queries_per_batch,
@@ -53,7 +52,6 @@ class BO(flexs.Explorer):
         name = "BO-optimization_method={optimization_method}"
         super().__init__(
             model,
-            landscape,
             name,
             rounds,
             sequences_batch_size,
@@ -67,7 +65,7 @@ class BO(flexs.Explorer):
         self.best_fitness = 0
         self.top_sequence = []
         self.num_actions = 0
-        self.virtual_screen = virtual_screen 
+        self.virtual_screen = virtual_screen
         # use PER buffer, same as in DQN
         self.model_type = "blank"
         self.state = None
@@ -208,9 +206,11 @@ class BO(flexs.Explorer):
             self.initialize_data_structures()
         else:
             # set state to best measured sequence from prior batch
-            last_round_num = measured_sequences['round'].max()
-            last_batch = measured_sequences[measured_sequences['round'] == last_round_num]
-            last_batch_seqs = last_batch['sequence'].values
+            last_round_num = measured_sequences["round"].max()
+            last_batch = measured_sequences[
+                measured_sequences["round"] == last_round_num
+            ]
+            last_batch_seqs = last_batch["sequence"].values
             if self.recomb_rate > 0 and len(last_batch) > 1:
                 last_batch_seqs = self._recombine_population(list(last_batch_seqs))
             measured_batch = sorted(
@@ -225,9 +225,10 @@ class BO(flexs.Explorer):
             copy.deepcopy(self.model.cost),
             copy.deepcopy(self.model.evals),
         )
-        all_measured_seqs = set(measured_sequences['sequence'].values)
+        all_measured_seqs = set(measured_sequences["sequence"].values)
         while (self.model.cost - prev_cost < self.sequences_batch_size) and (
-            self.model.evals - prev_evals < self.sequences_batch_size * self.virtual_screen
+            self.model.evals - prev_evals
+            < self.sequences_batch_size * self.virtual_screen
         ):
             uncertainty, new_state_string, _ = self.pick_action(all_measured_seqs)
             all_measured_seqs.add(new_state_string)
@@ -245,12 +246,12 @@ class BO(flexs.Explorer):
                 self.seq_len, self.sequences_batch_size - len(samples), self.alphabet
             )
             samples.update(random_sequences)
-        # get predicted fitnesses of samples 
+        # get predicted fitnesses of samples
         preds = [self.model.get_fitness(sample) for sample in samples]
         # train ensemble model before returning samples
         self.train_models()
 
-        return list(samples), preds 
+        return list(samples), preds
 
 
 class GPR_BO(flexs.Explorer):
@@ -266,7 +267,6 @@ class GPR_BO(flexs.Explorer):
     def __init__(
         self,
         model,
-        landscape,
         rounds,
         sequences_batch_size,
         model_queries_per_batch,
@@ -278,10 +278,11 @@ class GPR_BO(flexs.Explorer):
         seq_proposal_method="Thompson",
     ):
         """Initialize the explorer."""
-        name = "GPR_BO_Explorer-method={method}-seq_proposal_method={seq_proposal_method}"
+        name = (
+            "GPR_BO_Explorer-method={method}-seq_proposal_method={seq_proposal_method}"
+        )
         super().__init__(
             model,
-            landscape,
             name,
             rounds,
             sequences_batch_size,
@@ -289,13 +290,13 @@ class GPR_BO(flexs.Explorer):
             starting_sequence,
             log_file,
         )
-        self.alphabet = alphabet 
+        self.alphabet = alphabet
         self.alphabet_len = len(alphabet)
         self.method = method
         self.seq_proposal_method = seq_proposal_method
         self.best_fitness = 0
         self.top_sequence = []
-        self.virtual_screen = virtual_screen 
+        self.virtual_screen = virtual_screen
 
         self.seq_len = None
         self.maxima = None
@@ -383,14 +384,14 @@ class GPR_BO(flexs.Explorer):
         seq_proposal_funcs = {
             "Thompson": self.propose_sequences_via_thompson,
             "Greedy": self.propose_sequences_via_greedy,
-            "UCB": self.propose_sequences_via_ucb
+            "UCB": self.propose_sequences_via_ucb,
         }
         seq_proposal_func = seq_proposal_funcs[self.seq_proposal_method]
         new_seqs = seq_proposal_func()
         new_states = []
         new_fitnesses = []
         i = 0
-        all_measured_seqs = set(measured_sequences['sequence'].values)
+        all_measured_seqs = set(measured_sequences["sequence"].values)
         while (len(new_states) < self.sequences_batch_size) and i < len(new_seqs):
             new_fitness, new_seq = new_seqs[i]
             if new_seq not in all_measured_seqs:
@@ -406,4 +407,4 @@ class GPR_BO(flexs.Explorer):
 
         print("Current best fitness:", self.best_fitness)
 
-        return list(samples), new_fitnesses 
+        return list(samples), new_fitnesses

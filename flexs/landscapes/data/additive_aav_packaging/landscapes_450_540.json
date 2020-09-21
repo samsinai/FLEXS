@@ -1,0 +1,111 @@
+{
+    "heart:450:540:0": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "lung:450:540:0": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "kidney:450:540:0": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "liver:450:540:0": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "blood:450:540:0": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "spleen:450:540:0": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 540,
+        "noise": 0
+    },
+    "heart:450:540:0.01": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "lung:450:540:0.01": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "kidney:450:540:0.01": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "liver:450:540:0.01": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "blood:450:540:0.01": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "spleen:450:540:0.01": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 540,
+        "noise": 0.01
+    },
+    "heart:450:540:0.1": {
+        "phenotype": "heart",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "lung:450:540:0.1": {
+        "phenotype": "lung",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "kidney:450:540:0.1": {
+        "phenotype": "kidney",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "liver:450:540:0.1": {
+        "phenotype": "liver",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "blood:450:540:0.1": {
+        "phenotype": "blood",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    },
+    "spleen:450:540:0.1": {
+        "phenotype": "spleen",
+        "start": 450,
+        "end": 540,
+        "noise": 0.1
+    }
+
+}

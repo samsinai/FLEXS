@@ -31,7 +31,6 @@ class GeneticAlgorithm(flexs.Explorer):
     def __init__(
         self,
         model,
-        landscape,
         rounds,
         starting_sequence,
         sequences_batch_size,
@@ -52,7 +51,6 @@ class GeneticAlgorithm(flexs.Explorer):
 
         super().__init__(
             model,
-            landscape,
             name,
             rounds,
             sequences_batch_size,
