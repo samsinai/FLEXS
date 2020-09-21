@@ -20,7 +20,9 @@ class KerasModel(flexs.Model):
 
     def train(self, sequences, labels, verbose=False):
         one_hots = tf.convert_to_tensor(
-            [s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences],
+            np.array(
+                [s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences]
+            ),
             dtype=tf.float32,
         )
         labels = tf.convert_to_tensor(labels)
@@ -35,7 +37,9 @@ class KerasModel(flexs.Model):
 
     def _fitness_function(self, sequences):
         one_hots = tf.convert_to_tensor(
-            [s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences],
+            np.array(
+                [s_utils.string_to_one_hot(seq, self.alphabet) for seq in sequences]
+            ),
             dtype=tf.float32,
         )
 

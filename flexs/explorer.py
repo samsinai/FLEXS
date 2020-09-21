@@ -16,7 +16,6 @@ class Explorer(abc.ABC):
     def __init__(
         self,
         model: flexs.Model,
-        landscape: flexs.Landscape,
         name: str,
         rounds: int,
         sequences_batch_size: int,
@@ -25,7 +24,6 @@ class Explorer(abc.ABC):
         log_file: str = None,
     ):
         self.model = model
-        self.landscape = landscape
         self.name = name
 
         self.rounds = rounds
@@ -37,6 +35,11 @@ class Explorer(abc.ABC):
         if self.log_file is not None:
             self.log_file = Path(self.log_file)
             self.log_file.mkdir(parents=True, exist_ok=True)
+
+        if model_queries_per_batch < sequences_batch_size:
+            raise ValueError(
+                "`model_queries_per_batch` must be >= `sequences_batch_size`"
+            )
 
     @abc.abstractmethod
     def propose_sequences(
@@ -59,10 +62,8 @@ class Explorer(abc.ABC):
 
     def _log(
         self,
-        metadata: Dict,
         sequences_data: pd.DataFrame,
-        preds: float,
-        true_score: float,
+        metadata: Dict,
         current_round: int,
         verbose: bool,
     ) -> None:
@@ -76,9 +77,11 @@ class Explorer(abc.ABC):
                 sequences_data.to_csv(f, index=False)
 
         if verbose:
-            print(f"round: {current_round}, top: {true_score.max()}")
+            print(f"round: {current_round}, top: {sequences_data['true_score'].max()}")
 
-    def run(self, verbose: bool = True) -> Tuple[pd.DataFrame, Dict]:
+    def run(
+        self, landscape: flexs.Landscape, verbose: bool = True
+    ) -> Tuple[pd.DataFrame, Dict]:
         """Run the exporer."""
 
         self.model.cost = 0
@@ -88,7 +91,7 @@ class Explorer(abc.ABC):
             "run_id": datetime.now().strftime("%H:%M:%S-%m/%d/%Y"),
             "exp_name": self.name,
             "model_name": self.model.name,
-            "landscape_name": self.landscape.name,
+            "landscape_name": landscape.name,
             "rounds": self.rounds,
             "sequences_batch_size": self.sequences_batch_size,
             "model_queries_per_batch": self.model_queries_per_batch,
@@ -99,19 +102,14 @@ class Explorer(abc.ABC):
             {
                 "sequence": self.starting_sequence,
                 "model_score": np.nan,
-                "true_score": self.landscape.get_fitness([self.starting_sequence]),
+                "true_score": landscape.get_fitness([self.starting_sequence]),
                 "round": 0,
                 "model_cost": self.model.cost,
                 "measurement_cost": 1,
             }
         )
         self._log(
-            sequences_data,
-            metadata,
-            sequences_data["model_score"],
-            sequences_data["true_score"],
-            0,
-            verbose,
+            sequences_data, metadata, 0, verbose,
         )
 
         # For each round, train model on available data, propose sequences,
@@ -123,7 +121,7 @@ class Explorer(abc.ABC):
             )
 
             seqs, preds = self.propose_sequences(sequences_data)
-            true_score = self.landscape.get_fitness(seqs)
+            true_score = landscape.get_fitness(seqs)
 
             if len(seqs) > self.sequences_batch_size:
                 warnings.warn(
@@ -142,6 +140,6 @@ class Explorer(abc.ABC):
                     }
                 )
             )
-            self._log(metadata, sequences_data, preds, true_score, r, verbose)
+            self._log(sequences_data, metadata, r, verbose)
 
         return sequences_data, metadata

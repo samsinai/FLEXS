@@ -23,7 +23,6 @@ class PPO(flexs.Explorer):
     def __init__(
         self,
         model: flexs.Model,
-        landscape: flexs.Landscape,
         rounds: int,
         sequences_batch_size: int,
         model_queries_per_batch: int,
@@ -49,7 +48,6 @@ class PPO(flexs.Explorer):
 
         super().__init__(
             model,
-            landscape,
             "PPO_Agent",
             rounds,
             sequences_batch_size,

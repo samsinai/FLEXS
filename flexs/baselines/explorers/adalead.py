@@ -1,4 +1,3 @@
-"""Elitist explorers."""
 import random
 
 import numpy as np
@@ -15,7 +14,6 @@ class Adalead(flexs.Explorer):
     def __init__(
         self,
         model,
-        landscape,
         rounds,
         sequences_batch_size,
         model_queries_per_batch,
@@ -31,7 +29,6 @@ class Adalead(flexs.Explorer):
 
         super().__init__(
             model,
-            landscape,
             name,
             rounds,
             sequences_batch_size,

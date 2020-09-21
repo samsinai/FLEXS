@@ -5,6 +5,7 @@ import numpy as np
 
 SEQUENCES_TYPE = Union[List[str], np.ndarray]
 
+
 class Landscape(abc.ABC):
     def __init__(self, name: str):
         self.cost = 0
