@@ -9,7 +9,7 @@ from tf_agents.trajectories import time_step as ts
 from utils.sequence_utils import (
     construct_mutant_from_sample,
     one_hot_to_string,
-    translate_string_to_one_hot,
+    one_hot_to_string,
 )
 
 module_path = os.path.abspath(os.path.join(".."))
@@ -49,7 +49,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         # sequence
         self.seq = starting_seq
         self.seq_len = len(self.seq)
-        self._state = translate_string_to_one_hot(self.seq, self.alphabet)
+        self._state = one_hot_to_string(self.seq, self.alphabet)
         self.episode_seqs = {}  # the sequences seen this episode
 
         # tf_agents environment
@@ -71,7 +71,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def _reset(self):
         self.previous_fitness = -float("inf")
-        self._state = translate_string_to_one_hot(self.seq, self.alphabet)
+        self._state = one_hot_to_string(self.seq, self.alphabet)
         self.episode_seqs = {}
         self.num_steps = 0
         return ts.restart(np.array(self._state, dtype=np.float32))

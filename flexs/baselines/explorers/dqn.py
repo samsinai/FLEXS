@@ -19,7 +19,7 @@ from flexs.utils.sequence_utils import (
     sample_greedy,
     sample_random,
     one_hot_to_string,
-    translate_string_to_one_hot,
+    string_to_one_hot,
 )
 
 
@@ -53,7 +53,7 @@ def build_q_network(sequence_len, alphabet_len, device):
     return model
 
 
-class DQN_Explorer(flexs.Explorer):
+class DQN(flexs.Explorer):
     """Explorer for DQN."""
 
     def __init__(
@@ -61,12 +61,11 @@ class DQN_Explorer(flexs.Explorer):
         model,
         landscape,
         rounds,
-        starting_sequence,
         sequences_batch_size,
         model_queries_per_batch,
+        starting_sequence,
         alphabet,
-        batch_size=100,
-        virtual_screen=10,
+        log_file=None,
         memory_size=100000,
         train_epochs=20,
         gamma=0.9,
@@ -100,8 +99,8 @@ class DQN_Explorer(flexs.Explorer):
             sequences_batch_size,
             model_queries_per_batch,
             starting_sequence,
+            log_file,
         )
-        self.explorer_type = "DQN_Explorer"
         self.alphabet = alphabet
         self.alphabet_size = len(alphabet)
         self.memory_size = memory_size
@@ -122,24 +121,20 @@ class DQN_Explorer(flexs.Explorer):
 
     def initialize_data_structures(self):
         """Initialize internal data structures."""
-        start_sequence = list(self.model.measured_sequences)[0]
-        self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
-        self.seq_len = len(start_sequence)
+        self.state = string_to_one_hot(self.starting_sequence, self.alphabet)
+        self.seq_len = len(self.starting_sequence)
         self.q_network = build_q_network(self.seq_len, len(self.alphabet), self.device)
         self.q_network.eval()
         self.memory = PrioritizedReplayBuffer(
-            len(self.alphabet) * self.seq_len, self.memory_size, self.batch_size, 0.6
+            len(self.alphabet) * self.seq_len,
+            self.memory_size,
+            self.sequences_batch_size,
+            0.6,
         )
-
-    def reset(self):
-        """Reset the explorer."""
-        self.best_fitness = 0
-        self.batches = {-1: ""}
-        self.num_actions = 0
 
     def sample(self):
         """Sample a random `batch_size` subset of the memory."""
-        indices = np.random.choice(len(self.memory), self.batch_size)
+        indices = np.random.choice(len(self.memory), self.sequences_batch_size)
         rewards, actions, states, next_states = zip(
             *[self.memory[ind] for ind in indices]
         )
@@ -204,7 +199,7 @@ class DQN_Explorer(flexs.Explorer):
         """Return an action and the resulting mutant."""
         state_tensor = torch.FloatTensor([self.state.ravel()])
         prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
-        prediction = prediction.reshape((len(self.alphabet), self.seq_len))
+        prediction = prediction.reshape((self.seq_len, len(self.alphabet)))
         moves = renormalize_moves(self.state, prediction)
         # make action
         if moves.sum() > 0:
@@ -220,19 +215,20 @@ class DQN_Explorer(flexs.Explorer):
 
         return action, mutant
 
-    def pick_action(self):
+    def pick_action(self, all_measured_seqs):
         """Pick an action.
 
         Generates a new string representing the state, along with its associated reward.
         """
         eps = max(
-            self.epsilon_min, (0.5 - self.model.cost / (self.batch_size * self.rounds)),
+            self.epsilon_min,
+            (0.5 - self.model.cost / (self.sequences_batch_size * self.rounds)),
         )
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)
         new_state_string = one_hot_to_string(new_state, self.alphabet)
-        reward = self.model.get_fitness(new_state_string)
-        if not new_state_string in self.model.measured_sequences:
+        reward = self.model.get_fitness([new_state_string]).item()
+        if not new_state_string in all_measured_seqs:
             if reward >= self.best_fitness:
                 state_tensor = torch.FloatTensor([self.state.ravel()])
                 prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
@@ -242,30 +238,31 @@ class DQN_Explorer(flexs.Explorer):
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
         if (
             self.model.cost > 0
-            and self.model.cost % self.batch_size == 0
-            and len(self.memory) >= self.batch_size
+            and self.model.cost % self.sequences_batch_size == 0
+            and len(self.memory) >= self.sequences_batch_size
         ):
             self.train_actor(self.train_epochs)
         self.num_actions += 1
         return new_state_string, reward
 
-    def propose_samples(self):
+    def propose_sequences(self, measured_sequences_data):
         """Propose `batch_size` samples."""
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
-        samples = set()
-        prev_cost = copy.deepcopy(self.model.cost)
-        total_evals = 0
-        while (self.model.cost - prev_cost < self.batch_size) and (
-            total_evals < self.batch_size * self.virtual_screen
-        ):
-            new_state_string, _ = self.pick_action()
-            samples.add(new_state_string)
-            total_evals += 1
-        if len(samples) < self.batch_size:
-            random_sequences = generate_random_sequences(
-                self.seq_len, self.batch_size - len(samples), self.alphabet
-            )
-            samples.update(random_sequences)
-        return list(samples)
+
+        all_measured_seqs = set(measured_sequences_data["sequence"].values)
+        sequences = {}
+
+        prev_cost = self.model.cost
+        while self.model.cost - prev_cost < self.model_queries_per_batch:
+            new_state_string, pred = self.pick_action(all_measured_seqs)
+            all_measured_seqs.add(new_state_string)
+            sequences[new_state_string] = pred
+
+        # We propose the top `self.sequences_batch_size` new sequences we have generated
+        new_seqs = np.array(list(sequences.keys()))
+        preds = np.array(list(sequences.values()))
+        sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
+
+        return new_seqs[sorted_order], preds[sorted_order]

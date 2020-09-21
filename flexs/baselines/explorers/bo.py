@@ -9,12 +9,12 @@ from flexs.utils.replay_buffers import PrioritizedReplayBuffer
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
     generate_random_sequences,
+    string_to_one_hot,
     one_hot_to_string,
-    translate_string_to_one_hot,
 )
 
 
-class BO_Explorer(flexs.Explorer):
+class BO(flexs.Explorer):
     """Explorer using Bayesian Optimization."""
 
     def __init__(
@@ -22,11 +22,11 @@ class BO_Explorer(flexs.Explorer):
         model,
         landscape,
         rounds,
-        starting_sequence,
         sequences_batch_size,
         model_queries_per_batch,
+        starting_sequence,
         alphabet,
-        batch_size=100,
+        log_file=None,
         virtual_screen=10,
         method="EI",
         recomb_rate=0,
@@ -50,7 +50,7 @@ class BO_Explorer(flexs.Explorer):
                         sequence
                     Thompson sample another starting sequence
         """
-        name = "BO_Explorer_method={method}"
+        name = "BO-optimization_method={optimization_method}"
         super().__init__(
             model,
             landscape,
@@ -59,6 +59,7 @@ class BO_Explorer(flexs.Explorer):
             sequences_batch_size,
             model_queries_per_batch,
             starting_sequence,
+            log_file,
         )
         self.alphabet = alphabet
         self.method = method
@@ -66,6 +67,7 @@ class BO_Explorer(flexs.Explorer):
         self.best_fitness = 0
         self.top_sequence = []
         self.num_actions = 0
+        self.virtual_screen = virtual_screen 
         # use PER buffer, same as in DQN
         self.model_type = "blank"
         self.state = None
@@ -75,11 +77,10 @@ class BO_Explorer(flexs.Explorer):
 
     def initialize_data_structures(self):
         """Initialize."""
-        start_sequence = list(self.model.measured_sequences)[0]
-        self.state = translate_string_to_one_hot(start_sequence, self.alphabet)
-        self.seq_len = len(start_sequence)
+        self.state = string_to_one_hot(self.starting_sequence, self.alphabet)
+        self.seq_len = len(self.starting_sequence)
         self.memory = PrioritizedReplayBuffer(
-            len(self.alphabet) * self.seq_len, 100000, self.batch_size, 0.6
+            len(self.alphabet) * self.seq_len, 100000, self.sequences_batch_size, 0.6
         )
 
     def reset(self):
@@ -154,7 +155,7 @@ class BO_Explorer(flexs.Explorer):
                 actions.append(tuple(action))
         return actions
 
-    def pick_action(self):
+    def pick_action(self, all_measured_seqs):
         """Pick action."""
         state = self.state.copy()
         actions = self.sample_actions()
@@ -179,10 +180,10 @@ class BO_Explorer(flexs.Explorer):
         uncertainty = np.std(method_pred[action_ind])
         action = actions_to_screen[action_ind]
         new_state_string = states_to_screen[action_ind]
-        self.state = translate_string_to_one_hot(new_state_string, self.alphabet)
+        self.state = string_to_one_hot(new_state_string, self.alphabet)
         new_state = self.state
         reward = np.mean(ensemble_preds[action_ind])
-        if not new_state_string in self.model.measured_sequences:
+        if not new_state_string in all_measured_seqs:
             if reward >= self.best_fitness:
                 self.top_sequence.append((reward, new_state, self.model.cost))
             self.best_fitness = max(self.best_fitness, reward)
@@ -200,21 +201,23 @@ class BO_Explorer(flexs.Explorer):
         sequences = [x[1] for x in measured_batch]
         return sequences[index]
 
-    def propose_samples(self):
+    def propose_sequences(self, measured_sequences):
         """Propose `batch_size` samples."""
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
         else:
             # set state to best measured sequence from prior batch
-            last_batch = self.batches[self.get_last_batch()]
+            last_round_num = measured_sequences['round'].max()
+            last_batch = measured_sequences[measured_sequences['round'] == last_round_num]
+            last_batch_seqs = last_batch['sequence'].values
             if self.recomb_rate > 0 and len(last_batch) > 1:
-                last_batch = self._recombine_population(list(last_batch))
+                last_batch_seqs = self._recombine_population(list(last_batch_seqs))
             measured_batch = sorted(
                 [(self.model.get_fitness(seq), seq) for seq in last_batch]
             )
             sampled_seq = self.Thompson_sample(measured_batch)
-            self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
+            self.state = string_to_one_hot(sampled_seq, self.alphabet)
         # generate next batch by picking actions
         self.initial_uncertainty = None
         samples = set()
@@ -222,31 +225,35 @@ class BO_Explorer(flexs.Explorer):
             copy.deepcopy(self.model.cost),
             copy.deepcopy(self.model.evals),
         )
-        while (self.model.cost - prev_cost < self.batch_size) and (
-            self.model.evals - prev_evals < self.batch_size * self.virtual_screen
+        all_measured_seqs = set(measured_sequences['sequence'].values)
+        while (self.model.cost - prev_cost < self.sequences_batch_size) and (
+            self.model.evals - prev_evals < self.sequences_batch_size * self.virtual_screen
         ):
-            uncertainty, new_state_string, _ = self.pick_action()
+            uncertainty, new_state_string, _ = self.pick_action(all_measured_seqs)
+            all_measured_seqs.add(new_state_string)
             samples.add(new_state_string)
             if self.initial_uncertainty is None:
                 self.initial_uncertainty = uncertainty
             if uncertainty > 2 * self.initial_uncertainty:
                 # reset sequence to starting sequence if we're in territory that's too uncharted
                 sampled_seq = self.Thompson_sample(measured_batch)
-                self.state = translate_string_to_one_hot(sampled_seq, self.alphabet)
+                self.state = string_to_one_hot(sampled_seq, self.alphabet)
                 self.initial_uncertainty = None
 
-        if len(samples) < self.batch_size:
+        if len(samples) < self.sequences_batch_size:
             random_sequences = generate_random_sequences(
-                self.seq_len, self.batch_size - len(samples), self.alphabet
+                self.seq_len, self.sequences_batch_size - len(samples), self.alphabet
             )
             samples.update(random_sequences)
+        # get predicted fitnesses of samples 
+        preds = [self.model.get_fitness(sample) for sample in samples]
         # train ensemble model before returning samples
         self.train_models()
 
-        return list(samples)
+        return list(samples), preds 
 
 
-class GPR_BO_Explorer(Base_explorer):
+class GPR_BO(flexs.Explorer):
     """Explorer using Bayesian Optimization.
 
     Uses Gaussian process with RBF kernel on black box function.
@@ -258,34 +265,40 @@ class GPR_BO_Explorer(Base_explorer):
 
     def __init__(
         self,
-        batch_size=100,
-        alphabet="UCGA",
+        model,
+        landscape,
+        rounds,
+        sequences_batch_size,
+        model_queries_per_batch,
+        starting_sequence,
+        alphabet,
+        log_file=None,
         virtual_screen=10,
-        path="./simulations/",
-        debug=False,
         method="EI",
+        seq_proposal_method="Thompson",
     ):
         """Initialize the explorer."""
-        super(GPR_BO_Explorer, self).__init__(
-            batch_size=batch_size,
-            alphabet=alphabet,
-            virtual_screen=virtual_screen,
-            path=path,
-            debug=debug,
+        name = "GPR_BO_Explorer-method={method}-seq_proposal_method={seq_proposal_method}"
+        super().__init__(
+            model,
+            landscape,
+            name,
+            rounds,
+            sequences_batch_size,
+            model_queries_per_batch,
+            starting_sequence,
+            log_file,
         )
-        self.explorer_type = "GPR_BO_Explorer"
+        self.alphabet = alphabet 
         self.alphabet_len = len(alphabet)
         self.method = method
+        self.seq_proposal_method = seq_proposal_method
         self.best_fitness = 0
         self.top_sequence = []
+        self.virtual_screen = virtual_screen 
 
         self.seq_len = None
         self.maxima = None
-        self._reset = False
-
-    def _initialize(self):
-        start_sequence = list(self.model.measured_sequences)[0]
-        self.seq_len = len(start_sequence)
 
     def reset(self):
         """Reset."""
@@ -363,31 +376,34 @@ class GPR_BO_Explorer(Base_explorer):
         # Sort descending based on the value.
         return sorted(self.maxima, reverse=True, key=lambda x: x[0])
 
-    def propose_samples(self):
+    def propose_sequences(self, measured_sequences):
         """Propose `batch_size` samples."""
-        if self._reset:
-            # indicates model was reset
-            self._initialize()
-        self._reset = False
-
         samples = set()
 
-        new_seqs = self.propose_sequences_via_thompson()
+        seq_proposal_funcs = {
+            "Thompson": self.propose_sequences_via_thompson,
+            "Greedy": self.propose_sequences_via_greedy,
+            "UCB": self.propose_sequences_via_ucb
+        }
+        seq_proposal_func = seq_proposal_funcs[self.seq_proposal_method]
+        new_seqs = seq_proposal_func()
         new_states = []
         new_fitnesses = []
         i = 0
-        while (len(new_states) < self.batch_size) and i < len(new_seqs):
+        all_measured_seqs = set(measured_sequences['sequence'].values)
+        while (len(new_states) < self.sequences_batch_size) and i < len(new_seqs):
             new_fitness, new_seq = new_seqs[i]
-            if new_seq not in self.model.measured_sequences:
-                new_state = translate_string_to_one_hot(new_seq, self.alphabet)
+            if new_seq not in all_measured_seqs:
+                new_state = one_hot_to_string(new_seq, self.alphabet)
                 if new_fitness >= self.best_fitness:
                     self.top_sequence.append((new_fitness, new_state, self.model.cost))
                     self.best_fitness = new_fitness
                 samples.add(new_seq)
+                all_measured_seqs.add(new_seq)
                 new_states.append(new_state)
                 new_fitnesses.append(new_fitness)
             i += 1
 
         print("Current best fitness:", self.best_fitness)
 
-        return list(samples)
+        return list(samples), new_fitnesses 
