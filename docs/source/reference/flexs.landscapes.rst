@@ -10,7 +10,7 @@ flexs.landscapes
 .. toctree::
    :maxdepth: 3
 
-   flexs.landscapes.Additive_models
+   flexs.landscapes.additive_aav_packaging
    flexs.landscapes.bert_gfp
    flexs.landscapes.rna
    flexs.landscapes.rosetta

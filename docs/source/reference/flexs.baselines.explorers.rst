@@ -10,13 +10,12 @@ flexs.baselines.explorers
 .. toctree::
    :maxdepth: 3
 
-   flexs.baselines.explorers.PPO_explorer
    flexs.baselines.explorers.adalead
-   flexs.baselines.explorers.base_explorer
-   flexs.baselines.explorers.bo_explorer
+   flexs.baselines.explorers.bo
    flexs.baselines.explorers.cbas_dbas
    flexs.baselines.explorers.cmaes
-   flexs.baselines.explorers.dqn_explorer
+   flexs.baselines.explorers.dqn
    flexs.baselines.explorers.dyna_ppo
    flexs.baselines.explorers.genetic_algorithm
+   flexs.baselines.explorers.ppo
    flexs.baselines.explorers.random

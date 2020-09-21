@@ -33,6 +33,7 @@ class Random(flexs.Explorer):
         model_queries_per_batch: int,
         alphabet: str,
         log_file: str = None,
+        elitist: bool = False,
         seed: int = None,
     ):
         name = f"Random_mu={mu}"
@@ -49,7 +50,7 @@ class Random(flexs.Explorer):
         self.mu = mu
         self.rng = np.random.default_rng(seed)
         self.alphabet = alphabet
-        self.name = f"Random_mu{self.mu}"
+        self.elitist = elitist
 
     def propose_sequences(
         self, measured_sequences: pd.DataFrame
@@ -72,6 +73,10 @@ class Random(flexs.Explorer):
 
         new_seqs = np.array(list(new_seqs))
         preds = self.model.get_fitness(new_seqs)
-        sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
 
-        return new_seqs[sorted_order], preds[sorted_order]
+        if self.elitist:
+            idxs = np.argsort(preds)[: -self.sequences_batch_size : -1]
+        else:
+            idxs = self.rng.integers(0, len(new_seqs), size=self.sequences_batch_size)
+
+        return new_seqs[idxs], preds[idxs]

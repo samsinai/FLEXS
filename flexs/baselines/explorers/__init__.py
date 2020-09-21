@@ -5,4 +5,5 @@ from flexs.baselines.explorers.cmaes import CMAES
 from flexs.baselines.explorers.dqn import DQN
 from flexs.baselines.explorers.dyna_ppo import DynaPPO
 from flexs.baselines.explorers.genetic_algorithm import GeneticAlgorithm
+from flexs.baselines.explorers.ppo import PPO
 from flexs.baselines.explorers.random import Random

@@ -1,1 +1,1 @@
-from flexs.baselines import explorers, models
+from flexs.baselines import models, explorers
