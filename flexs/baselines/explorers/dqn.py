@@ -19,7 +19,7 @@ from flexs.utils.sequence_utils import (
     sample_greedy,
     sample_random,
     one_hot_to_string,
-    string_to_one_hot
+    string_to_one_hot,
 )
 
 
@@ -66,8 +66,6 @@ class DQN(flexs.Explorer):
         starting_sequence,
         alphabet,
         log_file=None,
-        batch_size=100,
-        virtual_screen=10,
         memory_size=100000,
         train_epochs=20,
         gamma=0.9,
@@ -115,7 +113,6 @@ class DQN(flexs.Explorer):
         self.times_seen = Counter()
         self.num_actions = 0
         self.model_type = "blank"
-        self.virtual_screen = virtual_screen 
 
         self.state = None
         self.seq_len = None
@@ -129,14 +126,11 @@ class DQN(flexs.Explorer):
         self.q_network = build_q_network(self.seq_len, len(self.alphabet), self.device)
         self.q_network.eval()
         self.memory = PrioritizedReplayBuffer(
-            len(self.alphabet) * self.seq_len, self.memory_size, self.sequences_batch_size, 0.6
+            len(self.alphabet) * self.seq_len,
+            self.memory_size,
+            self.sequences_batch_size,
+            0.6,
         )
-
-    def reset(self):
-        """Reset the explorer."""
-        self.best_fitness = 0
-        self.batches = {-1: ""}
-        self.num_actions = 0
 
     def sample(self):
         """Sample a random `batch_size` subset of the memory."""
@@ -227,12 +221,13 @@ class DQN(flexs.Explorer):
         Generates a new string representing the state, along with its associated reward.
         """
         eps = max(
-            self.epsilon_min, (0.5 - self.model.cost / (self.sequences_batch_size * self.rounds)),
+            self.epsilon_min,
+            (0.5 - self.model.cost / (self.sequences_batch_size * self.rounds)),
         )
         state = self.state.copy()
         action, new_state = self.get_action_and_mutant(eps)
         new_state_string = one_hot_to_string(new_state, self.alphabet)
-        reward = self.model.get_fitness(new_state_string)
+        reward = self.model.get_fitness([new_state_string]).item()
         if not new_state_string in all_measured_seqs:
             if reward >= self.best_fitness:
                 state_tensor = torch.FloatTensor([self.state.ravel()])
@@ -250,26 +245,24 @@ class DQN(flexs.Explorer):
         self.num_actions += 1
         return new_state_string, reward
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(self, measured_sequences_data):
         """Propose `batch_size` samples."""
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
-        seq_preds = set()
-        prev_cost = copy.deepcopy(self.model.cost)
-        total_evals = 0
-        all_measured_seqs = set(measured_sequences['sequence'].values)
-        while (self.model.cost - prev_cost < self.sequences_batch_size) and (
-            total_evals < self.sequences_batch_size * self.virtual_screen
-        ):
+
+        all_measured_seqs = set(measured_sequences_data["sequence"].values)
+        sequences = {}
+
+        prev_cost = self.model.cost
+        while self.model.cost - prev_cost < self.model_queries_per_batch:
             new_state_string, pred = self.pick_action(all_measured_seqs)
             all_measured_seqs.add(new_state_string)
-            seq_preds.add((new_state_string, pred[0]))
-            total_evals += 1
-        if len(seq_preds) < self.sequences_batch_size:
-            random_sequences = generate_random_sequences(
-                self.seq_len, self.sequences_batch_size - len(seq_preds), self.alphabet
-            )
-            seq_preds.update(random_sequences)
-        samples, preds = zip(*seq_preds)
-        return list(samples), list(preds)
+            sequences[new_state_string] = pred
+
+        # We propose the top `self.sequences_batch_size` new sequences we have generated
+        new_seqs = np.array(list(sequences.keys()))
+        preds = np.array(list(sequences.values()))
+        sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
+
+        return new_seqs[sorted_order], preds[sorted_order]
