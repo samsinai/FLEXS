@@ -1,6 +1,4 @@
-"""
-First steps
-"""
+"""The FLEXS (Fitness Landscape EXploration Sandbox) package."""
 
 from flexs.landscape import Landscape  # isort:skip
 from flexs.model import Model, LandscapeAsModel  # isort:skip

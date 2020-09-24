@@ -33,8 +33,8 @@ class Explorer(abc.ABC):
 
         self.log_file = log_file
         if self.log_file is not None:
-            self.log_file = Path(self.log_file)
-            self.log_file.mkdir(parents=True, exist_ok=True)
+            dir_path, filename = os.path.split(self.log_file)
+            os.makedirs(dir_path, exist_ok=True)
 
         if model_queries_per_batch < sequences_batch_size:
             raise ValueError(

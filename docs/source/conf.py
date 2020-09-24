@@ -38,11 +38,13 @@ extensions = [
     # "sphinxcontrib.apidoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
+    "sphinx_autodoc_typehints",
     "sphinx_rtd_theme",
     "sphinx.ext.autosummary",
 ]
 autosummary_generate = True
 source_suffix = [".rst", ".md"]
+autodoc_typehints = "description"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

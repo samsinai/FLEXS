@@ -1,6 +1,4 @@
 """DyNA-PPO environment module."""
-import os
-import sys
 
 import editdistance
 import numpy as np
@@ -8,27 +6,14 @@ from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 import flexs
-from flexs.utils import sequence_utils as s_utils
-
-from typing import Callable, List
-from flexs.model import SEQUENCES_TYPE
-from flexs.utils.sequence_utils import (
-    construct_mutant_from_sample,
-    one_hot_to_string,
-    string_to_one_hot,
-)
+import flexs.utils.sequence_utils as s_utils
 
 
 class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """DyNA-PPO environment based on TF-Agents."""
 
     def __init__(  # pylint: disable=W0231
-        self,
-        alphabet: str,
-        starting_seq: str,
-        model: flexs.Model,
-        max_num_steps: int,
-        get_fitness_ensemble: Callable[[SEQUENCES_TYPE], np.ndarray],
+        self, alphabet: str, seq_length: int, model: flexs.Model
     ):
         """Initialize DyNA-PPO agent environment.
 
@@ -51,22 +36,17 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
         self.alphabet = alphabet
 
-        self.current_seq_len = 0
-        self.state = np.zeros((len(starting_seq), len(alphabet + 1)))
-        self.state[np.arange(len(starting_seq)), -1] = 1
+        self.seq_length = seq_length
+        self.partial_seq_len = 0
+        self.state = np.zeros((seq_length, len(alphabet) + 1), dtype="float32")
+        self.state[np.arange(len(self.state)), -1] = 1
 
         # model/model/measurements
         self.model = model
         self.previous_fitness = -float("inf")
-        self.get_fitness_ensemble = get_fitness_ensemble
-        self.give_oracle_reward = False
 
         # sequence
-        self.seq = starting_seq
-        self.seq_len = len(self.seq)
-        self._state = string_to_one_hot(self.seq, self.alphabet)
         self.all_seqs = {}
-        self.episode_seqs = {}
         self.lam = 0.1
 
         # tf_agents environment
@@ -78,7 +58,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             name="action",
         )
         self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(self.seq_len, self.alphabet_len),
+            shape=(self.seq_length, len(self.alphabet) + 1),
             dtype=np.float32,
             minimum=0,
             maximum=1,
@@ -87,7 +67,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         self._time_step_spec = ts.time_step_spec(self._observation_spec)
 
     def _reset(self):
-        self.current_seq_len = 0
+        self.partial_seq_len = 0
         self.state = np.zeros_like(self.state)
         self.state[np.arange(len(self.state)), -1] = 1
         return ts.restart(self.state)
@@ -114,23 +94,26 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 dens += self.all_seqs[s] / dist
         return dens
 
+    def get_cached_fitness(self, seq):
+        return self.all_seqs[seq]
+
     def _step(self, action):
         """Progress the agent one step in the environment.
         """
 
-        self.state[self.current_seq_len, -1] = 0
-        self.state[self.current_seq_len, action] = 1
-        self.current_seq_len += 1
+        self.state[self.partial_seq_len, -1] = 0
+        self.state[self.partial_seq_len, action] = 1
+        self.partial_seq_len += 1
 
-        if self.current_seq_len < self.seq_length:
+        # We have not generated the last residue in the sequence, so continue
+        if self.partial_seq_len < self.seq_length - 1:
             return ts.transition(self.state, 0)
 
-        complete_sequence = one_hot_to_string(self.state[:, :-1], self.alphabet)
-        if self.give_oracle_reward:
-            reward = self.model.get_fitness([complete_sequence]).item()
-        else:
-            reward = self.get_fitness_ensemble([complete_sequence]).item()
+        # If sequence is of full length, score the sequence and end the episode
+        # We need to take off the column in the matrix (-1) representing the mask token
+        complete_sequence = s_utils.one_hot_to_string(self.state[:, :-1], self.alphabet)
+        fitness = self.model.get_fitness([complete_sequence]).item()
+        self.all_seqs[complete_sequence] = fitness
 
-        reward = reward - self.lam * self.sequence_density(self.current_sequence)
-
+        reward = fitness - self.lam * self.sequence_density(complete_sequence)
         return ts.termination(self.state, reward)

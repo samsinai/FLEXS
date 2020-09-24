@@ -93,7 +93,7 @@ class VAE:
         epochs=10,
         epsilon_std=1.0,
         beta=1,
-        validation_split=0.05,
+        validation_split=0.2,
         mutation_rate=0.1,
         verbose=True,
     ):

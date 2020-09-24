@@ -8,7 +8,7 @@ import sklearn.linear_model
 import sklearn.gaussian_process
 import sklearn.ensemble
 import sklearn.tree
-import sklearn.metrics
+import scipy.stats
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tf_agents.agents.ppo import ppo_agent
@@ -20,7 +20,7 @@ from tf_agents.environments.utils import validate_py_environment
 
 import flexs
 from flexs import baselines
-from flexs.baselines.explorers.environments.dynappo import (
+from flexs.baselines.explorers.environments.dyna_ppo import (
     DynaPPOEnvironment as DynaPPOEnv,
 )
 import flexs.utils.sequence_utils as s_utils
@@ -28,9 +28,10 @@ from typing import List, Set, Tuple, Type, Union
 
 
 class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
-    def __init__(self, seq_len, r_squared_threshold, alphabet):
-        super().__init__(
-            models=[
+    def __init__(self, seq_len, r_squared_threshold, alphabet, models=None):
+
+        if models is None:
+            models = [
                 # FLEXS models
                 baselines.models.GlobalEpistasisModel(seq_len, 100, alphabet),
                 baselines.models.MLP(seq_len, 200, alphabet),
@@ -39,7 +40,9 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
                 baselines.models.LinearRegression(alphabet),
                 baselines.models.RandomForest(alphabet),
                 baselines.models.SklearnRegressor(
-                    sklearn.neighbors.NearestNeighbors(), alphabet, "nearest_neighbors",
+                    sklearn.neighbors.KNeighborsRegressor(),
+                    alphabet,
+                    "nearest_neighbors",
                 ),
                 baselines.models.SklearnRegressor(
                     sklearn.linear_model.Lasso(), alphabet, "lasso"
@@ -61,34 +64,43 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
                     sklearn.tree.ExtraTreeRegressor(), alphabet, "extra_trees"
                 ),
             ]
-        )
 
-        self.r_squared_vals = None
+
+        super().__init__(models=models)
+
+        self.r_squared_vals = np.ones(len(self.models))
         self.r_squared_threshold = r_squared_threshold
 
     def train(self, sequences, labels):
+        if len(sequences) < 10:
+            return
+
         (train_X, test_X, train_y, test_y,) = sklearn.model_selection.train_test_split(
             sequences, labels, test_size=0.25
         )
 
+        # Train each model in the ensemble
         for model in self.models:
             model.train(train_X, train_y)
 
-        model_preds = np.stack(
-            [model.get_fitness(test_X) for model in self.models], axis=0
-        )
-
+        # Calculate r^2 values for each model in the ensemble on test set
         self.r_squared_vals = np.array(
-            [sklearn.metrics.r2_score(test_y, preds) for preds in model_preds]
+            [
+                scipy.stats.pearsonr(test_y, model.get_fitness(test_X))[0]**2
+                for model in self.models
+            ]
         )
 
     def _fitness_function(self, sequences):
-        scores = [
-            model.get_fitness(sequences)
-            for model, r_squared in zip(self.models, self.r_squared_vals)
-            if r_squared > self.r_squared_threshold
+        passing_models = [
+            model for model, r_squared in zip(self.models, self.r_squared_vals)
+            if r_squared >= self.r_squared_threshold
         ]
-        return np.mean(scores, axis=0)
+
+        if len(passing_models) == 0:
+            return self.models[np.argmax(self.r_squared_vals)].get_fitness(sequences)
+
+        return np.mean([model.get_fitness(sequences) for model in passing_models], axis=0)
 
 
 class DynaPPO(flexs.Explorer):
@@ -104,7 +116,8 @@ class DynaPPO(flexs.Explorer):
         log_file: str = None,
         ensemble_r_squared_threshold: float = 0.5,
         num_experiment_rounds: int = 10,
-        num_model_rounds: int = 20,
+        num_model_rounds: int = 1,
+        ensemble_models=None
     ):
         """Explorer which implements DynaPPO.
 
@@ -133,9 +146,15 @@ class DynaPPO(flexs.Explorer):
             tf_env: Environment in which `agent` operates.
         """
 
+        tf.config.run_functions_eagerly(False)
+
         name = f"DynaPPO_Agent_{ensemble_r_squared_threshold}_{num_experiment_rounds}_{num_model_rounds}"
         model = DynaPPOEnsemble(
-            len(starting_sequence), ensemble_r_squared_threshold, alphabet
+            len(starting_sequence), ensemble_r_squared_threshold, alphabet, ensemble_models
+        )
+        model.train(
+            s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
+            [0] * 10,
         )
 
         super().__init__(
@@ -158,10 +177,7 @@ class DynaPPO(flexs.Explorer):
         self.agent = None
 
         env = DynaPPOEnv(
-            alphabet=self.alphabet,
-            starting_seq=starting_sequence,
-            model=model,
-            max_num_steps=self.model_queries_per_batch,
+            alphabet=self.alphabet, seq_length=len(starting_sequence), model=model,
         )
         validate_py_environment(env, episodes=1)
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
@@ -186,14 +202,6 @@ class DynaPPO(flexs.Explorer):
         )
         self.agent.initialize()
 
-    def _set_tf_env_reward(self, give_oracle_reward: bool):
-        """Set TF-Agents environment reward.
-
-        If `give_oracle_reward` is true, the reward value in the environment is coming from the
-        oracle. Otherwise, the reward value comes from the ensemble model.
-        """
-        self.tf_env.pyenv.envs[0].give_oracle_reward = give_oracle_reward
-
     def add_last_seq_in_trajectory(self, experience, new_seqs):
         """Add the last sequence in an episode's trajectory.
 
@@ -207,59 +215,20 @@ class DynaPPO(flexs.Explorer):
         """
         if experience.is_boundary():
             seq = s_utils.one_hot_to_string(
-                experience.observation.numpy()[0], self.alphabet
+                experience.observation.numpy()[0][:, :-1], self.alphabet
             )
-            new_seqs.add(seq)
+            new_seqs[seq] = self.tf_env.envs[0].get_cached_fitness(seq)
 
-            top_fitness = max(new_seqs.values())
-            top_sequences = [
-                seq for seq, fitness in new_seqs.items() if fitness >= 0.9 * top_fitness
-            ]
-            self.tf_env.pyenv.envs[0].seq = np.random.choice(top_sequences)
+    def propose_sequences(self, measured_sequences_data):
+        """Propose `self.sequences_batch_size` samples."""
 
-    def perform_model_based_training_step(
-        self, measured_sequences_data
-    ) -> Union[type(None), bool]:
-        """Perform model-based training step."""
-        # Change reward to ensemble based.
-        self._set_tf_env_reward(give_oracle_reward=False)
-
-        seen_seqs = set(measured_sequences_data["sequence"])
-        proposed_seqs = set()
-
-        replay_buffer, collect_driver = self.get_replay_buffer_and_driver(
-            new_sequence_bucket=proposed_seqs
+        time_steps = np.tile(
+            range(len(self.starting_sequence)), len(measured_sequences_data)
         )
 
-        effective_budget = self.sequences_batch_size
-        self.ensemble.cost = 0
-        while self.ensemble.cost < effective_budget:
-            collect_driver.run()
-            if self.ensemble.should_model_exit_early:
-                return True
+        # gt_trajectories = tf_agents.trajectory.trajectories.Trajectory()
 
-        # Train policy on samples collected.
-        trajectories = replay_buffer.gather_all()
-        self.agent.train(experience=trajectories)
-        replay_buffer.clear()
-
-    def learn_policy(self, measured_sequences_data: pd.DataFrame):
-        """Learn policy."""
-
-        for n in range(self.num_experiment_rounds):
-            print(f"Experiment based round {n}/{self.num_experiment_rounds}")
-            self.perform_experiment_based_training_step(measured_sequences_data)
-
-        self.has_learned_policy = True
-
-    def get_replay_buffer_and_driver(
-        self, new_sequence_bucket: Set[str]
-    ) -> Tuple[
-        Type[tf_uniform_replay_buffer.TFUniformReplayBuffer],
-        Type[dynamic_episode_driver.DynamicEpisodeDriver],
-    ]:
         num_parallel_environments = 1
-
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
             self.agent.collect_data_spec,
@@ -267,68 +236,40 @@ class DynaPPO(flexs.Explorer):
             max_length=replay_buffer_capacity,
         )
 
+        sequences = {}
         collect_driver = dynamic_episode_driver.DynamicEpisodeDriver(
             self.tf_env,
             self.agent.collect_policy,
             observers=[
                 replay_buffer.add_batch,
-                partial(self.add_last_seq_in_trajectory, new_seqs=new_sequence_bucket),
+                partial(self.add_last_seq_in_trajectory, new_seqs=sequences),
             ],
             num_episodes=1,
         )
 
-        return replay_buffer, collect_driver
-
-    def propose_sequences(self, measured_sequences_data):
-        """Propose `self.sequences_batch_size` samples."""
-        if not self.has_learned_policy:
-            self.learn_policy(measured_sequences_data)
-
-        # Need to switch back to using the model.
-        self._set_tf_env_reward(give_oracle_reward=True)
-        seen_seqs = set(measured_sequences_data["sequence"])
-        proposed_seqs = set()
-
-        replay_buffer, collect_driver = self.get_replay_buffer_and_driver(
-            new_sequence_bucket=proposed_seqs
-        )
-
-        # Since we used part of the total budget for pretraining, amortize this cost.
-        effective_budget = (
-            self.rounds * self.model_queries_per_batch / 2
-        ) / self.rounds
-
-        print("Effective budget:", effective_budget)
         previous_model_cost = self.model.cost
+        for _ in range(self.num_model_rounds):
+            if self.model.cost - previous_model_cost >= self.model_queries_per_batch:
+                break
 
-        attempts = 0
-        cycles = 3
-        # Terminate if all we see are old sequences.
-        while ((self.model.cost - previous_model_cost) < effective_budget) and (
-            attempts < effective_budget * cycles
-        ):
-            collect_driver.run()
-            attempts += 1
-        print("Total evals:", self.model.cost - previous_model_cost)
+            previous_round_model_cost = self.model.cost
+            while self.model.cost - previous_round_model_cost < int(
+                self.model_queries_per_batch / self.num_model_rounds
+            ):
+                collect_driver.run()
 
-        proposed_seqs = list(proposed_seqs.difference(seen_seqs))
-        measured_proposed_seqs = pd.DataFrame(
-            {
-                "sequence": proposed_seqs,
-                "model_score": self.model.get_fitness(proposed_seqs),
-            }
-        )
-        measured_proposed_seqs = measured_proposed_seqs.sort_values(
-            by="model_score", ascending=False
-        )
+            trajectories = replay_buffer.gather_all()
+            self.agent.train(experience=trajectories)
+            replay_buffer.clear()
 
-        trajectories = replay_buffer.gather_all()
-        self.agent.train(experience=trajectories)
-        replay_buffer.clear()
+        # We propose the top `self.sequences_batch_size` new sequences we have generated
+        sequences = {
+            seq: fitness
+            for seq, fitness in sequences.items()
+            if seq not in set(measured_sequences_data["sequence"])
+        }
+        new_seqs = np.array(list(sequences.keys()))
+        preds = np.array(list(sequences.values()))
+        sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
 
-        return (
-            measured_proposed_seqs["sequence"].to_numpy()[: self.sequences_batch_size],
-            measured_proposed_seqs["model_score"].to_numpy()[
-                : self.sequences_batch_size
-            ],
-        )
+        return new_seqs[sorted_order], preds[sorted_order]

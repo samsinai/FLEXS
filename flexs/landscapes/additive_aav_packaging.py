@@ -92,14 +92,13 @@ def registry():
     Returns a dictionary of problems of the form:
     `{
         "problem name": {
-            "params": ...,
-            "starts": ...
+            "params": ...
         },
         ...
     }`
 
-    where `flexs.landscapes.RNABinding(**problem["params"])` instantiates the
-    RNA binding landscape for the given set of parameters.
+    where `flexs.landscapes.AdditiveAAVPackaging(**problem["params"])` instantiates the
+    additive AAV packaging landscape for the given set of parameters.
 
     Returns:
         dict: Problems in the registry.

@@ -12,11 +12,14 @@ class TFBinding(flexs.Landscape):
 
         # Load TF pairwise TF binding measurements from file
         data = pd.read_csv(landscape_file, sep="\t")
-        score = data["E-score"]
+        score = data["E-score"] # "E-score" is enrichment score
         norm_score = (score - score.min()) / (score.max() - score.min())
 
-        # Populate dictionary with normalized scores
+        # The csv file keeps one DNA strand's sequence in "8-mer" and the other in "8-mer.1".
+        # Since it doesn't really matter which strand we have, we will map the sequences of
+        # both strands to the same normalized enrichment score.
         self.sequences = dict(zip(data["8-mer"], norm_score))
+        self.sequences.update(zip(data["8-mer.1"], norm_score))
 
     def _fitness_function(self, sequences):
         return np.array([self.sequences[seq] for seq in sequences])
