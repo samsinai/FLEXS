@@ -1,5 +1,5 @@
 """A small set of evaluation metrics to benchmark explorers."""
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 import flexs
 from flexs import baselines
@@ -17,9 +17,8 @@ def robustness(
 
     Args:
         landscape: The landscape to run on.
-        make_explorer: A function that takes in
-            a model and signal strength (for potential bookeeping/logging purposes) and
-            returns the desired explorer.
+        make_explorer: A function that takes in a model and signal strength
+            (for potential bookeeping/logging purposes) and an explorer.
         signal_strengths: A list of signal strengths between 0 and 1.
     """
     results = []
@@ -36,16 +35,25 @@ def robustness(
 
 
 def efficiency(
-    landscape,
-    make_explorer,
-    budgets=[(100, 500), (100, 5000), (1000, 5000), (1000, 10000)],
+    landscape: flexs.Landscape,
+    make_explorer: Callable[[int, int], flexs.Explorer],
+    budgets: List[Tuple[int, int]] = [
+        (100, 500),
+        (100, 5000),
+        (1000, 5000),
+        (1000, 10000),
+    ],
 ):
     """
-    Evaluates explorer outputs as a function of the number of allowed
-    ground truth measurements and model queries per round.
+    Evaluate explorer outputs as a function of the number of allowed ground truth measurements
+    and model queries per round.
 
+    Args:
+        landscape: Ground truth fitness landscape.
+        make_explorer: A function that takes in a `sequences_batch_size` and
+            a `model_queries_per_batch` and returns an explorer.
+        budgets: A list of tuples (`sequences_batch_size`, `model_queries_per_batch`).
     """
-
     results = []
     for sequences_batch_size, model_queries_per_batch in budgets:
         print(
@@ -62,12 +70,26 @@ def efficiency(
 
 
 def adaptivity(
-    landscape,
-    make_explorer,
-    num_rounds=[1, 10, 100, 1000],
-    total_ground_truth_measurements=1000,
-    total_model_queries=5000,
+    landscape: flexs.Landscape,
+    make_explorer: Callable[[int, int, int], flexs.Explorer],
+    num_rounds: List[int] = [1, 10, 100],
+    total_ground_truth_measurements: int = 1000,
+    total_model_queries: int = 10000,
 ):
+    """
+    For a fixed total budget of ground truth measurements and model queries,
+    run with different numbers of rounds.
+
+    Args:
+        landscape: Ground truth fitness landscape.
+        make_explorer: A function that takes in a number of rounds, a
+            `sequences_batch_size` and a `model_queries_per_batch` and returns an explorer.
+        num_rounds: A list of number of rounds to run the explorer with.
+        total_ground_truth_measurements: Total number of ground truth measurements
+            across all rounds (`sequences_batch_size * rounds`).
+        total_model_queries: Total number of model queries across all rounds
+            (`model_queries_per_round * rounds`).
+    """
     results = []
     for rounds in num_rounds:
         print(f"Evaluating for num_rounds: {rounds}")

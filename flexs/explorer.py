@@ -1,8 +1,9 @@
+"""Defines abstract base explorer class."""
+
 import abc
 import json
 from datetime import datetime
 import os
-from pathlib import Path
 from typing import Dict, Tuple
 import warnings
 
@@ -13,6 +14,13 @@ import flexs
 
 
 class Explorer(abc.ABC):
+    """
+    Abstract base explorer class.
+
+    Run explorer through the `run` method. Implement subclasses
+    by overriding `propose_sequences` (do not override `run`).
+    """
+
     def __init__(
         self,
         model: flexs.Model,
@@ -23,6 +31,19 @@ class Explorer(abc.ABC):
         starting_sequence: str,
         log_file: str = None,
     ):
+        """
+        Create an Explorer.
+
+        Args:
+            model: Model of ground truth that the explorer will use to help guide sequence proposal.
+            name: A human-readable name for the explorer (may include parameter values).
+            rounds: Number of rounds to run for (a round consists of sequence proposal,
+                ground truth fitness measurement of proposed sequences, and retraining the model).
+            sequences_batch_size: Number of sequences to propose for measurement per round.
+            model_queries_per_batch: Number of allowed model evaluations per round.
+            starting_sequence: Sequence from which to start exploration.
+            log_file: .csv filepath to write output.
+        """
         self.model = model
         self.name = name
 
@@ -45,7 +66,8 @@ class Explorer(abc.ABC):
     def propose_sequences(
         self, measured_sequences_data: pd.DataFrame
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """Propose a list of sequences to be measured in the next round.
+        """
+        Propose a list of sequences to be measured in the next round.
 
         This method will be overriden to contain the explorer logic for each explorer.
 
@@ -82,7 +104,13 @@ class Explorer(abc.ABC):
     def run(
         self, landscape: flexs.Landscape, verbose: bool = True
     ) -> Tuple[pd.DataFrame, Dict]:
-        """Run the exporer."""
+        """
+        Run the exporer.
+
+        Args:
+            landscape: Ground truth fitness landscape.
+            verbose: Whether to print output or not.
+        """
 
         self.model.cost = 0
 

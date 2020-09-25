@@ -1,5 +1,4 @@
 """DQN explorer."""
-import copy
 import random
 from collections import Counter
 
@@ -9,15 +8,11 @@ from torch import nn
 from torch import optim as optim
 from torch.nn import functional as F
 from torch.nn.utils import clip_grad_norm_
+
 import flexs
 from flexs.utils.replay_buffers import PrioritizedReplayBuffer
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
-    generate_random_sequences,
-    make_random_action,
-    renormalize_moves,
-    sample_greedy,
-    sample_random,
     one_hot_to_string,
     string_to_one_hot,
 )
@@ -198,15 +193,51 @@ class DQN(flexs.Explorer):
         state_tensor = torch.FloatTensor([self.state.ravel()])
         prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
         prediction = prediction.reshape((self.seq_len, len(self.alphabet)))
-        moves = renormalize_moves(self.state, prediction)
+
+        # Ensure that staying in place gives no reward
+        zero_current_state = (self.state - 1) * (-1)
+        moves = np.multiply(prediction, zero_current_state)
+
         # make action
         if moves.sum() > 0:
-            p = random.random()
-            action = sample_random(moves) if p < epsilon else sample_greedy(moves)
+            # Sample a random action
+            if random.random() < epsilon:
+                i, j = moves.shape
+                non_zero_moves = np.nonzero(moves)
+                k = len(non_zero_moves)
+                l = len(non_zero_moves[0])
+                if k != 0 and l != 0:
+                    rand_arg = random.choice(
+                        [
+                            [non_zero_moves[alph][pos] for alph in range(k)]
+                            for pos in range(l)
+                        ]
+                    )
+                else:
+                    rand_arg = [random.randint(0, i - 1), random.randint(0, j - 1)]
+                y = rand_arg[1]
+                x = rand_arg[0]
+                action = np.zeros((i, j))
+                action[x][y] = moves[x][y]
+
+            # Choose the greedy action
+            else:
+                i, j = moves.shape
+                max_arg = np.argmax(moves)
+                y = max_arg % j
+                x = int(max_arg / j)
+                action = np.zeros((i, j))
+                action[x][y] = moves[x][y]
+
         else:
             # sometimes initialization of network causes prediction of all zeros,
             # causing moves of all zeros
-            action = make_random_action(self.state.shape)
+            action = np.zeros(self.state.shape)
+            action[
+                np.random.randint(self.state.shape[0]),
+                np.random.randint(self.state.shape[1]),
+            ] = 1
+
         # get next state (mutant)
         mutant = construct_mutant_from_sample(action, self.state)
         self.state = mutant
