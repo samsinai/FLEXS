@@ -4,6 +4,7 @@ from flexs import baselines
 import flexs.utils.sequence_utils as s_utils
 
 def run_explorer_robustness(args, landscape, wt):
+    alphabet = s_utils.RNAA if args.landscapes == "rna" else s_utils.DNAA
     if args.explorer == "adalead":
         def make_explorer(model, ss):
             return baselines.explorers.Adalead(
@@ -11,16 +12,16 @@ def run_explorer_robustness(args, landscape, wt):
                 rounds=5,
                 recomb_rate=0.2,
                 starting_sequence=wt,
-                sequences_batch_size=100,
-                model_queries_per_batch=2000,
-                alphabet=s_utils.RNAA,
+                sequences_batch_size=args.sequences_batch_size,
+                model_queries_per_batch=args.model_queries_per_batch,
+                alphabet=alphabet,
                 log_file=f"runs/{args.explorer}_{args.landscapes}_ss{ss}"
             )
         results = flexs.evaluate.robustness(landscape, make_explorer)
     elif args.explorer == "cbas" or args.explorer == "dbas":
         g = baselines.explorers.cbas_dbas.VAE(
             seq_length=len(wt),
-            alphabet=s_utils.RNAA,
+            alphabet=alphabet,
             batch_size=100,
             latent_dim=2,
             intermediate_dim=250,
@@ -28,7 +29,6 @@ def run_explorer_robustness(args, landscape, wt):
             epsilon_std=1.0,
             beta=1,
             validation_split=0,
-            min_training_size=100,
             mutation_rate=2,
             verbose=False,
         )
@@ -40,9 +40,9 @@ def run_explorer_robustness(args, landscape, wt):
                 Q=0.8,
                 algo=args.explorer,
                 starting_sequence=wt,
-                sequences_batch_size=100,
-                model_queries_per_batch=2000,
-                alphabet=s_utils.RNAA,
+                sequences_batch_size=args.sequences_batch_size,
+                model_queries_per_batch=args.model_queries_per_batch,
+                alphabet=alphabet,
                 log_file=f"runs/{args.explorer}_{args.landscapes}_ss{ss}"
             )
             # mutation rate?
@@ -53,9 +53,9 @@ def run_explorer_robustness(args, landscape, wt):
                 model,
                 rounds=5,
                 starting_sequence=wt,
-                sequences_batch_size=100,
-                model_queries_per_batch=2000,
-                alphabet=s_utils.RNAA,
+                sequences_batch_size=args.sequences_batch_size,
+                model_queries_per_batch=args.model_queries_per_batch,
+                alphabet=alphabet,
                 population_size=40,
                 max_iter=400,
                 log_file=f"runs/{args.explorer}_{args.landscapes}_ss{ss}"
@@ -64,13 +64,13 @@ def run_explorer_robustness(args, landscape, wt):
     elif args.explorer == "dynappo":
         def make_explorer(model, ss):
             return baselines.explorers.DynaPPO(
-                model,
+                rounds=5,
                 starting_sequence=wt,
-                sequences_batch_size=100,
-                model_queries_per_batch=2000,
+                sequences_batch_size=args.sequences_batch_size,
+                model_queries_per_batch=args.model_queries_per_batch,
                 num_experiment_rounds=10,
                 num_model_rounds=8,
-                alphabet=s_utils.RNAA,
+                alphabet=alphabet,
                 log_file=f"runs/{args.explorer}_{args.landscapes}_ss{ss}"
             )
         results = flexs.evaluate.robustness(landscape, make_explorer)
@@ -94,8 +94,10 @@ def run_all(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--explorer", choices=["adalead", "cbas", "dbas", "cmaes", "dynappo"])
-    parser.add_argument("--landscapes", choices=["rna", "tf"])
+    parser.add_argument("--explorer", choices=["adalead", "cbas", "dbas", "cmaes", "dynappo"], required=True)
+    parser.add_argument("--landscapes", choices=["rna", "tf"], required=True)
+    parser.add_argument("--sequences_batch_size", type=int, default=100)
+    parser.add_argument("--model_queries_per_batch", type=int, default=2000)
 
     args = parser.parse_args()
 
