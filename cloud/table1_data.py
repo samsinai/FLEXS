@@ -36,8 +36,8 @@ def _robustness(
 
 def run_explorers(explorer, landscape, wt, problem_name, start_num):
     alphabet = s_utils.RNAA
-    sequences_batch_size = 1
-    model_queries_per_batch = 20
+    sequences_batch_size = 100
+    model_queries_per_batch = 2000
 
     if explorer == "adalead":
         def make_explorer(model, ss, tag):
