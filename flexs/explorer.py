@@ -4,6 +4,7 @@ import abc
 import json
 from datetime import datetime
 import os
+import time
 from typing import Dict, Tuple
 import warnings
 
@@ -90,7 +91,7 @@ class Explorer(abc.ABC):
         metadata: Dict,
         current_round: int,
         verbose: bool,
-        round_start_time: datetime,
+        round_start_time: float,
     ) -> None:
         if self.log_file is not None:
             with open(self.log_file, "w") as f:
@@ -102,9 +103,8 @@ class Explorer(abc.ABC):
                 sequences_data.to_csv(f, index=False)
 
         if verbose:
-            time = datetime.now() - round_start_time
             print(
-                f"round: {current_round}, top: {sequences_data['true_score'].max()}, time: {time.seconds}s"
+                f"round: {current_round}, top: {sequences_data['true_score'].max()}, time: {time.time() - round_start_time:02f}s"
             )
 
     def run(
@@ -142,12 +142,12 @@ class Explorer(abc.ABC):
                 "measurement_cost": 1,
             }
         )
-        self._log(sequences_data, metadata, 0, verbose, datetime.now())
+        self._log(sequences_data, metadata, 0, verbose, time.time())
 
         # For each round, train model on available data, propose sequences,
         # measure them on the true landscape, add to available data, and repeat.
         for r in tqdm(range(1, self.rounds + 1)):
-            round_start_time = datetime.now()
+            round_start_time = time.time()
             self.model.train(
                 sequences_data["sequence"].to_numpy(),
                 sequences_data["true_score"].to_numpy(),

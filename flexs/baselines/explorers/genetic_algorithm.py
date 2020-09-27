@@ -112,60 +112,8 @@ class GeneticAlgorithm(flexs.Explorer):
         probs = torch.Tensor(fitnesses / np.sum(fitnesses))
         return torch.multinomial(probs, num_parents, replacement=True).numpy()
 
-    def _recombine(self, pop, scores):
-        num_children = int(self.children_proportion * self.population_size)
-
-        if self.recombination_strategy is None:
-            parents = self._choose_parents(scores, num_children)
-            return pop[parents]
-
-        """elif self.recombination_strategy == "1-point-crossover":
-            parents = self._choose_parents(
-                pop, scores, argsorted_scores, 2 * num_children
-            )
-
-            children = np.empty((num_children, pop.shape[1]))
-            crossover_points = self.rng.integers(1, pop.shape[1], num_children)
-
-            # Didn't find a way to vectorize this function, but it's not a
-            # huge deal since performance analysis shows that the predictor
-            # is the bottleneck, not these loops here.
-            for i in range(num_children):
-                children[i, : crossover_points[i]] = pop[
-                    parents[2 * i], : crossover_points[i]
-                ]
-                children[i, crossover_points[i] :] = pop[
-                    parents[2 * i + 1], crossover_points[i] :
-                ]
-
-            return children
-
-        elif self.recombination_strategy == "n-tile-crossover":
-            parents = self._choose_parents(pop, scores, argsorted_scores, num_children)
-
-            children = pop[parents].copy()
-            crossover_prob_per_tile = self.avg_crossovers / self.num_crossover_tiles
-
-            # indices = list of tile boundary points (n + 1 points for n tiles)
-            indices = list(
-                range(0, pop.shape[1], pop.shape[1] // self.num_crossover_tiles)
-            ) + [pop.shape[1]]
-
-            # Replace current tile with the corresponding tile from a random parent w/ some probability
-            for i in range(num_children):
-                for j in range(self.num_crossover_tiles):
-                    if self.rng.random() <= crossover_prob_per_tile:
-                        children[i, indices[j] : indices[j + 1]] = pop[
-                            self.rng.choice(parents), indices[j] : indices[j + 1]
-                        ]
-
-            return children"""
-
-        raise ValueError()
-
     def propose_sequences(self, measured_sequences):
         """Run genetic algorithm explorer."""
-
         # Set the torch seed by generating a random integer from the pre-seeded self.rng
         torch.manual_seed(self.rng.integers(-(2 ** 31), 2 ** 31))
 
@@ -186,7 +134,8 @@ class GeneticAlgorithm(flexs.Explorer):
         ):
             # Create "children" by recombining parents selected from population
             # according to self.parent_selection_strategy and self.recombination_strategy
-            parents = self._recombine(pop, scores)
+            num_children = int(self.children_proportion * self.population_size)
+            parents = pop[self._choose_parents(scores, num_children)]
 
             # Single-point mutation of children (for now)
             children = []

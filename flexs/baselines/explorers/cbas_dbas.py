@@ -324,7 +324,6 @@ class CbAS(flexs.Explorer):
             epsilon_std=self.generator.epsilon_std,
             beta=self.generator.beta,
             validation_split=self.generator.validation_split,
-            mutation_rate=self.generator.mutation_rate,
             verbose=self.generator.verbose,
         )
         original_weights = self.generator.vae.get_weights()
