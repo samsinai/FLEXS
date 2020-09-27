@@ -1,3 +1,4 @@
+"""Defines the Adalead explorer class."""
 import random
 
 import numpy as np
@@ -22,7 +23,7 @@ class Adalead(flexs.Explorer):
         mu=1,
         recomb_rate=0,
         threshold=0.05,
-        rho=1,
+        rho=0,
         log_file=None,
     ):
         name = f"Adalead_mu={mu}_threshold={threshold}"

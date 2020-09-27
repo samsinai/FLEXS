@@ -32,7 +32,7 @@ class VAEModel(keras.Model):
         # encoding layers
         encoder_inputs = keras.layers.Input(shape=(original_dim))
         x = keras.layers.Dense(intermediate_dim, activation="elu")(encoder_inputs)
-        x = keras.layers.Dropout(0.7)(x)
+        x = keras.layers.Dropout(0.3)(x)
         x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
         x = keras.layers.BatchNormalization()(x)
         x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
@@ -47,7 +47,7 @@ class VAEModel(keras.Model):
         latent_inputs = keras.Input(shape=(latent_dim,))
         x = keras.layers.Dense(intermediate_dim, activation="elu")(latent_inputs)
         x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
-        x = keras.layers.Dropout(0.7)(x)
+        x = keras.layers.Dropout(0.3)(x)
         x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
         decoder_outputs = keras.layers.Dense(self.original_dim, activation="sigmoid")(x)
         self.decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
@@ -94,7 +94,6 @@ class VAE:
         epsilon_std=1.0,
         beta=1,
         validation_split=0.2,
-        mutation_rate=0.1,
         verbose=True,
     ):
         tf.config.run_functions_eagerly(True)
@@ -106,9 +105,8 @@ class VAE:
         self.epsilon_std = epsilon_std
         self.beta = beta
         self.validation_split = validation_split
-        self.mutation_rate = mutation_rate
         self.verbose = verbose
-        self.name = "VAE"
+        self.name = f"VAE_latent_dim={latent_dim}_intermediate_dim={intermediate_dim}"
 
         self.alphabet = alphabet
         self.seq_length = seq_length
@@ -279,7 +277,9 @@ class CbAS(flexs.Explorer):
         sequences = set(samples)
         while len(sequences) < 100:
             sample = random.choice(samples)
-            sample = s_utils.generate_random_mutant(sample, 3, alphabet=self.alphabet)
+            sample = s_utils.generate_random_mutant(
+                sample, self.mutation_rate, alphabet=self.alphabet
+            )
 
             if sample not in sequences:
                 samples.append(sample)

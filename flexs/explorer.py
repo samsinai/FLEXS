@@ -88,6 +88,7 @@ class Explorer(abc.ABC):
         metadata: Dict,
         current_round: int,
         verbose: bool,
+        round_start_time: datetime,
     ) -> None:
         if self.log_file is not None:
             with open(self.log_file, "w") as f:
@@ -99,7 +100,10 @@ class Explorer(abc.ABC):
                 sequences_data.to_csv(f, index=False)
 
         if verbose:
-            print(f"round: {current_round}, top: {sequences_data['true_score'].max()}")
+            time = datetime.now() - round_start_time
+            print(
+                f"round: {current_round}, top: {sequences_data['true_score'].max()}, time: {time.seconds}s"
+            )
 
     def run(
         self, landscape: flexs.Landscape, verbose: bool = True
@@ -136,13 +140,12 @@ class Explorer(abc.ABC):
                 "measurement_cost": 1,
             }
         )
-        self._log(
-            sequences_data, metadata, 0, verbose,
-        )
+        self._log(sequences_data, metadata, 0, verbose, datetime.now())
 
         # For each round, train model on available data, propose sequences,
         # measure them on the true landscape, add to available data, and repeat.
         for r in range(1, self.rounds + 1):
+            round_start_time = datetime.now()
             self.model.train(
                 sequences_data["sequence"].to_numpy(),
                 sequences_data["true_score"].to_numpy(),
@@ -168,6 +171,6 @@ class Explorer(abc.ABC):
                     }
                 )
             )
-            self._log(sequences_data, metadata, r, verbose)
+            self._log(sequences_data, metadata, r, verbose, round_start_time)
 
         return sequences_data, metadata

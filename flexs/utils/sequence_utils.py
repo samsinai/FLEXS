@@ -82,11 +82,13 @@ def generate_random_sequences(length: int, number: int, alphabet: str) -> List[s
 
 def generate_random_mutant(sequence: str, mu: float, alphabet: str) -> str:
     """
-    Generate a mutant of `sequence` with average number of mutations `mu`.
+    Generate a mutant of `sequence` where each residue mutates with probability `mu`.
+
+    So the expected value of the total number of mutations is `len(sequence) * mu`.
 
     Args:
         sequence: Sequence that will be mutated from.
-        mu: Expected value number of mutations.
+        mu: Probability of mutation per residue.
         alphabet: Alphabet string.
 
     Returns:

@@ -65,7 +65,6 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
                 ),
             ]
 
-
         super().__init__(models=models)
 
         self.r_squared_vals = np.ones(len(self.models))
@@ -86,21 +85,24 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
         # Calculate r^2 values for each model in the ensemble on test set
         self.r_squared_vals = np.array(
             [
-                scipy.stats.pearsonr(test_y, model.get_fitness(test_X))[0]**2
+                scipy.stats.pearsonr(test_y, model.get_fitness(test_X))[0] ** 2
                 for model in self.models
             ]
         )
 
     def _fitness_function(self, sequences):
         passing_models = [
-            model for model, r_squared in zip(self.models, self.r_squared_vals)
+            model
+            for model, r_squared in zip(self.models, self.r_squared_vals)
             if r_squared >= self.r_squared_threshold
         ]
 
         if len(passing_models) == 0:
             return self.models[np.argmax(self.r_squared_vals)].get_fitness(sequences)
 
-        return np.mean([model.get_fitness(sequences) for model in passing_models], axis=0)
+        return np.mean(
+            [model.get_fitness(sequences) for model in passing_models], axis=0
+        )
 
 
 class DynaPPO(flexs.Explorer):
@@ -117,7 +119,7 @@ class DynaPPO(flexs.Explorer):
         ensemble_r_squared_threshold: float = 0.5,
         num_experiment_rounds: int = 10,
         num_model_rounds: int = 1,
-        ensemble_models=None
+        ensemble_models=None,
     ):
         """Explorer which implements DynaPPO.
 
@@ -136,8 +138,6 @@ class DynaPPO(flexs.Explorer):
                 the event that the model uncertainty is too high.
             ens: All possible models to include in the ensemble.
             ens_archs: Corresponding architectures of `ens`.
-            has_learned_policy: Whether or not we have learned a good policy (we need
-                to do so before we can propose samples).
             meas_seqs: All measured sequences.
             meas_seqs_it: Iterator through `meas_seqs`.
             top_seqs: Top measured sequences by fitness score.
@@ -150,7 +150,10 @@ class DynaPPO(flexs.Explorer):
 
         name = f"DynaPPO_Agent_{ensemble_r_squared_threshold}_{num_experiment_rounds}_{num_model_rounds}"
         model = DynaPPOEnsemble(
-            len(starting_sequence), ensemble_r_squared_threshold, alphabet, ensemble_models
+            len(starting_sequence),
+            ensemble_r_squared_threshold,
+            alphabet,
+            ensemble_models,
         )
         model.train(
             s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
@@ -170,11 +173,6 @@ class DynaPPO(flexs.Explorer):
         self.alphabet = alphabet
         self.num_experiment_rounds = num_experiment_rounds
         self.num_model_rounds = num_model_rounds
-
-        self.has_learned_policy = False
-
-        self.tf_env = None
-        self.agent = None
 
         env = DynaPPOEnv(
             alphabet=self.alphabet, seq_length=len(starting_sequence), model=model,
@@ -222,10 +220,10 @@ class DynaPPO(flexs.Explorer):
     def propose_sequences(self, measured_sequences_data):
         """Propose `self.sequences_batch_size` samples."""
 
-        time_steps = np.tile(
-            range(len(self.starting_sequence)), len(measured_sequences_data)
-        )
-
+        # Not yet implemented: the Dyna part of DyNAPPO. Is it really necessary?
+        # time_steps = np.tile(
+        #     range(len(self.starting_sequence)), len(measured_sequences_data)
+        # )
         # gt_trajectories = tf_agents.trajectory.trajectories.Trajectory()
 
         num_parallel_environments = 1
