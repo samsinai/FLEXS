@@ -32,7 +32,7 @@ class VAEModel(keras.Model):
         # encoding layers
         encoder_inputs = keras.layers.Input(shape=(original_dim))
         x = keras.layers.Dense(intermediate_dim, activation="elu")(encoder_inputs)
-        x = keras.layers.Dropout(0.7)(x)
+        x = keras.layers.Dropout(0.3)(x)
         x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
         x = keras.layers.BatchNormalization()(x)
         x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
@@ -47,7 +47,7 @@ class VAEModel(keras.Model):
         latent_inputs = keras.Input(shape=(latent_dim,))
         x = keras.layers.Dense(intermediate_dim, activation="elu")(latent_inputs)
         x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
-        x = keras.layers.Dropout(0.7)(x)
+        x = keras.layers.Dropout(0.3)(x)
         x = keras.layers.Dense(intermediate_dim, activation="elu")(x)
         decoder_outputs = keras.layers.Dense(self.original_dim, activation="sigmoid")(x)
         self.decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
@@ -262,7 +262,7 @@ class CbAS(flexs.Explorer):
         )
 
         if algo not in ["cbas", "dbas"]:
-            raise ValueError("`algo` must be on of 'cbas' or 'dbas'")
+            raise ValueError("`algo` must be one of 'cbas' or 'dbas'")
         self.algo = algo
 
         self.generator = generator
