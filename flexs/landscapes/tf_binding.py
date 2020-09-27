@@ -50,7 +50,25 @@ def registry():
         problem_name = fname.replace("_8mers.txt", "")
 
         problems[problem_name] = {
-            "params": {"landscape_file": os.path.join(tf_binding_data_dir, fname)}
+            "params": {
+                "landscape_file": os.path.join(tf_binding_data_dir, fname)
+            },
+            "starts": [
+                "GCTCGAGC",
+                "GCGCGCGC",
+                "TGCGCGCC",
+                "ATATAGCC",
+                "GTTTGGTA",
+                "ATTATGTT",
+                "CAGTTTTT",
+                "AAAAATTT",
+                "AAAAACGC",
+                "GTTGTTTT",
+                "TGCTTTTT",
+                "AAAGATAG",
+                "CCTTCTTT",
+                "AAAGAGAG",
+            ]
         }
 
     return problems

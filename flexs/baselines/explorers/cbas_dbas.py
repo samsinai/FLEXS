@@ -260,7 +260,7 @@ class CbAS(flexs.Explorer):
         )
 
         if algo not in ["cbas", "dbas"]:
-            raise ValueError("`algo` must be on of 'cbas' or 'dbas'")
+            raise ValueError("`algo` must be one of 'cbas' or 'dbas'")
         self.algo = algo
 
         self.generator = generator
