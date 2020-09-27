@@ -4,6 +4,8 @@ from flexs import baselines
 import flexs.utils.sequence_utils as s_utils
 
 def run_explorer_robustness(args, landscape, wt):
+    # needs signal strength in name
+    # log_file=f'plots/2b/random/run{i}.csv' arg
     if args.explorer == "adalead":
         def make_explorer(model, ss):
             return baselines.explorers.Adalead(
@@ -12,7 +14,7 @@ def run_explorer_robustness(args, landscape, wt):
                 recomb_rate=0.2,
                 starting_sequence=wt,
                 sequences_batch_size=100,
-                model_queries_per_batch=20,
+                model_queries_per_batch=2000,
                 alphabet=s_utils.RNAA
             )
         results = flexs.evaluate.robustness(landscape, make_explorer)
@@ -40,7 +42,7 @@ def run_explorer_robustness(args, landscape, wt):
                 algo=args.explorer,
                 starting_sequence=wt,
                 sequences_batch_size=100,
-                model_queries_per_batch=20,
+                model_queries_per_batch=2000,
                 alphabet=s_utils.RNAA
             )
             # mutation rate?
@@ -52,8 +54,10 @@ def run_explorer_robustness(args, landscape, wt):
                 rounds=5,
                 starting_sequence=wt,
                 sequences_batch_size=100,
-                model_queries_per_batch=20,
-                alphabet=s_utils.RNAA
+                model_queries_per_batch=2000,
+                alphabet=s_utils.RNAA,
+                population_size=40,
+                max_iter=400
             )
         results = flexs.evaluate.robustness(landscape, make_explorer)
     elif args.explorer == "dynappo":
@@ -62,10 +66,11 @@ def run_explorer_robustness(args, landscape, wt):
                 model,
                 starting_sequence=wt,
                 sequences_batch_size=100,
-                model_queries_per_batch=20,
+                model_queries_per_batch=2000,
+                num_experiment_rounds=10,
+                num_model_rounds=8,
                 alphabet=s_utils.RNAA
             )
-            # num model rounds needs change
         results = flexs.evaluate.robustness(landscape, make_explorer)
     return results
 
@@ -82,7 +87,7 @@ def misc(args):
             problem = flexs.landscapes.tf_binding.registry()[p]
             landscape = flexs.landscapes.TFBinding(**problem["params"])
             for s in range(13):
-                wt = problem["starts"][s] # not going to work
+                wt = problem["starts"][s]
                 results = run_explorer_robustness(args, landscape, wt)
 
 if __name__ == "__main__":
