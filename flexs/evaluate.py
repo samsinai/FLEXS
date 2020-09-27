@@ -9,6 +9,7 @@ def robustness(
     landscape: flexs.Landscape,
     make_explorer: Callable[[flexs.Model, float], flexs.Explorer],
     signal_strengths: List[float] = [0, 0.5, 0.75, 0.9, 1],
+    verbose: bool = True,
 ):
     """
     Evaluate explorer outputs as a function of the noisyness of its model.
@@ -18,7 +19,7 @@ def robustness(
     Args:
         landscape: The landscape to run on.
         make_explorer: A function that takes in a model and signal strength
-            (for potential bookeeping/logging purposes) and an explorer.
+            (for potential bookkeeping/logging purposes) and an explorer.
         signal_strengths: A list of signal strengths between 0 and 1.
     """
     results = []
@@ -27,7 +28,7 @@ def robustness(
 
         model = baselines.models.NoisyAbstractModel(landscape, signal_strength=ss)
         explorer = make_explorer(model, ss)
-        res = explorer.run(landscape)
+        res = explorer.run(landscape, verbose=verbose)
 
         results.append((ss, res))
 
