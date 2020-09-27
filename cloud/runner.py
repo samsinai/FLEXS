@@ -9,7 +9,7 @@ def run_explorer_robustness(args, landscape, wt):
         def make_explorer(model, ss):
             return baselines.explorers.Adalead(
                 model,
-                rounds=5,
+                rounds=10,
                 recomb_rate=0.2,
                 starting_sequence=wt,
                 sequences_batch_size=args.sequences_batch_size,
@@ -36,7 +36,7 @@ def run_explorer_robustness(args, landscape, wt):
             return baselines.explorers.CbAS(
                 model,
                 generator=g,
-                rounds=5,
+                rounds=10,
                 Q=0.8,
                 algo=args.explorer,
                 starting_sequence=wt,
@@ -51,7 +51,7 @@ def run_explorer_robustness(args, landscape, wt):
         def make_explorer(model, ss):
             return baselines.explorers.CMAES(
                 model,
-                rounds=5,
+                rounds=10,
                 starting_sequence=wt,
                 sequences_batch_size=args.sequences_batch_size,
                 model_queries_per_batch=args.model_queries_per_batch,
@@ -64,7 +64,7 @@ def run_explorer_robustness(args, landscape, wt):
     elif args.explorer == "dynappo":
         def make_explorer(model, ss):
             return baselines.explorers.DynaPPO(
-                rounds=5,
+                rounds=10,
                 starting_sequence=wt,
                 sequences_batch_size=args.sequences_batch_size,
                 model_queries_per_batch=args.model_queries_per_batch,
