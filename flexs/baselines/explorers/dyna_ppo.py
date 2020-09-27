@@ -110,6 +110,7 @@ class DynaPPO(flexs.Explorer):
 
     def __init__(
         self,
+        landscape: flexs.Landscape,
         rounds: int,
         sequences_batch_size: int,
         model_queries_per_batch: int,
@@ -174,9 +175,7 @@ class DynaPPO(flexs.Explorer):
         self.num_experiment_rounds = num_experiment_rounds
         self.num_model_rounds = num_model_rounds
 
-        env = DynaPPOEnv(
-            alphabet=self.alphabet, seq_length=len(starting_sequence), model=model,
-        )
+        env = DynaPPOEnv(self.alphabet, len(starting_sequence), model, landscape)
         validate_py_environment(env, episodes=1)
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
 
@@ -219,13 +218,6 @@ class DynaPPO(flexs.Explorer):
 
     def propose_sequences(self, measured_sequences_data):
         """Propose `self.sequences_batch_size` samples."""
-
-        # Not yet implemented: the Dyna part of DyNAPPO. Is it really necessary?
-        # time_steps = np.tile(
-        #     range(len(self.starting_sequence)), len(measured_sequences_data)
-        # )
-        # gt_trajectories = tf_agents.trajectory.trajectories.Trajectory()
-
         num_parallel_environments = 1
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
@@ -245,6 +237,33 @@ class DynaPPO(flexs.Explorer):
             num_episodes=1,
         )
 
+        # Experiment-based training round. Each sequence we generate here must be
+        # evaluated by the ground truth landscape model. So each sequence we evaluate
+        # reduces our sequence proposal budget by one.
+        # We amortize this experiment-based training cost to be 1/2 of the sequence budget
+        # at round one and linearly interpolate to a cost of 0 by the last round.
+        current_round = measured_sequences_data["round"].max()
+        experiment_based_training_budget = int(
+            (self.rounds - current_round + 1)
+            / self.rounds
+            * self.sequences_batch_size
+            / 2
+        )
+        self.tf_env.envs[0].set_fitness_model_to_gt(True)
+        previous_landscape_cost = self.tf_env.envs[0].landscape.cost
+        while (
+            self.tf_env.envs[0].landscape.cost - previous_landscape_cost
+            < experiment_based_training_budget
+        ):
+            collect_driver.run()
+
+        trajectories = replay_buffer.gather_all()
+        self.agent.train(experience=trajectories)
+        replay_buffer.clear()
+        sequences.clear()
+
+        # Model-based training rounds
+        self.tf_env.envs[0].set_fitness_model_to_gt(False)
         previous_model_cost = self.model.cost
         for _ in range(self.num_model_rounds):
             if self.model.cost - previous_model_cost >= self.model_queries_per_batch:
@@ -268,6 +287,8 @@ class DynaPPO(flexs.Explorer):
         }
         new_seqs = np.array(list(sequences.keys()))
         preds = np.array(list(sequences.values()))
-        sorted_order = np.argsort(preds)[: -self.sequences_batch_size : -1]
+        sorted_order = np.argsort(preds)[
+            : -(self.sequences_batch_size - experiment_based_training_budget) : -1
+        ]
 
         return new_seqs[sorted_order], preds[sorted_order]

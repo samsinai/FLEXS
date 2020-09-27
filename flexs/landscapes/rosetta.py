@@ -149,7 +149,7 @@ class RosettaFolding(flexs.Landscape):
         """ Negate and normalize folding energy to get maximization objective """
 
         energies = torch.tensor([self.get_folding_energy(seq) for seq in sequences])
-        scaled_energies = (-energies + self.sigmoid_center) / self.sigmoid_norm_value
+        scaled_energies = (-energies - self.sigmoid_center) / self.sigmoid_norm_value
         return torch.sigmoid(scaled_energies).numpy()
 
 

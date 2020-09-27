@@ -13,7 +13,11 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """DyNA-PPO environment based on TF-Agents."""
 
     def __init__(  # pylint: disable=W0231
-        self, alphabet: str, seq_length: int, model: flexs.Model
+        self,
+        alphabet: str,
+        seq_length: int,
+        model: flexs.Model,
+        landscape: flexs.Landscape,
     ):
         """Initialize DyNA-PPO agent environment.
 
@@ -43,6 +47,8 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
         # model/model/measurements
         self.model = model
+        self.landscape = landscape
+        self.fitness_model_is_gt = False
         self.previous_fitness = -float("inf")
 
         # sequence
@@ -97,10 +103,17 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     def get_cached_fitness(self, seq):
         return self.all_seqs[seq]
 
-    def _step(self, action):
-        """Progress the agent one step in the environment.
+    def set_fitness_model_to_gt(self, fitness_model_is_gt):
         """
+        Set the fitness model to the ground truth landscape or to the model.
 
+        Call with `True` when doing an experiment-based training round
+        and call with `False` when doing a model-based training round.
+        """
+        self.fitness_model_is_gt = fitness_model_is_gt
+
+    def _step(self, action):
+        """Progress the agent one step in the environment."""
         self.state[self.partial_seq_len, -1] = 0
         self.state[self.partial_seq_len, action] = 1
         self.partial_seq_len += 1
@@ -112,7 +125,10 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         # If sequence is of full length, score the sequence and end the episode
         # We need to take off the column in the matrix (-1) representing the mask token
         complete_sequence = s_utils.one_hot_to_string(self.state[:, :-1], self.alphabet)
-        fitness = self.model.get_fitness([complete_sequence]).item()
+        if self.fitness_model_is_gt:
+            fitness = self.landscape.get_fitness([complete_sequence]).item()
+        else:
+            fitness = self.model.get_fitness([complete_sequence]).item()
         self.all_seqs[complete_sequence] = fitness
 
         reward = fitness - self.lam * self.sequence_density(complete_sequence)
