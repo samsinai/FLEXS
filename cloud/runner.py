@@ -63,6 +63,7 @@ def run_explorer_robustness(args, landscape, wt, problem_name, start_num):
     elif args.explorer == "dynappo":
         def make_explorer(model, ss):
             return baselines.explorers.DynaPPO(
+                landscape=landscape,
                 rounds=10,
                 starting_sequence=wt,
                 sequences_batch_size=args.sequences_batch_size,
