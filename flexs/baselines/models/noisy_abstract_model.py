@@ -62,7 +62,10 @@ class NoisyAbstractModel(flexs.Model):
 
             signal = self.landscape.get_fitness([seq]).item()
             neighbor_fitness = self.landscape.get_fitness([neighbor_seq]).item()
-            noise = np.random.exponential(scale=neighbor_fitness)
+            if neighbor_fitness >= 0:
+                noise = np.random.exponential(scale=neighbor_fitness)
+            else:
+                noise = np.random.choice(list(self.cache.values()))
 
             alpha = self.ss ** distance
             new_fitnesses.append(alpha * signal + (1 - alpha) * noise)
