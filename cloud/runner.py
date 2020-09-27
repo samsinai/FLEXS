@@ -4,8 +4,6 @@ from flexs import baselines
 import flexs.utils.sequence_utils as s_utils
 
 def run_explorer_robustness(args, landscape, wt):
-    # needs signal strength in name
-    # log_file=f'plots/2b/random/run{i}.csv' arg
     if args.explorer == "adalead":
         def make_explorer(model, ss):
             return baselines.explorers.Adalead(
@@ -15,7 +13,8 @@ def run_explorer_robustness(args, landscape, wt):
                 starting_sequence=wt,
                 sequences_batch_size=100,
                 model_queries_per_batch=2000,
-                alphabet=s_utils.RNAA
+                alphabet=s_utils.RNAA,
+                log_file=f"runs/{args.explorer}_{args.landscapes}_ss{ss}"
             )
         results = flexs.evaluate.robustness(landscape, make_explorer)
     elif args.explorer == "cbas" or args.explorer == "dbas":
@@ -43,7 +42,8 @@ def run_explorer_robustness(args, landscape, wt):
                 starting_sequence=wt,
                 sequences_batch_size=100,
                 model_queries_per_batch=2000,
-                alphabet=s_utils.RNAA
+                alphabet=s_utils.RNAA,
+                log_file=f"runs/{args.explorer}_{args.landscapes}_ss{ss}"
             )
             # mutation rate?
         results = flexs.evaluate.robustness(landscape, make_explorer)
@@ -57,7 +57,8 @@ def run_explorer_robustness(args, landscape, wt):
                 model_queries_per_batch=2000,
                 alphabet=s_utils.RNAA,
                 population_size=40,
-                max_iter=400
+                max_iter=400,
+                log_file=f"runs/{args.explorer}_{args.landscapes}_ss{ss}"
             )
         results = flexs.evaluate.robustness(landscape, make_explorer)
     elif args.explorer == "dynappo":
@@ -69,12 +70,13 @@ def run_explorer_robustness(args, landscape, wt):
                 model_queries_per_batch=2000,
                 num_experiment_rounds=10,
                 num_model_rounds=8,
-                alphabet=s_utils.RNAA
+                alphabet=s_utils.RNAA,
+                log_file=f"runs/{args.explorer}_{args.landscapes}_ss{ss}"
             )
         results = flexs.evaluate.robustness(landscape, make_explorer)
     return results
 
-def misc(args):
+def run_all(args):
     if args.landscapes == "rna":
         for p in ["L14_RNA1", "L14_RNA1+2"]:
             problem = flexs.landscapes.rna.registry()[p]
@@ -96,3 +98,5 @@ if __name__ == "__main__":
     parser.add_argument("--landscapes", choices=["rna", "tf"])
 
     args = parser.parse_args()
+
+    run_all(args)
