@@ -60,8 +60,8 @@ class Explorer(abc.ABC):
             os.makedirs(dir_path, exist_ok=True)
 
         if model_queries_per_batch < sequences_batch_size:
-            raise ValueError(
-                "`model_queries_per_batch` must be >= `sequences_batch_size`"
+            warnings.warn(
+                "`model_queries_per_batch` should be >= `sequences_batch_size`"
             )
 
     @abc.abstractmethod

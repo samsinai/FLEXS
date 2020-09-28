@@ -24,6 +24,7 @@ class Adalead(flexs.Explorer):
         recomb_rate=0,
         threshold=0.05,
         rho=0,
+        eval_batch_size=20,
         log_file=None,
     ):
         name = f"Adalead_mu={mu}_threshold={threshold}"
@@ -42,6 +43,7 @@ class Adalead(flexs.Explorer):
         self.alphabet = alphabet
         self.mu = mu  # number of mutations per *sequence*.
         self.rho = rho
+        self.eval_batch_size = eval_batch_size
 
     def _recombine_population(self, gen):
         # If only one member of population, can't do any recombining
@@ -86,37 +88,53 @@ class Adalead(flexs.Explorer):
         )
 
         sequences = {}
-        while len(sequences) < self.model_queries_per_batch:
+        previous_model_cost = self.model.cost
+        while self.model.cost - previous_model_cost < self.model_queries_per_batch:
             # generate recombinant mutants
             for i in range(self.rho):
                 # @TODO if parents=[], the outer while loops infinitely
                 parents = self._recombine_population(parents)
 
-            for root in parents:
+            for i in range(0, len(parents), self.eval_batch_size):
                 # Here we do rollouts from each parent (root of rollout tree)
-                root_fitness = self.model.get_fitness([root]).item()
-                node = root
+                roots = parents[i : i + self.eval_batch_size]
+                root_fitnesses = self.model.get_fitness(roots)
 
-                while len(sequences) < self.model_queries_per_batch:
-                    child = s_utils.generate_random_mutant(
-                        node, self.mu * 1 / len(node), self.alphabet
-                    )
+                nodes = list(enumerate(roots))
 
-                    # Skip if child has been already been generated before
-                    if child in measured_sequence_set or child in sequences:
-                        continue
+                while (
+                    len(nodes) > 0
+                    and self.model.cost - previous_model_cost + self.eval_batch_size
+                    < self.model_queries_per_batch
+                ):
+                    child_idxs = []
+                    children = []
+                    while len(children) < len(nodes):
+                        idx, node = nodes[len(children) - 1]
+
+                        child = s_utils.generate_random_mutant(
+                            node, self.mu * 1 / len(node), self.alphabet,
+                        )
+
+                        # Stop when we generate new child that has never been seen before
+                        if (
+                            child not in measured_sequence_set
+                            and child not in sequences
+                        ):
+                            child_idxs.append(idx)
+                            children.append(child)
 
                     # Stop the rollout once the child has worse predicted
                     # fitness than the root of the rollout tree.
                     # Otherwise, set node = child and add child to the list
                     # of sequences to propose.
-                    child_fitness = self.model.get_fitness([child]).item()
-                    sequences[child] = child_fitness
+                    fitnesses = self.model.get_fitness(children)
+                    sequences.update(zip(children, fitnesses))
 
-                    if child_fitness >= root_fitness:
-                        node = child
-                    else:
-                        break
+                    nodes = []
+                    for idx, child, fitness in zip(child_idxs, children, fitnesses):
+                        if fitness >= root_fitnesses[idx]:
+                            nodes.append((idx, child))
 
         # We propose the top `self.sequences_batch_size` new sequences we have generated
         new_seqs = np.array(list(sequences.keys()))
