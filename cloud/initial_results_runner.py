@@ -8,7 +8,7 @@ def run_explorer_robustness():
     landscape = flexs.landscapes.RNABinding(**problem["params"])
     wt = problem["starts"][0]
 
-    # random
+    '''# random
     def make_explorer(model, ss):
         return baselines.explorers.Random(
             model,
@@ -50,12 +50,12 @@ def run_explorer_robustness():
             alphabet=s_utils.RNAA,
             log_file=f"runs/initial_results/adalead/ss{ss}.csv"
         )
-    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
+    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)'''
 
     # cbas
     g = baselines.explorers.cbas_dbas.VAE(
         seq_length=len(wt),
-        alphabet=alphabet,
+        alphabet=s_utils.RNAA,
         batch_size=100,
         latent_dim=2,
         intermediate_dim=250,
@@ -99,6 +99,7 @@ def run_explorer_robustness():
     # dynappo
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPO(
+            landscape=landscape,
             rounds=10,
             starting_sequence=wt,
             sequences_batch_size=100,
@@ -107,6 +108,21 @@ def run_explorer_robustness():
             num_model_rounds=8,
             alphabet=s_utils.RNAA,
             log_file=f"runs/initial_results/dynappo/ss{ss}.csv"
+        )
+    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
+
+    # dynappo mutative
+    def make_explorer(model, ss):
+        return baselines.explorers.DynaPPOMutative(
+            landscape=landscape,
+            rounds=10,
+            starting_sequence=wt,
+            sequences_batch_size=100,
+            model_queries_per_batch=2000,
+            num_experiment_rounds=10,
+            num_model_rounds=8,
+            alphabet=s_utils.RNAA,
+            log_file=f"runs/initial_results/dynappo_mutative/ss{ss}.csv"
         )
     flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
 
