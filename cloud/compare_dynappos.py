@@ -12,6 +12,7 @@ model_queries_per_batch = 2000
 def run_dynappo_constructive(landscape, wt, problem_name, start_num):
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPO(
+            model=model,
             landscape=landscape,
             rounds=10,
             starting_sequence=wt,
@@ -28,6 +29,7 @@ def run_dynappo_constructive(landscape, wt, problem_name, start_num):
 def run_dynappo_mutative(landscape, wt, problem_name, start_num):
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPOMutative(
+            model=model,
             landscape=landscape,
             rounds=10,
             starting_sequence=wt,
