@@ -10,10 +10,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import tqdm
 
 import flexs
-
-from tqdm import tqdm
 
 
 class Explorer(abc.ABC):
@@ -146,7 +145,8 @@ class Explorer(abc.ABC):
 
         # For each round, train model on available data, propose sequences,
         # measure them on the true landscape, add to available data, and repeat.
-        for r in tqdm(range(1, self.rounds + 1)):
+        range_iterator = range if verbose else tqdm.trange
+        for r in range_iterator(1, self.rounds + 1):
             round_start_time = time.time()
             self.model.train(
                 sequences_data["sequence"].to_numpy(),

@@ -21,7 +21,8 @@ from tf_agents.environments.utils import validate_py_environment
 import flexs
 from flexs import baselines
 from flexs.baselines.explorers.environments.dyna_ppo import (
-    DynaPPOEnvironment as DynaPPOEnv, DynaPPOEnvironmentMutative as DynaPPOEnvMut
+    DynaPPOEnvironment as DynaPPOEnv,
+    DynaPPOEnvironmentMutative as DynaPPOEnvMut,
 )
 import flexs.utils.sequence_utils as s_utils
 from typing import List, Set, Tuple, Type, Union
@@ -174,9 +175,9 @@ class DynaPPO(flexs.Explorer):
         self.num_experiment_rounds = num_experiment_rounds
         self.num_model_rounds = num_model_rounds
 
-        env = DynaPPOEnv(self.alphabet, len(starting_sequence), model, landscape)
-        validate_py_environment(env, episodes=1)
-        self.tf_env = tf_py_environment.TFPyEnvironment(env)
+        self.tf_env = DynaPPOEnv(
+            self.alphabet, len(starting_sequence), model, landscape
+        )
 
         actor_net = actor_distribution_network.ActorDistributionNetwork(
             self.tf_env.observation_spec(),
@@ -213,7 +214,7 @@ class DynaPPO(flexs.Explorer):
             seq = s_utils.one_hot_to_string(
                 experience.observation.numpy()[0][:, :-1], self.alphabet
             )
-            new_seqs[seq] = self.tf_env.envs[0].get_cached_fitness(seq)
+            new_seqs[seq] = self.tf_env.get_cached_fitness(seq)
 
     def propose_sequences(self, measured_sequences_data):
         """Propose `self.sequences_batch_size` samples."""
@@ -249,7 +250,7 @@ class DynaPPO(flexs.Explorer):
             / 2
         )
         self.tf_env.envs[0].set_fitness_model_to_gt(True)
-        previous_landscape_cost = self.tf_env.envs[0].landscape.cost
+        previous_landscape_cost = self.tf_env.landscape.cost
         while (
             self.tf_env.envs[0].landscape.cost - previous_landscape_cost
             < experiment_based_training_budget
@@ -262,7 +263,7 @@ class DynaPPO(flexs.Explorer):
         sequences.clear()
 
         # Model-based training rounds
-        self.tf_env.envs[0].set_fitness_model_to_gt(False)
+        self.tf_env.set_fitness_model_to_gt(False)
         previous_model_cost = self.model.cost
         for _ in range(self.num_model_rounds):
             if self.model.cost - previous_model_cost >= self.model_queries_per_batch:
@@ -291,6 +292,7 @@ class DynaPPO(flexs.Explorer):
         ]
 
         return new_seqs[sorted_order], preds[sorted_order]
+
 
 class DynaPPOMutative(flexs.Explorer):
     """Explorer for DyNA-PPO. Note that unlike the other DynaPPO explorer, this one is mutative rather than constructive."""
@@ -366,7 +368,7 @@ class DynaPPOMutative(flexs.Explorer):
             starting_seq=starting_sequence,
             model=model,
             landscape=landscape,
-            max_num_steps=model_queries_per_batch
+            max_num_steps=model_queries_per_batch,
         )
         validate_py_environment(env, episodes=1)
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
@@ -381,7 +383,7 @@ class DynaPPOMutative(flexs.Explorer):
         value_net = value_network.ValueNetwork(
             self.tf_env.observation_spec(),
             preprocessing_combiner=encoder_layer,
-            fc_layer_params=[128]
+            fc_layer_params=[128],
         )
 
         self.agent = ppo_agent.PPOAgent(
@@ -419,7 +421,9 @@ class DynaPPOMutative(flexs.Explorer):
             if len(top_sequences) > 0:
                 self.tf_env.pyenv.envs[0].seq = np.random.choice(top_sequences)
             else:
-                self.tf_env.pyenv.envs[0].seq = np.random.choice([seq for seq, _ in new_seqs.items()])
+                self.tf_env.pyenv.envs[0].seq = np.random.choice(
+                    [seq for seq, _ in new_seqs.items()]
+                )
 
     def propose_sequences(self, measured_sequences_data):
         """Propose `self.sequences_batch_size` samples."""

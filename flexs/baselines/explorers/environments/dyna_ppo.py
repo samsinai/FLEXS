@@ -134,6 +134,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         reward = fitness - self.lam * self.sequence_density(complete_sequence)
         return ts.termination(self.state, reward)
 
+
 class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disable=W0223
     """DyNA-PPO environment based on TF-Agents. Note that unlike the other DynaPPO environment, this one is mutative rather than constructive."""
 
@@ -143,7 +144,7 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
         starting_seq: str,
         model: flexs.Model,
         landscape: flexs.Landscape,
-        max_num_steps: int
+        max_num_steps: int,
     ):
         """Initialize DyNA-PPO agent environment.
 
@@ -162,7 +163,7 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
         """
         # alphabet
         self.alphabet = alphabet
-        
+
         # model/model/measurements
         self.model = model
         self.landscape = landscape
@@ -171,7 +172,9 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
 
         self.seq = starting_seq
         self._state = {
-            "sequence": s_utils.string_to_one_hot(self.seq, self.alphabet).astype(np.float32),
+            "sequence": s_utils.string_to_one_hot(self.seq, self.alphabet).astype(
+                np.float32
+            ),
             "fitness": self.model.get_fitness([starting_seq]).astype(np.float32),
         }
         self.episode_seqs = set()  # the sequences seen in the current episode
@@ -204,7 +207,9 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
     def _reset(self):
         self.previous_fitness = -float("inf")
         self._state = {
-            "sequence": s_utils.string_to_one_hot(self.seq, self.alphabet).astype(np.float32),
+            "sequence": s_utils.string_to_one_hot(self.seq, self.alphabet).astype(
+                np.float32
+            ),
             "fitness": self.model.get_fitness([self.seq]).astype(np.float32),
         }
         self.episode_seqs = set()
@@ -268,12 +273,18 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
         state_string = s_utils.one_hot_to_string(self._state["sequence"], self.alphabet)
 
         if self.fitness_model_is_gt:
-            self._state["fitness"] = self.landscape.get_fitness([state_string]).astype(np.float32)
+            self._state["fitness"] = self.landscape.get_fitness([state_string]).astype(
+                np.float32
+            )
         else:
-            self._state["fitness"] = self.model.get_fitness([state_string]).astype(np.float32)
+            self._state["fitness"] = self.model.get_fitness([state_string]).astype(
+                np.float32
+            )
         self.all_seqs[state_string] = self._state["fitness"].item()
 
-        reward = self._state["fitness"].item() - self.lam * self.sequence_density(state_string)
+        reward = self._state["fitness"].item() - self.lam * self.sequence_density(
+            state_string
+        )
 
         # if we have seen the sequence this episode,
         # terminate episode and punish
