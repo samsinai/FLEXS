@@ -97,7 +97,8 @@ def run_explorers(explorer, landscape, wt, problem_name, start_num):
     elif explorer == "dynappo":
         def make_explorer(model, ss, tag):
             return baselines.explorers.DynaPPO(
-                landscape,
+                model=model,
+                landscape=landscape,
                 rounds=10,
                 starting_sequence=wt,
                 sequences_batch_size=sequences_batch_size,
