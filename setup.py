@@ -19,6 +19,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires=">=3.5",
     install_requires=[
+        "cma",
         "editdistance",
         "numpy>=1.17",
         "pandas>=0.23",
