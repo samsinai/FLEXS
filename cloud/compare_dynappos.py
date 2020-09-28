@@ -6,8 +6,8 @@ import flexs.utils.sequence_utils as s_utils
 from typing import Callable
 
 alphabet = s_utils.RNAA
-sequences_batch_size = 10
-model_queries_per_batch = 200
+sequences_batch_size = 100
+model_queries_per_batch = 2000
 
 def run_dynappo_constructive(landscape, wt, problem_name, start_num):
     def make_explorer(model, ss):
