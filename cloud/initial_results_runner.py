@@ -8,7 +8,7 @@ def run_explorer_robustness():
     landscape = flexs.landscapes.RNABinding(**problem["params"])
     wt = problem["starts"][0]
 
-    '''# random
+    # random
     def make_explorer(model, ss):
         return baselines.explorers.Random(
             model,
@@ -50,7 +50,7 @@ def run_explorer_robustness():
             alphabet=s_utils.RNAA,
             log_file=f"runs/initial_results/adalead/ss{ss}.csv"
         )
-    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)'''
+    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
 
     # cbas
     g = baselines.explorers.cbas_dbas.VAE(
