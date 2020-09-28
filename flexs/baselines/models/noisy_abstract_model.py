@@ -26,6 +26,10 @@ class NoisyAbstractModel(flexs.Model):
         self.cache = {}
 
     def _get_min_distance(self, sequence):
+        # Special case if cache is empty
+        if len(self.cache) == 0:
+            return 0, sequence
+
         new_dist = np.inf
         closest = None
 

@@ -8,7 +8,7 @@ def run_explorer_robustness():
     landscape = flexs.landscapes.RNABinding(**problem["params"])
     wt = problem["starts"][0]
 
-    # random
+    '''# random
     def make_explorer(model, ss):
         return baselines.explorers.Random(
             model,
@@ -94,11 +94,12 @@ def run_explorer_robustness():
             max_iter=400,
             log_file=f"runs/initial_results/cmaes/ss{ss}.csv"
         )
-    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
+    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)'''
 
     # dynappo
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPO(
+            model=model,
             landscape=landscape,
             rounds=10,
             starting_sequence=wt,
@@ -114,6 +115,7 @@ def run_explorer_robustness():
     # dynappo mutative
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPOMutative(
+            model=model,
             landscape=landscape,
             rounds=10,
             starting_sequence=wt,

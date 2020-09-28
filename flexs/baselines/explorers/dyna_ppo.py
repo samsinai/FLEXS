@@ -28,7 +28,7 @@ from typing import List, Set, Tuple, Type, Union
 
 
 class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
-    def __init__(self, seq_len, r_squared_threshold, alphabet, models=None):
+    def __init__(self, seq_len, alphabet, r_squared_threshold=0.5, models=None):
 
         if models is None:
             models = [
@@ -117,10 +117,9 @@ class DynaPPO(flexs.Explorer):
         starting_sequence: str,
         alphabet: str,
         log_file: str = None,
-        ensemble_r_squared_threshold: float = 0.5,
+        model: flexs.Model = None,
         num_experiment_rounds: int = 10,
         num_model_rounds: int = 1,
-        ensemble_models=None,
     ):
         """Explorer which implements DynaPPO.
 
@@ -149,17 +148,17 @@ class DynaPPO(flexs.Explorer):
 
         tf.config.run_functions_eagerly(False)
 
-        name = f"DynaPPO_Agent_{ensemble_r_squared_threshold}_{num_experiment_rounds}_{num_model_rounds}"
-        model = DynaPPOEnsemble(
-            len(starting_sequence),
-            ensemble_r_squared_threshold,
-            alphabet,
-            ensemble_models,
-        )
-        model.train(
-            s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
-            [0] * 10,
-        )
+        name = f"DynaPPO_Agent_{num_experiment_rounds}_{num_model_rounds}"
+
+        if model is None:
+            model = DynaPPOEnsemble(
+                len(starting_sequence),
+                alphabet,
+            )
+            model.train(
+                s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
+                [0] * 10,
+            )
 
         super().__init__(
             model,
@@ -305,10 +304,9 @@ class DynaPPOMutative(flexs.Explorer):
         starting_sequence: str,
         alphabet: str,
         log_file: str = None,
-        ensemble_r_squared_threshold: float = 0.5,
+        model: flexs.Model = None,
         num_experiment_rounds: int = 10,
         num_model_rounds: int = 1,
-        ensemble_models=None,
     ):
         """Explorer which implements DynaPPO.
 
@@ -337,17 +335,17 @@ class DynaPPOMutative(flexs.Explorer):
 
         tf.config.run_functions_eagerly(False)
 
-        name = f"DynaPPO_Agent_{ensemble_r_squared_threshold}_{num_experiment_rounds}_{num_model_rounds}"
-        model = DynaPPOEnsemble(
-            len(starting_sequence),
-            ensemble_r_squared_threshold,
-            alphabet,
-            ensemble_models,
-        )
-        model.train(
-            s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
-            [0] * 10,
-        )
+        name = f"DynaPPO_Agent_{num_experiment_rounds}_{num_model_rounds}"
+
+        if model is None:
+            model = DynaPPOEnsemble(
+                len(starting_sequence),
+                alphabet,
+            )
+            model.train(
+                s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
+                [0] * 10,
+            )
 
         super().__init__(
             model,
