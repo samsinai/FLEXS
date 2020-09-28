@@ -13,7 +13,7 @@ def _robustness(
     """
     results = []
 
-    for ss in [0.0, 1.0]:
+    for ss in [0.0, 0.5, 0.9, 1.0]:
         print(f"Evaluating for robustness with model accuracy; signal_strength: {ss}")
 
         model = baselines.models.NoisyAbstractModel(landscape, signal_strength=ss)
