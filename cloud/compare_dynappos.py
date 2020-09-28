@@ -5,11 +5,11 @@ from flexs import baselines
 import flexs.utils.sequence_utils as s_utils
 from typing import Callable
 
-def run_dynappo_constructive(landscape, wt, problem_name, start_num):
-    alphabet = s_utils.RNAA
-    sequences_batch_size = 100
-    model_queries_per_batch = 2000
+alphabet = s_utils.RNAA
+sequences_batch_size = 10
+model_queries_per_batch = 200
 
+def run_dynappo_constructive(landscape, wt, problem_name, start_num):
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPO(
             landscape=landscape,
@@ -26,10 +26,6 @@ def run_dynappo_constructive(landscape, wt, problem_name, start_num):
     return results
 
 def run_dynappo_mutative(landscape, wt, problem_name, start_num):
-    alphabet = s_utils.RNAA
-    sequences_batch_size = 10
-    model_queries_per_batch = 200
-
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPOMutative(
             landscape=landscape,
@@ -46,9 +42,10 @@ def run_dynappo_mutative(landscape, wt, problem_name, start_num):
     return results
 
 if __name__ == "__main__":
-    for p in ["L14_RNA1", "L14_RNA1+2"]:
+    for p in ["L14_RNA1"]:
         problem = flexs.landscapes.rna.registry()[p]
         landscape = flexs.landscapes.RNABinding(**problem["params"])
         for s in range(5):
             wt = problem["starts"][s]
+            results = run_dynappo_constructive(landscape, wt, p, s)
             results = run_dynappo_mutative(landscape, wt, p, s)
