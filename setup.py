@@ -21,7 +21,7 @@ setuptools.setup(
     install_requires=[
         "cma",
         "editdistance",
-        "numpy>=1.17",
+        "numpy>=1.16",
         "pandas>=0.23",
         "torch>=0.4",
         "scikit-learn>=0.20",

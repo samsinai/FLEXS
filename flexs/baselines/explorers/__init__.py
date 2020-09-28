@@ -1,3 +1,6 @@
+"""FLEXS `explorers` module"""
+from flexs.baselines.explorers import environments
+
 from flexs.baselines.explorers.adalead import Adalead
 from flexs.baselines.explorers.bo import BO, GPR_BO
 from flexs.baselines.explorers.cbas_dbas import CbAS, VAE
