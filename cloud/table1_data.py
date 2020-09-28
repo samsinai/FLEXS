@@ -111,7 +111,7 @@ def run_explorers(explorer, landscape, wt, problem_name, start_num):
 
 if __name__ == "__main__":
     for explorer in ["cmaes", "adalead", "cbas", "dbas", "dynappo"]:
-        for p in ["L14_RNA1", "L14_RNA1+2"]:
+        for p in ["L14_RNA1", "L14_RNA1+2", "C21_L100_RNA1+3"]:
             problem = flexs.landscapes.rna.registry()[p]
             landscape = flexs.landscapes.RNABinding(**problem["params"])
             for s in range(5):
