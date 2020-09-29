@@ -174,6 +174,15 @@ def registry():
     rosetta_data_dir = os.path.join(os.path.dirname(__file__), "data/rosetta")
 
     return {
-        pdb_file: {"params": {"pdb_file": os.path.join(rosetta_data_dir, pdb_file)}}
-        for pdb_file in os.listdir(rosetta_data_dir)
+        "3msi": {
+            "params": {"pdb_file": f"{rosetta_data_dir}/3msi.pdb"},
+            "starts": {
+                "ed_3_wt": "MAQASVVANQLIPINTHLTLVMMRSEVVTYVHIPAEDIPRLVSMDVNRAVPLGTTLMPDMVKGYAA",
+                "ed_5_wt": "MAQASVVFNQLIPINTHLTLVMMRFEVVTPVGCPAMDIPRLVSQQVNRAVPLGTTLMPDMVKGYAA",
+                "ed_7_wt": "WAQRSVVANQLIPINTGLTLVMMRSELVTGVGAPAEDIPRLVSMQVNRAVPLGTTNMPDMVKGYAA",
+                "ed_12_wt": "RAQESVVANQLIPILTHLTQKMSRRFVVTPVGIPAEDIPRLVNAQVDRAVPLGTTLMPDMDKGYAA",
+                "ed_27_wt": "MRRYSVIAYQERPINLHSTLTFNRSEVPWPVNRPASDAPRLVSMQNNRSVPLGTKLPEDPVCRYAL",
+            },
+        },
+        "3mx7": {"params": {"pdb_file": f"{rosetta_data_dir}/3mx7.pdb"},},
     }
