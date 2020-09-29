@@ -5,8 +5,8 @@ from flexs import baselines
 import flexs.utils.sequence_utils as s_utils
 from typing import Callable
 
-sequences_batch_size = 10
-model_queries_per_batch = 20
+sequences_batch_size = 100
+model_queries_per_batch = 2000
 
 def run_bo_table1(landscape, wt, problem_name, start_num):
     alphabet = s_utils.RNAA
