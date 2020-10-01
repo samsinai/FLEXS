@@ -57,4 +57,4 @@ elif task == "RNA":
         landscape = flexs.landscapes.RNABinding(**problem["params"])
         for s in range(5):
             wt = problem["starts"][s]
-            results = run_explorer_robustness(args, landscape, wt, p, s)
+            results = run_explorer_RNA(landscape, wt, p, s)
