@@ -264,10 +264,12 @@ class DynaPPO(flexs.Explorer):
                         one_hot = self.last_round_experimental_trajectories.observation[
                             batch, t
                         ]
-                        fitness = measured_dict[
-                            s_utils.one_hot_to_string(one_hot[:, :-1], self.alphabet)
-                        ]
-                        rewards[batch, t] += fitness
+                        seq = s_utils.one_hot_to_string(one_hot[:, :-1], self.alphabet)
+                        if seq in measured_dict:
+                            fitness = measured_dict[seq]
+                            rewards[batch, t] += fitness
+                        else:
+                            continue
 
             self.last_round_experimental_trajectories = trajectory.Trajectory(
                 step_type=self.last_round_experimental_trajectories.step_type,
@@ -312,7 +314,9 @@ class DynaPPO(flexs.Explorer):
         new_seqs = np.array(list(sequences))
         preds = self.model.get_fitness(new_seqs)
 
-        return new_seqs, preds
+        sorted_order = np.argsort(preds)[::-1][:self.sequences_batch_size]
+
+        return new_seqs[sorted_order], preds[sorted_order]
 
 
 class DynaPPOMutative(flexs.Explorer):
