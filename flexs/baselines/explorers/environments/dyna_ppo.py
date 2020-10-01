@@ -5,6 +5,9 @@ import numpy as np
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
+from tf_agents.utils import nest_utils
+import tensorflow as tf
+
 import flexs
 import flexs.utils.sequence_utils as s_utils
 
@@ -18,6 +21,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         seq_length: int,
         model: flexs.Model,
         landscape: flexs.Landscape,
+        batch_size: int,
     ):
         """Initialize DyNA-PPO agent environment.
 
@@ -39,11 +43,14 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         """
 
         self.alphabet = alphabet
+        self._batch_size = batch_size
 
         self.seq_length = seq_length
         self.partial_seq_len = 0
-        self.state = np.zeros((seq_length, len(alphabet) + 1), dtype="float32")
-        self.state[np.arange(len(self.state)), -1] = 1
+        self.states = np.zeros(
+            (batch_size, seq_length, len(alphabet) + 1), dtype="float32"
+        )
+        self.states[:, np.arange(seq_length), -1] = 1
 
         # model/model/measurements
         self.model = model
@@ -74,9 +81,18 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def _reset(self):
         self.partial_seq_len = 0
-        self.state = np.zeros_like(self.state)
-        self.state[np.arange(len(self.state)), -1] = 1
-        return ts.restart(self.state)
+        self.states[:, :, :] = 0
+        self.states[:, np.arange(self.seq_length), -1] = 1
+        return nest_utils.stack_nested_arrays(
+            [ts.restart(seq_state) for seq_state in self.states]
+        )
+
+    def batched(self):
+        return True
+
+    @property
+    def batch_size(self):
+        return self._batch_size
 
     def time_step_spec(self):
         """Define time steps."""
@@ -112,27 +128,40 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         """
         self.fitness_model_is_gt = fitness_model_is_gt
 
-    def _step(self, action):
+    def _step(self, actions):
         """Progress the agent one step in the environment."""
-        self.state[self.partial_seq_len, -1] = 0
-        self.state[self.partial_seq_len, action] = 1
+        self.states[:, self.partial_seq_len, -1] = 0
+        self.states[np.arange(self._batch_size), self.partial_seq_len, actions] = 1
         self.partial_seq_len += 1
 
         # We have not generated the last residue in the sequence, so continue
         if self.partial_seq_len < self.seq_length - 1:
-            return ts.transition(self.state, 0)
+            return nest_utils.stack_nested_arrays(
+                [ts.transition(seq_state, 0) for seq_state in self.states]
+            )
 
         # If sequence is of full length, score the sequence and end the episode
         # We need to take off the column in the matrix (-1) representing the mask token
-        complete_sequence = s_utils.one_hot_to_string(self.state[:, :-1], self.alphabet)
+        complete_sequences = [
+            s_utils.one_hot_to_string(seq_state[:, :-1], self.alphabet)
+            for seq_state in self.states
+        ]
         if self.fitness_model_is_gt:
-            fitness = self.landscape.get_fitness([complete_sequence]).item()
+            fitnesses = self.landscape.get_fitness(complete_sequences)
         else:
-            fitness = self.model.get_fitness([complete_sequence]).item()
-        self.all_seqs[complete_sequence] = fitness
+            fitnesses = self.model.get_fitness(complete_sequences)
+        self.all_seqs.update(zip(complete_sequences, fitnesses))
 
-        reward = fitness - self.lam * self.sequence_density(complete_sequence)
-        return ts.termination(self.state, reward)
+        # Reward = fitness - lambda * sequence density
+        rewards = np.array(
+            [
+                f - self.lam * self.sequence_density(seq)
+                for seq, f in zip(complete_sequences, fitnesses)
+            ]
+        )
+        return nest_utils.stack_nested_arrays(
+            [ts.termination(seq_state, r) for seq_state, r in zip(self.states, rewards)]
+        )
 
 
 class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disable=W0223

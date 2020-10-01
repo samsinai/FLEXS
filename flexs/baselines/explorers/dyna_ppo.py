@@ -127,6 +127,7 @@ class DynaPPO(flexs.Explorer):
         model: flexs.Model = None,
         num_experiment_rounds: int = 10,
         num_model_rounds: int = 1,
+        env_batch_size=4,
     ):
         """Explorer which implements DynaPPO.
 
@@ -177,9 +178,11 @@ class DynaPPO(flexs.Explorer):
         self.alphabet = alphabet
         self.num_experiment_rounds = num_experiment_rounds
         self.num_model_rounds = num_model_rounds
+        self.env_batch_size = env_batch_size
 
-        env = DynaPPOEnv(self.alphabet, len(starting_sequence), model, landscape)
-        validate_py_environment(env, episodes=1)
+        env = DynaPPOEnv(
+            self.alphabet, len(starting_sequence), model, landscape, env_batch_size
+        )
         self.tf_env = tf_py_environment.TFPyEnvironment(env)
 
         actor_net = actor_distribution_network.ActorDistributionNetwork(
@@ -213,19 +216,17 @@ class DynaPPO(flexs.Explorer):
         to the next one in `last_batch`, so that when the environment resets, mutants
         are generated from that new sequence.
         """
-        if experience.is_boundary():
-            seq = s_utils.one_hot_to_string(
-                experience.observation.numpy()[0][:, :-1], self.alphabet
-            )
-            new_seqs[seq] = self.tf_env.envs[0].get_cached_fitness(seq)
+        for is_bound, obs in zip(experience.is_boundary(), experience.observation):
+            if is_bound:
+                seq = s_utils.one_hot_to_string(obs.numpy()[:, :-1], self.alphabet)
+                new_seqs[seq] = self.tf_env.get_cached_fitness(seq)
 
     def propose_sequences(self, measured_sequences_data):
         """Propose `self.sequences_batch_size` samples."""
-        num_parallel_environments = 1
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
             self.agent.collect_data_spec,
-            batch_size=num_parallel_environments,
+            batch_size=self.env_batch_size,
             max_length=replay_buffer_capacity,
         )
 
@@ -252,10 +253,10 @@ class DynaPPO(flexs.Explorer):
             * self.sequences_batch_size
             / 2
         )
-        self.tf_env.envs[0].set_fitness_model_to_gt(True)
-        previous_landscape_cost = self.tf_env.envs[0].landscape.cost
+        self.tf_env.set_fitness_model_to_gt(True)
+        previous_landscape_cost = self.tf_env.landscape.cost
         while (
-            self.tf_env.envs[0].landscape.cost - previous_landscape_cost
+            self.tf_env.landscape.cost - previous_landscape_cost
             < experiment_based_training_budget
         ):
             collect_driver.run()
@@ -266,7 +267,7 @@ class DynaPPO(flexs.Explorer):
         sequences.clear()
 
         # Model-based training rounds
-        self.tf_env.envs[0].set_fitness_model_to_gt(False)
+        self.tf_env.set_fitness_model_to_gt(False)
         previous_model_cost = self.model.cost
         for _ in range(self.num_model_rounds):
             if self.model.cost - previous_model_cost >= self.model_queries_per_batch:
