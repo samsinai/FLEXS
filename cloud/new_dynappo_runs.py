@@ -21,7 +21,7 @@ def run_explorer_TF(landscape, wt, problem_name, start_num):
             alphabet=alphabet,
             log_file=f"runs/new_dynappo/{problem_name}_start{start_num}_ss{ss}"
         )
-    results = flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
+    results = flexs.evaluate.robustness(landscape, make_explorer, signal_strengths=[0, 1], verbose=False)
     return results
 
 def run_explorer_RNA(landscape, wt, problem_name, start_num):
@@ -39,7 +39,7 @@ def run_explorer_RNA(landscape, wt, problem_name, start_num):
             alphabet=alphabet,
             log_file=f"runs/new_dynappo/{problem_name}_start{start_num}_ss{ss}"
         )
-    results = flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
+    results = flexs.evaluate.robustness(landscape, make_explorer, signal_strengths=[0, 1], verbose=False)
     return results
 
 task = "TF"
