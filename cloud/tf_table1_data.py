@@ -23,7 +23,7 @@ def _robustness(
         results.append((ss, res))
 
     cnn_ensemble = flexs.Ensemble([
-        baselines.models.CNN(len(wt), alphabet=s_utils.RNAA, num_filters=32, hidden_size=100, loss='MSE')
+        baselines.models.CNN(len(wt), alphabet=s_utils.DNAA, num_filters=32, hidden_size=100, loss='MSE')
         for i in range(3)
     ])
     explorer = make_explorer(cnn_ensemble, ss, tag="cnn")
