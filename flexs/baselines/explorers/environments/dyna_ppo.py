@@ -130,6 +130,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
     def _step(self, actions):
         """Progress the agent one step in the environment."""
+        actions = actions.flatten()
         self.states[:, self.partial_seq_len, -1] = 0
         self.states[np.arange(self._batch_size), self.partial_seq_len, actions] = 1
         self.partial_seq_len += 1
