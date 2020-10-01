@@ -17,6 +17,7 @@ from tf_agents.environments import tf_py_environment
 from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.environments.utils import validate_py_environment
+from tf_agents.trajectories import time_step, trajectory
 
 import flexs
 from flexs import baselines
@@ -205,6 +206,8 @@ class DynaPPO(flexs.Explorer):
         )
         self.agent.initialize()
 
+        self.last_round_experimental_trajectories = None
+
     def add_last_seq_in_trajectory(self, experience, new_seqs):
         """Add the last sequence in an episode's trajectory.
 
@@ -216,10 +219,10 @@ class DynaPPO(flexs.Explorer):
         to the next one in `last_batch`, so that when the environment resets, mutants
         are generated from that new sequence.
         """
-        for is_bound, obs in zip(experience.is_boundary(), experience.observation):
-            if is_bound:
+        if experience.is_boundary().numpy().all():
+            for obs in experience.observation:
                 seq = s_utils.one_hot_to_string(obs.numpy()[:, :-1], self.alphabet)
-                new_seqs[seq] = self.tf_env.get_cached_fitness(seq)
+                new_seqs.add(seq)
 
     def propose_sequences(self, measured_sequences_data):
         """Propose `self.sequences_batch_size` samples."""
@@ -230,7 +233,7 @@ class DynaPPO(flexs.Explorer):
             max_length=replay_buffer_capacity,
         )
 
-        sequences = {}
+        sequences = set()
         collect_driver = dynamic_episode_driver.DynamicEpisodeDriver(
             self.tf_env,
             self.agent.collect_policy,
@@ -241,36 +244,50 @@ class DynaPPO(flexs.Explorer):
             num_episodes=1,
         )
 
-        # Experiment-based training round. Each sequence we generate here must be
-        # evaluated by the ground truth landscape model. So each sequence we evaluate
-        # reduces our sequence proposal budget by one.
-        # We amortize this experiment-based training cost to be 1/2 of the sequence budget
-        # at round one and linearly interpolate to a cost of 0 by the last round.
-        current_round = measured_sequences_data["round"].max()
-        experiment_based_training_budget = int(
-            (self.rounds - current_round + 1)
-            / self.rounds
-            * self.sequences_batch_size
-            / 2
-        )
-        self.tf_env.set_fitness_model_to_gt(True)
-        previous_landscape_cost = self.tf_env.landscape.cost
-        while (
-            self.tf_env.landscape.cost - previous_landscape_cost
-            < experiment_based_training_budget
-        ):
-            collect_driver.run()
+        # Experimental-training step
+        if self.last_round_experimental_trajectories is not None:
+            measured_dict = dict(
+                zip(
+                    measured_sequences_data["sequence"],
+                    measured_sequences_data["true_score"],
+                )
+            )
 
-        trajectories = replay_buffer.gather_all()
-        self.agent.train(experience=trajectories)
-        replay_buffer.clear()
-        sequences.clear()
+            obs_shape = self.last_round_experimental_trajectories.observation.shape
+            rewards = self.last_round_experimental_trajectories.reward.numpy()
+            for batch in range(obs_shape[0]):
+                for t in range(obs_shape[1]):
+                    if (
+                        self.last_round_experimental_trajectories.step_type[batch, t]
+                        == time_step.StepType.LAST
+                    ):
+                        one_hot = self.last_round_experimental_trajectories.observation[
+                            batch, t
+                        ]
+                        fitness = measured_dict[
+                            s_utils.one_hot_to_string(one_hot[:, :-1], self.alphabet)
+                        ]
+                        rewards[batch, t] += fitness
+
+            self.last_round_experimental_trajectories = trajectory.Trajectory(
+                step_type=self.last_round_experimental_trajectories.step_type,
+                observation=self.last_round_experimental_trajectories.observation,
+                action=self.last_round_experimental_trajectories.action,
+                policy_info=self.last_round_experimental_trajectories.policy_info,
+                next_step_type=self.last_round_experimental_trajectories.next_step_type,
+                reward=tf.convert_to_tensor(rewards),
+                discount=self.last_round_experimental_trajectories.discount,
+            )
+            self.agent.train(experience=self.last_round_experimental_trajectories)
 
         # Model-based training rounds
-        self.tf_env.set_fitness_model_to_gt(False)
+        self.tf_env.should_calc_rewards = True
         previous_model_cost = self.model.cost
         for _ in range(self.num_model_rounds):
-            if self.model.cost - previous_model_cost >= self.model_queries_per_batch:
+            if (
+                self.model.cost - previous_model_cost
+                >= self.model_queries_per_batch - self.sequences_batch_size
+            ):
                 break
 
             previous_round_model_cost = self.model.cost
@@ -283,19 +300,19 @@ class DynaPPO(flexs.Explorer):
             self.agent.train(experience=trajectories)
             replay_buffer.clear()
 
-        # We propose the top `self.sequences_batch_size` new sequences we have generated
-        sequences = {
-            seq: fitness
-            for seq, fitness in sequences.items()
-            if seq not in set(measured_sequences_data["sequence"])
-        }
-        new_seqs = np.array(list(sequences.keys()))
-        preds = np.array(list(sequences.values()))
-        sorted_order = np.argsort(preds)[
-            : -(self.sequences_batch_size - experiment_based_training_budget) : -1
-        ]
+        # Sequence proposal (don't calculate model fitnesses)
+        sequences.clear()
+        self.tf_env.should_calc_rewards = False
+        while len(sequences) < self.sequences_batch_size:
+            collect_driver.run()
 
-        return new_seqs[sorted_order], preds[sorted_order]
+        self.last_round_experimental_trajectories = replay_buffer.gather_all()
+        replay_buffer.clear()
+
+        new_seqs = np.array(list(sequences))
+        preds = self.model.get_fitness(new_seqs)
+
+        return new_seqs, preds
 
 
 class DynaPPOMutative(flexs.Explorer):

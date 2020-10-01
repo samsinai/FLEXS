@@ -1,3 +1,0 @@
-{"run_id": "18:23:11-09/30/2020", "exp_name": "BO-optimization_method={optimization_method}", "model_name": "LandscapeAsModel=RosettaFolding", "landscape_name": "RosettaFolding", "rounds": 10, "sequences_batch_size": 100, "model_queries_per_batch": 2000}
-sequence,model_score,true_score,round,model_cost,measurement_cost
-MAQASVVANQLIPINTHLTLVMMRSEVVTYVHIPAEDIPRLVSMDVNRAVPLGTTLMPDMVKGYAA,,0.39759383,0,0,1

@@ -9,7 +9,9 @@ def run_explorer(explorer, landscape, wt, start_name):
     alphabet = s_utils.AAS
     sequences_batch_size = 100
     model_queries_per_batch = 2000
-    model = flexs.LandscapeAsModel(landscape)
+    model = baselines.models.MLP(
+        len(wt), hidden_size=100, alphabet=alphabet, loss="MSE"
+    )
 
     if explorer == "adalead":
         exp = baselines.explorers.Adalead(
@@ -20,7 +22,7 @@ def run_explorer(explorer, landscape, wt, start_name):
             sequences_batch_size=sequences_batch_size,
             model_queries_per_batch=model_queries_per_batch,
             alphabet=alphabet,
-            log_file=f"runs/3msi/{explorer}_start={start_name}.csv",
+            log_file=f"runs/3msi/{explorer}/start={start_name}.csv",
         )
 
     elif explorer == "cbas" or explorer == "dbas":
@@ -48,7 +50,7 @@ def run_explorer(explorer, landscape, wt, start_name):
             model_queries_per_batch=model_queries_per_batch,
             mutation_rate=2.0 / len(wt),
             alphabet=alphabet,
-            log_file=f"runs/3msi/{explorer}_start={start_name}.csv",
+            log_file=f"runs/3msi/{explorer}/start={start_name}.csv",
         )
 
     elif explorer == "cmaes":
@@ -62,7 +64,7 @@ def run_explorer(explorer, landscape, wt, start_name):
             alphabet=alphabet,
             population_size=40,
             max_iter=400,
-            log_file=f"runs/3msi/{explorer}_start={start_name}.csv",
+            log_file=f"runs/3msi/{explorer}/start={start_name}.csv",
         )
 
     elif explorer == "dynappo":
@@ -77,18 +79,19 @@ def run_explorer(explorer, landscape, wt, start_name):
             num_experiment_rounds=10,
             num_model_rounds=8,
             alphabet=alphabet,
-            log_file=f"runs/3msi/{explorer}_start={start_name}.csv",
+            log_file=f"runs/3msi/{explorer}/start={start_name}.csv",
         )
 
     elif explorer == "bo":
+        ensemble = flexs.Ensemble([model], combine_with=lambda x: x)
         exp = baselines.explorers.BO(
-            model=model,
+            model=ensemble,
             rounds=10,
             starting_sequence=wt,
             sequences_batch_size=sequences_batch_size,
             model_queries_per_batch=model_queries_per_batch,
             alphabet=alphabet,
-            log_file=f"runs/3msi/{explorer}_start{start_name}.csv",
+            log_file=f"runs/3msi/{explorer}/start{start_name}.csv",
         )
 
     elif explorer == "genetic":
@@ -104,7 +107,7 @@ def run_explorer(explorer, landscape, wt, start_name):
             sequences_batch_size=sequences_batch_size,
             model_queries_per_batch=model_queries_per_batch,
             alphabet=alphabet,
-            log_file=f"runs/3msi/{explorer}_start={start_name}.csv",
+            log_file=f"runs/3msi/{explorer}/start={start_name}.csv",
         )
 
     elif explorer == "random":
@@ -116,7 +119,7 @@ def run_explorer(explorer, landscape, wt, start_name):
             sequences_batch_size=sequences_batch_size,
             model_queries_per_batch=model_queries_per_batch,
             alphabet=alphabet,
-            log_file=f"runs/3msi/{explorer}_start={start_name}.csv",
+            log_file=f"runs/3msi/{explorer}/start={start_name}.csv",
         )
 
     exp.run(landscape)
@@ -129,8 +132,14 @@ def main():
     )
 
     for explorer in [
-        "bo"
-    ]:  # "cmaes", "adalead", "random", "genetic", "cbas", "dbas", "dynappo"]:
+        "cmaes",
+        "adalead",
+        "random",
+        "genetic",
+        "cbas",
+        "dbas",
+        "dynappo",
+    ]:
         for start_name, start_seq in problem["starts"].items():
             print(f"\n{explorer}, start {start_name}\n")
             run_explorer(explorer, landscape, start_seq, start_name)

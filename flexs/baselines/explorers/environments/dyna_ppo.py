@@ -55,7 +55,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         # model/model/measurements
         self.model = model
         self.landscape = landscape
-        self.fitness_model_is_gt = False
+        self.should_calc_rewards = True
         self.previous_fitness = -float("inf")
 
         # sequence
@@ -117,19 +117,20 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         return dens
 
     def get_cached_fitness(self, seq):
-        return self.all_seqs[seq]
+        return self.all_seqs.get(seq, None)
 
-    def set_fitness_model_to_gt(self, fitness_model_is_gt):
+    def calc_rewards(self, should_calc_rewards):
         """
         Set the fitness model to the ground truth landscape or to the model.
 
         Call with `True` when doing an experiment-based training round
         and call with `False` when doing a model-based training round.
         """
-        self.fitness_model_is_gt = fitness_model_is_gt
+        self.should_calc_rewards = should_calc_rewards
 
     def _step(self, actions):
         """Progress the agent one step in the environment."""
+        actions = actions.flatten()
         self.states[:, self.partial_seq_len, -1] = 0
         self.states[np.arange(self._batch_size), self.partial_seq_len, actions] = 1
         self.partial_seq_len += 1
@@ -146,11 +147,11 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             s_utils.one_hot_to_string(seq_state[:, :-1], self.alphabet)
             for seq_state in self.states
         ]
-        if self.fitness_model_is_gt:
-            fitnesses = self.landscape.get_fitness(complete_sequences)
-        else:
+        if self.should_calc_rewards:
             fitnesses = self.model.get_fitness(complete_sequences)
-        self.all_seqs.update(zip(complete_sequences, fitnesses))
+            self.all_seqs.update(zip(complete_sequences, fitnesses))
+        else:
+            fitnesses = np.zeros(len(complete_sequences))
 
         # Reward = fitness - lambda * sequence density
         rewards = np.array(
