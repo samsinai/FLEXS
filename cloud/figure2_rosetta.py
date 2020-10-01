@@ -16,6 +16,7 @@ def run_explorer(explorer, landscape, wt, start_name):
             model,
             rounds=10,
             recomb_rate=0.2,
+            rho=0,
             starting_sequence=wt,
             sequences_batch_size=sequences_batch_size,
             model_queries_per_batch=model_queries_per_batch,
@@ -60,7 +61,8 @@ def run_explorer(explorer, landscape, wt, start_name):
             sequences_batch_size=sequences_batch_size,
             model_queries_per_batch=model_queries_per_batch,
             alphabet=alphabet,
-            population_size=40,
+            population_size=15,
+            initial_variance=0.2,
             max_iter=400,
             log_file=f"runs/3msi/{explorer}_start={start_name}.csv",
         )
@@ -129,8 +131,15 @@ def main():
     )
 
     for explorer in [
-        "bo"
-    ]:  # "cmaes", "adalead", "random", "genetic", "cbas", "dbas", "dynappo"]:
+        "cmaes",
+        "adalead",
+        "bo",
+        "random",
+        "cbas",
+        "dbas",
+        "dynappo",
+        "genetic",
+    ]:
         for start_name, start_seq in problem["starts"].items():
             print(f"\n{explorer}, start {start_name}\n")
             run_explorer(explorer, landscape, start_seq, start_name)
