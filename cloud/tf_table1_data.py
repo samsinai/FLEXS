@@ -13,7 +13,7 @@ def _robustness(
     """
     results = []
 
-    for ss in [0.0, 0.5, 0.9, 1.0]:
+    for ss in [0.0, 1.0]:
         print(f"Evaluating for robustness with model accuracy; signal_strength: {ss}")
 
         model = baselines.models.NoisyAbstractModel(landscape, signal_strength=ss)
@@ -21,6 +21,15 @@ def _robustness(
         res = explorer.run(landscape, verbose=False)
 
         results.append((ss, res))
+
+    cnn_ensemble = flexs.Ensemble([
+        baselines.models.CNN(len(wt), alphabet=s_utils.RNAA, num_filters=32, hidden_size=100, loss='MSE')
+        for i in range(3)
+    ])
+    explorer = make_explorer(cnn_ensemble, ss, tag="cnn")
+    res = explorer.run(landscape, verbose=False)
+
+    results.append((None, res))
 
     return results
 
