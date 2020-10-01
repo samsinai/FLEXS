@@ -247,12 +247,7 @@ class DynaPPO(flexs.Explorer):
         # We amortize this experiment-based training cost to be 1/2 of the sequence budget
         # at round one and linearly interpolate to a cost of 0 by the last round.
         current_round = measured_sequences_data["round"].max()
-        experiment_based_training_budget = int(
-            (self.rounds - current_round + 1)
-            / self.rounds
-            * self.sequences_batch_size
-            / 2
-        )
+        experiment_based_training_budget = self.sequences_batch_size
         self.tf_env.set_fitness_model_to_gt(True)
         previous_landscape_cost = self.tf_env.landscape.cost
         while (
@@ -291,9 +286,7 @@ class DynaPPO(flexs.Explorer):
         }
         new_seqs = np.array(list(sequences.keys()))
         preds = np.array(list(sequences.values()))
-        sorted_order = np.argsort(preds)[
-            : -(self.sequences_batch_size - experiment_based_training_budget) : -1
-        ]
+        sorted_order = np.argsort(preds)[::-1][:self.sequences_batch_size]
 
         return new_seqs[sorted_order], preds[sorted_order]
 
