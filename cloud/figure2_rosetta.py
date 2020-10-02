@@ -127,7 +127,7 @@ def run_explorer(explorer, landscape, wt, start_name):
 def main():
     problem = flexs.landscapes.rosetta.registry()["3msi"]
     landscape = flexs.landscapes.RosettaFolding(
-        **problem["params"], sigmoid_center=-6, sigmoid_norm_value=12
+        **problem["params"], sigmoid_center=-3, sigmoid_norm_value=12
     )
 
     for explorer in [
