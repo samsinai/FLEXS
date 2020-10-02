@@ -10,7 +10,13 @@ import flexs
 
 
 class BertGFPBrightness(flexs.Landscape):
-    def __init__(self, norm_value=1):
+
+    gfp_wild_type = "MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVT" \
+                    "TLSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIE" \
+                    "LKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNT" \
+                    "PIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK"
+
+    def __init__(self, batch_size=10, device=None, norm_value=1):
         """
         Green fluorescent protein (GFP) lanscape. The oracle used in this lanscape is
         the transformer model from TAPE (https://github.com/songlab-cal/tape).
@@ -38,10 +44,12 @@ class BertGFPBrightness(flexs.Landscape):
                 with open(f"fluorescence-model/{file_name}", "wb") as f:
                     f.write(response.content)
 
-        # self.GFP_info = dict(zip(self.GFP_df["seq"], self.GFP_df["brightness"]))
+        self.batch_size = batch_size
         self.tokenizer = tape.TAPETokenizer(vocab="iupac")
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
+        if self.device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = tape.ProteinBertForValuePrediction.from_pretrained(
             "fluorescence-model"
         ).to(self.device)
@@ -53,4 +61,9 @@ class BertGFPBrightness(flexs.Landscape):
             [self.tokenizer.encode(seq) for seq in sequences]
         ).to(self.device)
 
-        return self.model(encoded_seqs)[0].detach().numpy().astype(float).reshape(-1)
+        batch_fitnesses = []
+        for seqs in np.array_split(encoded_seqs, self.batch_size):
+            fitnesses = self.model(seqs)[0].detach().cpu().numpy().astype(float).reshape(-1)
+            batch_fitnesses.append(fitnesses)
+
+        return np.concatenate(batch_fitnesses)
