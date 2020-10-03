@@ -11,7 +11,7 @@ from flex.utils.VAE_utils import Sampling, VAE
 
 
 class CbAS(flexs.Explorer):
-    """CbAS explorer."""
+    """CbAS and DbAS explorers."""
 
     def __init__(
         self,
@@ -29,7 +29,7 @@ class CbAS(flexs.Explorer):
         mutation_rate=0.2,
         log_file=None,
     ):
-        """Explorer which implements Conditioning by Adaptive Sampling (CbAS).
+        """Explorer which implements Conditioning by Adaptive Sampling (CbAS) and DbAS. 
 
         Paper: https://arxiv.org/pdf/1901.10060.pdf
 
@@ -44,7 +44,7 @@ class CbAS(flexs.Explorer):
                 n_convergence cycles.
             explorer_type:
         """
-        name = f"CbAS_Q={Q}_generator={generator.name}"
+        name = f"{algo}_Q={Q}_generator={generator.name}"
         super().__init__(
             model,
             name,
