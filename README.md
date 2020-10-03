@@ -18,8 +18,9 @@ FLEXS is an open-source simulation environment that enables you to develop and c
 
 ## Installation
 
-We strongly recommend that you install the dependencies for the sandbox in a conda virtual environment. 
-The dependencies of the sandbox are the latest versions of the following packages:
+FLEXS is available on PyPI and can be installed with `pip install flexs`. 
+
+We strongly recommend that you install the dependencies for the sandbox in a conda virtual environment. The main dependencies of the sandbox are the latest versions of the following packages:
 
 * Numpy 
 * Scikit-Learn
@@ -39,15 +40,16 @@ pip install keras
 
 ```
 
-If you are in a conda environment, you can also run `./load_environment.sh` in the main directory to install all of the dependencies. The following dependencies are required for specific use case. 
+If you are in a conda environment, you can also run `./load_environment.sh` in the main directory to install all of the dependencies. The following dependencies are required for specific use cases: 
 
 * TQDM (If you plan on using the Evolutionary Bayesian Explorer)
 * Tensorflow-Probability (If you aim to use DyNAPPO)
 * TF-Agents  (If you aim to use DyNAPPO)
 * [TAPE](https://github.com/songlab-cal/tape) (If you want to use the GFP oracle)
-* Gin 
+* ViennaRNA (dependency for RNA folding landscape)
+* PyRosetta (dependency for Protein folding landscape)
 
-We also provide limited support for making landscapes with [Rosetta](https://www.rosettacommons.org/), note that it requires a separate license.  
+Please note that [Rosetta](https://www.rosettacommons.org/) requires a commercial license if not being used for academic purposes.  
 
 ## Overview
 
