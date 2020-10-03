@@ -118,7 +118,8 @@ class Adalead(flexs.Explorer):
                             self.alphabet,
                         )
 
-                        # Stop when we generate new child that has never been seen before
+                        # Stop when we generate new child that has never been seen
+                        # before
                         if (
                             child not in measured_sequence_set
                             and child not in sequences
