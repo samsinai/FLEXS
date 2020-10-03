@@ -2,12 +2,10 @@
 import random
 
 import numpy as np
-import scipy.special
-
+from flex.utils.VAE_utils import VAE
 
 import flexs
 from flexs.utils import sequence_utils as s_utils
-from flex.utils.VAE_utils import Sampling, VAE
 
 
 class CbAS(flexs.Explorer):
@@ -92,7 +90,8 @@ class CbAS(flexs.Explorer):
         ]
 
         # gamma is our threshold (the self.Q-th percentile of sequences from last round)
-        # we will pick all of last round's sequences with fitness above the Qth percentile
+        # we will pick all of last round's sequences with fitness above the Qth
+        # percentile
         gamma = np.percentile(last_round_sequences["true_score"], 100 * self.Q)
         initial_batch = last_round_sequences["sequence"][
             last_round_sequences["true_score"] >= gamma
@@ -150,7 +149,8 @@ class CbAS(flexs.Explorer):
             # higher than the current
             gamma = max(np.percentile(scores, self.Q * 100), gamma)
 
-            # cbas and dbas mostly the same except cbas also does an importance sampling step
+            # cbas and dbas mostly the same except cbas also does an importance
+            # sampling step
             if self.algo == "cbas":
                 # calculate the weights for the proposed batch
                 log_probs_0 = self.generator.calculate_log_probability(
