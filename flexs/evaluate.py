@@ -14,13 +14,15 @@ def robustness(
     """
     Evaluate explorer outputs as a function of the noisyness of its model.
 
-    It runs the same explorer with `flexs.NoisyAbstractModel`'s of different signal strengths.
+    It runs the same explorer with `flexs.NoisyAbstractModel`'s of different
+    signal strengths.
 
     Args:
         landscape: The landscape to run on.
         make_explorer: A function that takes in a model and signal strength
             (for potential bookkeeping/logging purposes) and an explorer.
         signal_strengths: A list of signal strengths between 0 and 1.
+
     """
     results = []
     for ss in signal_strengths:
@@ -46,24 +48,26 @@ def efficiency(
     ],
 ):
     """
-    Evaluate explorer outputs as a function of the number of allowed ground truth measurements
-    and model queries per round.
+    Evaluate explorer outputs as a function of the number of allowed ground truth
+    measurements and model queries per round.
 
     Args:
         landscape: Ground truth fitness landscape.
         make_explorer: A function that takes in a `sequences_batch_size` and
             a `model_queries_per_batch` and returns an explorer.
         budgets: A list of tuples (`sequences_batch_size`, `model_queries_per_batch`).
+
     """
     results = []
     for sequences_batch_size, model_queries_per_batch in budgets:
         print(
-            f"Evaluating for sequences_batch_size: {sequences_batch_size}, model_queries_per_batch: {model_queries_per_batch}"
+            f"Evaluating for sequences_batch_size: {sequences_batch_size}, "
+            f"model_queries_per_batch: {model_queries_per_batch}"
         )
         explorer = make_explorer(sequences_batch_size, model_queries_per_batch)
         res = explorer.run(
             landscape
-        )  # TODO: is this being logged? because the last budget pair would take very long
+        )  # TODO: is this being logged? bc the last budget pair would take very long
 
         results.append(((sequences_batch_size, model_queries_per_batch), res))
 
@@ -84,12 +88,14 @@ def adaptivity(
     Args:
         landscape: Ground truth fitness landscape.
         make_explorer: A function that takes in a number of rounds, a
-            `sequences_batch_size` and a `model_queries_per_batch` and returns an explorer.
+            `sequences_batch_size` and a `model_queries_per_batch` and returns an
+            explorer.
         num_rounds: A list of number of rounds to run the explorer with.
         total_ground_truth_measurements: Total number of ground truth measurements
             across all rounds (`sequences_batch_size * rounds`).
         total_model_queries: Total number of model queries across all rounds
             (`model_queries_per_round * rounds`).
+
     """
     results = []
     for rounds in num_rounds:

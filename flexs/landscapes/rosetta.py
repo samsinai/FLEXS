@@ -184,5 +184,7 @@ def registry():
                 "ed_27_wt": "MRRYSVIAYQERPINLHSTLTFNRSEVPWPVNRPASDAPRLVSMQNNRSVPLGTKLPEDPVCRYAL",
             },
         },
-        "3mx7": {"params": {"pdb_file": f"{rosetta_data_dir}/3mx7.pdb"},},
+        "3mx7": {
+            "params": {"pdb_file": f"{rosetta_data_dir}/3mx7.pdb"},
+        },
     }

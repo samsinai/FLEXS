@@ -113,7 +113,9 @@ class Adalead(flexs.Explorer):
                         idx, node = nodes[len(children) - 1]
 
                         child = s_utils.generate_random_mutant(
-                            node, self.mu * 1 / len(node), self.alphabet,
+                            node,
+                            self.mu * 1 / len(node),
+                            self.alphabet,
                         )
 
                         # Stop when we generate new child that has never been seen before

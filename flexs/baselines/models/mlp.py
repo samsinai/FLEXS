@@ -34,5 +34,9 @@ class MLP(keras_model.KerasModel):
             name = f"MLP_hidden_size_{hidden_size}"
 
         super().__init__(
-            model, alphabet=alphabet, name=name, batch_size=batch_size, epochs=epochs,
+            model,
+            alphabet=alphabet,
+            name=name,
+            batch_size=batch_size,
+            epochs=epochs,
         )

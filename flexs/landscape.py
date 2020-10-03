@@ -1,11 +1,8 @@
 """Defines the Landscape class."""
-
 import abc
-from typing import List, Union
 
 import numpy as np
 
-SEQUENCES_TYPE = Union[List[str], np.ndarray]
 from flexs.types import SEQUENCES_TYPE
 
 
@@ -17,9 +14,11 @@ class Landscape(abc.ABC):
         cost (int): Number of sequences whose fitness has been evaluated.
         name (str): A human-readable name for the landscape (often contains
             parameter values in the name) which is used when logging explorer runs.
+
     """
 
     def __init__(self, name: str):
+        """Create Landscape, setting `name` and setting `cost` to zero."""
         self.cost = 0
         self.name = name
 
@@ -40,6 +39,7 @@ class Landscape(abc.ABC):
 
         Returns:
             Scores for each sequence.
+
         """
         self.cost += len(sequences)
         return self._fitness_function(sequences)

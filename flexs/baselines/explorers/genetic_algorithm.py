@@ -2,11 +2,14 @@ import numpy as np
 import torch
 
 import flexs
-import flexs.utils.sequence_utils as s_utils
+from flexs.utils import sequence_utils as s_utils
 
 
 class GeneticAlgorithm(flexs.Explorer):
-    """A genetic algorithm explorer with single point mutations and no crossover.
+    """A genetic algorithm explorer with single point mutations and no recombination.
+
+    A strong baseline, especially with perfect models. However, is more sensitive to
+    model quality than AdaLead.
 
     Based on the `parent_selection_strategy`, this class implements one of three
     genetic algorithms:
@@ -19,12 +22,6 @@ class GeneticAlgorithm(flexs.Explorer):
            genetic algorithm based off of the Wright-Fisher model of evolution,
            where members of the population become parents with a probability
            exponential to their fitness (softmax the scores then sample).
-
-    If `recombination_strategy` is None (the default), no recombination happens,
-    and children are simply mutated versions of parents.
-    If `recombination_strategy` is not None, children are generated through recombining
-    parents according to the strategy (currently, '1-point-crossover' and
-    `n-tile-crossover` are supported).
 
     """
 
@@ -121,7 +118,8 @@ class GeneticAlgorithm(flexs.Explorer):
 
         # Create initial population by choosing parents from `measured_sequences`
         initial_pop_inds = self._choose_parents(
-            measured_sequences["true_score"].to_numpy(), self.population_size,
+            measured_sequences["true_score"].to_numpy(),
+            self.population_size,
         )
         pop = measured_sequences["sequence"].to_numpy()[initial_pop_inds]
         scores = measured_sequences["true_score"].to_numpy()[initial_pop_inds]

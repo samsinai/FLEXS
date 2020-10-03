@@ -1,12 +1,11 @@
 """Defines abstract base explorer class."""
-
 import abc
 import json
-from datetime import datetime
 import os
 import time
-from typing import Dict, Tuple
 import warnings
+from datetime import datetime
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -37,14 +36,18 @@ class Explorer(abc.ABC):
         Create an Explorer.
 
         Args:
-            model: Model of ground truth that the explorer will use to help guide sequence proposal.
+            model: Model of ground truth that the explorer will use to help guide
+                sequence proposal.
             name: A human-readable name for the explorer (may include parameter values).
             rounds: Number of rounds to run for (a round consists of sequence proposal,
-                ground truth fitness measurement of proposed sequences, and retraining the model).
-            sequences_batch_size: Number of sequences to propose for measurement per round.
+                ground truth fitness measurement of proposed sequences, and retraining
+                the model).
+            sequences_batch_size: Number of sequences to propose for measurement per
+                round.
             model_queries_per_batch: Number of allowed model evaluations per round.
             starting_sequence: Sequence from which to start exploration.
             log_file: .csv filepath to write output.
+
         """
         self.model = model
         self.name = name
@@ -81,6 +84,7 @@ class Explorer(abc.ABC):
         Returns:
             (np.ndarray(string), np.ndarray(float)): A tuple containing the proposed
             sequences and their scores (according to the model).
+
         """
         pass
 
@@ -115,8 +119,8 @@ class Explorer(abc.ABC):
         Args:
             landscape: Ground truth fitness landscape.
             verbose: Whether to print output or not.
-        """
 
+        """
         self.model.cost = 0
 
         # Metadata about run that will be used for logging purposes

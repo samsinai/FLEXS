@@ -12,7 +12,7 @@ class TFBinding(flexs.Landscape):
 
         # Load TF pairwise TF binding measurements from file
         data = pd.read_csv(landscape_file, sep="\t")
-        score = data["E-score"] # "E-score" is enrichment score
+        score = data["E-score"]  # "E-score" is enrichment score
         norm_score = (score - score.min()) / (score.max() - score.min())
 
         # The csv file keeps one DNA strand's sequence in "8-mer" and the other in "8-mer.1".
@@ -50,9 +50,7 @@ def registry():
         problem_name = fname.replace("_8mers.txt", "")
 
         problems[problem_name] = {
-            "params": {
-                "landscape_file": os.path.join(tf_binding_data_dir, fname)
-            },
+            "params": {"landscape_file": os.path.join(tf_binding_data_dir, fname)},
             "starts": [
                 "GCTCGAGC",
                 "GCGCGCGC",
@@ -68,7 +66,7 @@ def registry():
                 "AAAGATAG",
                 "CCTTCTTT",
                 "AAAGAGAG",
-            ]
+            ],
         }
 
     return problems

@@ -1,5 +1,4 @@
 """CbAS and DbAS explorers."""
-
 import random
 
 import numpy as np
@@ -8,7 +7,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 import flexs
-import flexs.utils.sequence_utils as s_utils
+from flexs.utils import sequence_utils as s_utils
 
 
 class Sampling(keras.layers.Layer):

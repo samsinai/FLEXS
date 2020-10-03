@@ -3,7 +3,7 @@ import cma
 import numpy as np
 
 import flexs
-import flexs.utils.sequence_utils as s_utils
+from flexs.utils import sequence_utils as s_utils
 
 
 class CMAES(flexs.Explorer):

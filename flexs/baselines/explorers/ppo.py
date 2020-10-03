@@ -116,7 +116,9 @@ class PPO(flexs.Explorer):
             if len(top_sequences) > 0:
                 self.tf_env.pyenv.envs[0].seq = np.random.choice(top_sequences)
             else:
-                self.tf_env.pyenv.envs[0].seq = np.random.choice([seq for seq, _ in new_seqs.items()])
+                self.tf_env.pyenv.envs[0].seq = np.random.choice(
+                    [seq for seq, _ in new_seqs.items()]
+                )
 
     def propose_sequences(self, measured_sequences_data: pd.DataFrame):
         """Propose `batch_size` samples."""

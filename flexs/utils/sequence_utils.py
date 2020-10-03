@@ -20,6 +20,7 @@ BA = "01"
 def construct_mutant_from_sample(
     pwm_sample: np.ndarray, one_hot_base: np.ndarray
 ) -> np.ndarray:
+    """Return one hot mutant, a utility function for some explorers."""
     one_hot = np.zeros(one_hot_base.shape)
     one_hot += one_hot_base
     i, j = np.nonzero(pwm_sample)  # this can be problematic for non-positive fitnesses
@@ -38,6 +39,7 @@ def string_to_one_hot(sequence: str, alphabet: str) -> np.ndarray:
 
     Returns:
         One-hot numpy array of shape `(len(sequence), len(alphabet))`.
+
     """
     out = np.zeros((len(sequence), len(alphabet)))
     for i in range(len(sequence)):
@@ -52,11 +54,13 @@ def one_hot_to_string(
     Return the sequence string representing a one-hot vector according to an alphabet.
 
     Args:
-        one_hot: One-hot of shape `(len(sequence), len(alphabet)` representing a sequence.
+        one_hot: One-hot of shape `(len(sequence), len(alphabet)` representing
+            a sequence.
         alphabet: Alphabet string (assigns each character an index).
 
     Returns:
         Sequence string representation of `one_hot`.
+
     """
     residue_idxs = np.argmax(one_hot, axis=1)
     return "".join([alphabet[idx] for idx in residue_idxs])
@@ -93,6 +97,7 @@ def generate_random_mutant(sequence: str, mu: float, alphabet: str) -> str:
 
     Returns:
         Mutant sequence string.
+
     """
     mutant = []
     for s in sequence:

@@ -1,15 +1,14 @@
 """DyNA-PPO environment module."""
-
 import editdistance
 import numpy as np
+import tensorflow as tf
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 from tf_agents.utils import nest_utils
-import tensorflow as tf
 
 import flexs
-import flexs.utils.sequence_utils as s_utils
+from flexs.utils import sequence_utils as s_utils
 
 
 class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223

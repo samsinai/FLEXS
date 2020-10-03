@@ -1,31 +1,33 @@
 """DyNA-PPO explorer."""
 from functools import partial
+from typing import List, Set, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-import sklearn
-import sklearn.linear_model
-import sklearn.gaussian_process
-import sklearn.ensemble
-import sklearn.tree
 import scipy.stats
-from sklearn.model_selection import train_test_split
+import sklearn
+import sklearn.ensemble
+import sklearn.gaussian_process
+import sklearn.linear_model
+import sklearn.tree
 import tensorflow as tf
+from sklearn.model_selection import train_test_split
 from tf_agents.agents.ppo import ppo_agent
 from tf_agents.drivers import dynamic_episode_driver
 from tf_agents.environments import tf_py_environment
+from tf_agents.environments.utils import validate_py_environment
 from tf_agents.networks import actor_distribution_network, value_network
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
-from tf_agents.environments.utils import validate_py_environment
 
 import flexs
 from flexs import baselines
 from flexs.baselines.explorers.environments.dyna_ppo import (
     DynaPPOEnvironment as DynaPPOEnv,
+)
+from flexs.baselines.explorers.environments.dyna_ppo import (
     DynaPPOEnvironmentMutative as DynaPPOEnvMut,
 )
-import flexs.utils.sequence_utils as s_utils
-from typing import List, Set, Tuple, Type, Union
+from flexs.utils import sequence_utils as s_utils
 
 
 class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
@@ -49,7 +51,9 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
                     sklearn.linear_model.Lasso(), alphabet, "lasso"
                 ),
                 baselines.models.SklearnRegressor(
-                    sklearn.linear_model.BayesianRidge(), alphabet, "bayesian_ridge",
+                    sklearn.linear_model.BayesianRidge(),
+                    alphabet,
+                    "bayesian_ridge",
                 ),
                 baselines.models.SklearnRegressor(
                     sklearn.gaussian_process.GaussianProcessRegressor(),
@@ -159,7 +163,11 @@ class DynaPPO(flexs.Explorer):
         name = f"DynaPPO_Agent_{num_experiment_rounds}_{num_model_rounds}"
 
         if model is None:
-            model = DynaPPOEnsemble(len(starting_sequence), alphabet,)
+            model = DynaPPOEnsemble(
+                len(starting_sequence),
+                alphabet,
+            )
+            # Some models in the ensemble need to be trained on dummy dataset before they can predict
             model.train(
                 s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
                 [0] * 10,
@@ -286,7 +294,7 @@ class DynaPPO(flexs.Explorer):
         }
         new_seqs = np.array(list(sequences.keys()))
         preds = np.array(list(sequences.values()))
-        sorted_order = np.argsort(preds)[::-1][:self.sequences_batch_size]
+        sorted_order = np.argsort(preds)[::-1][: self.sequences_batch_size]
 
         return new_seqs[sorted_order], preds[sorted_order]
 
@@ -337,7 +345,10 @@ class DynaPPOMutative(flexs.Explorer):
         name = f"DynaPPO_Agent_{num_experiment_rounds}_{num_model_rounds}"
 
         if model is None:
-            model = DynaPPOEnsemble(len(starting_sequence), alphabet,)
+            model = DynaPPOEnsemble(
+                len(starting_sequence),
+                alphabet,
+            )
             model.train(
                 s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
                 [0] * 10,

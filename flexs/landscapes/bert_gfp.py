@@ -1,7 +1,7 @@
+"""Defines the BertGFPBrightness landscape."""
 import os
 
 import numpy as np
-import pandas as pd
 import requests
 import tape
 import torch
@@ -10,14 +10,27 @@ import flexs
 
 
 class BertGFPBrightness(flexs.Landscape):
+    r"""
+    Green fluorescent protein (GFP) brightness landscape.
+
+    The oracle used in this lanscape is the transformer model
+    from TAPE (https://github.com/songlab-cal/tape).
+
+    To create the transformer model used here, run the command:
+
+        ```tape-train transformer fluorescence --from_pretrained bert-base \
+                                               --batch_size 128 \
+                                               --gradient_accumulation_steps 10 \
+                                               --data_dir .```
+
+    """
+
     def __init__(self, norm_value=1):
         """
-        Green fluorescent protein (GFP) lanscape. The oracle used in this lanscape is
-        the transformer model from TAPE (https://github.com/songlab-cal/tape).
+        Create GFP landscape.
 
-        To create the transformer model used here, run the command:
-
-        tape-train transformer fluorescence --from_pretrained bert-base --batch_size 128 --gradient_accumulation_steps 10 --data_dir .
+        Downloads model into `./fluorescence-model` if not already cached there.
+        If interrupted during download, may have to delete this folder and try again.
         """
         super().__init__(name="GFP")
 
@@ -38,7 +51,6 @@ class BertGFPBrightness(flexs.Landscape):
                 with open(f"fluorescence-model/{file_name}", "wb") as f:
                     f.write(response.content)
 
-        # self.GFP_info = dict(zip(self.GFP_df["seq"], self.GFP_df["brightness"]))
         self.tokenizer = tape.TAPETokenizer(vocab="iupac")
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"

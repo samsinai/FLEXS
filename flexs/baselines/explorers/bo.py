@@ -3,14 +3,14 @@ import copy
 from bisect import bisect_left
 
 import numpy as np
-import flexs
+
 import flexs
 from flexs.utils.replay_buffers import PrioritizedReplayBuffer
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
     generate_random_sequences,
-    string_to_one_hot,
     one_hot_to_string,
+    string_to_one_hot,
 )
 
 
@@ -209,7 +209,9 @@ class BO(flexs.Explorer):
             measured_batch = []
             for seq in last_batch_seqs:
                 if seq in _last_batch_seqs:
-                    measured_batch.append((_last_batch_true_scores[_last_batch_seqs.index(seq)], seq))
+                    measured_batch.append(
+                        (_last_batch_true_scores[_last_batch_seqs.index(seq)], seq)
+                    )
                 else:
                     measured_batch.append((np.mean(self.model.get_fitness([seq])), seq))
             measured_batch = sorted(measured_batch)
@@ -220,7 +222,7 @@ class BO(flexs.Explorer):
         samples = set()
         prev_cost = self.model.cost
         all_measured_seqs = set(measured_sequences["sequence"].tolist())
-        while (self.model.cost - prev_cost < self.model_queries_per_batch):
+        while self.model.cost - prev_cost < self.model_queries_per_batch:
             uncertainty, new_state_string, _ = self.pick_action(all_measured_seqs)
             all_measured_seqs.add(new_state_string)
             samples.add(new_state_string)
