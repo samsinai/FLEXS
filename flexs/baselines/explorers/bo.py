@@ -15,7 +15,6 @@ from flexs.utils.sequence_utils import (
 
 
 class BO(flexs.Explorer):
-    """Explorer using Bayesian Optimization."""
 
     def __init__(
         self,
@@ -29,7 +28,7 @@ class BO(flexs.Explorer):
         method="EI",
         recomb_rate=0,
     ):
-        """Bayesian Optimization (BO) explorer.
+        """Evolutionary Bayesian Optimization (Evo_BO) explorer.
 
         Parameters:
             method (str, equal to EI or UCB): The improvement method used in BO,
@@ -249,11 +248,11 @@ class BO(flexs.Explorer):
 
 
 class GPR_BO(flexs.Explorer):
-    """Explorer using Bayesian Optimization.
+    """Explorer using GP-based Bayesian Optimization.
 
     Uses Gaussian process with RBF kernel on black box function.
     IMPORTANT: This explorer is not limited by `virtual_screen`, and is used to find
-    the upper-bound performance of Bayesian Optimization techniques.
+    the unrestricted performance of Bayesian Optimization techniques in small landscapes.
 
     Reference: http://krasserm.github.io/2018/03/21/bayesian-optimization/
     """
