@@ -1,6 +1,7 @@
 """DQN explorer."""
 import random
 from collections import Counter
+from typing import Optional
 
 import numpy as np
 import torch
@@ -49,22 +50,19 @@ def build_q_network(sequence_len, alphabet_len, device):
 
 
 class DQN(flexs.Explorer):
-    """Explorer for DQN."""
-
     def __init__(
         self,
-        model,
-        rounds,
-        sequences_batch_size,
-        model_queries_per_batch,
-        starting_sequence,
-        alphabet,
-        log_file=None,
-        memory_size=100000,
-        train_epochs=20,
-        gamma=0.9,
-        device="cpu",
-        noise_alpha=1,  # pylint: disable=W0613
+        model: flexs.Model,
+        rounds: int,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        starting_sequence: str,
+        alphabet: str,
+        log_file: Optional[str] = None,
+        memory_size: int = 100000,
+        train_epochs: int = 20,
+        gamma: float = 0.9,
+        device: str = "cpu",
     ):
         """DQN explorer class.
 
@@ -77,12 +75,9 @@ class DQN(flexs.Explorer):
             policy updates using Q network:
                 Q(s, a) <- Q(s, a) + alpha * (R(s, a) + gamma * max Q(s, a) - Q(s, a))
 
-        Attributes:
-        memory_size: size of agent memory
-        batch_size: batch size to train the PER buffer with
-        experiment_batch_size: the batch size of the experiment.
-            that is, if this were a lab, this would be the number of sequences
-            evaluated in a lab trial
+        Args:
+            memory_size: Size of agent memory.
+            gamma: Discount factor.
         """
         name = "DQN_Explorer"
         super().__init__(
@@ -249,6 +244,7 @@ class DQN(flexs.Explorer):
 
         Generates a new string representing the state, along with its associated reward.
         """
+
         eps = max(
             self.epsilon_min,
             (0.5 - self.model.cost / (self.sequences_batch_size * self.rounds)),
@@ -275,7 +271,8 @@ class DQN(flexs.Explorer):
         return new_state_string, reward
 
     def propose_sequences(self, measured_sequences_data):
-        """Propose `batch_size` samples."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
+
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()

@@ -6,10 +6,7 @@ from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 
 import flexs
-from flexs.utils.sequence_utils import (
-    one_hot_to_string,
-    string_to_one_hot,
-)
+from flexs.utils.sequence_utils import one_hot_to_string, string_to_one_hot
 
 
 class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223

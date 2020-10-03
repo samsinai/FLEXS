@@ -1,6 +1,7 @@
 """PPO explorer."""
 
 from functools import partial
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -18,8 +19,6 @@ from flexs.utils.sequence_utils import one_hot_to_string
 
 
 class PPO(flexs.Explorer):
-    """Explorer for PPO."""
-
     def __init__(
         self,
         model: flexs.Model,
@@ -28,7 +27,7 @@ class PPO(flexs.Explorer):
         model_queries_per_batch: int,
         starting_sequence: str,
         alphabet: str,
-        log_file: str = None,
+        log_file: Optional[str] = None,
     ):
         """Explorer which uses PPO.
 
@@ -36,14 +35,6 @@ class PPO(flexs.Explorer):
             for N experiment rounds
                 collect samples with policy
                 train policy on samples
-
-        Attributes:
-            meas_seqs: All measured sequences.
-            meas_seqs_it: Iterator through `meas_seqs`.
-            original_horizon: Total number of rounds. Used to compute proposal
-                budget and distribute this budget between rounds.
-            tf_env: TF-Agents environment in which to run the explorer.
-            agent: Decision-making agent.
         """
 
         super().__init__(
@@ -121,7 +112,7 @@ class PPO(flexs.Explorer):
                 )
 
     def propose_sequences(self, measured_sequences_data: pd.DataFrame):
-        """Propose `batch_size` samples."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
 
         num_parallel_environments = 1
         replay_buffer_capacity = 10001

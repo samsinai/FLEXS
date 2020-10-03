@@ -1,5 +1,6 @@
 """Defines the Adalead explorer class."""
 import random
+from typing import Optional
 
 import numpy as np
 
@@ -8,25 +9,37 @@ from flexs.utils import sequence_utils as s_utils
 
 
 class Adalead(flexs.Explorer):
-    """
-    AdaLead explorer.
-    """
-
     def __init__(
         self,
-        model,
-        rounds,
-        sequences_batch_size,
-        model_queries_per_batch,
-        starting_sequence,
-        alphabet,
-        mu=1,
-        recomb_rate=0,
-        threshold=0.05,
-        rho=0,
-        eval_batch_size=20,
-        log_file=None,
+        model: flexs.Model,
+        rounds: int,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        starting_sequence: str,
+        alphabet: str,
+        mu: int = 1,
+        recomb_rate: float = 0,
+        threshold: float = 0.05,
+        rho: int = 0,
+        eval_batch_size: int = 20,
+        log_file: Optional[str] = None,
     ):
+        """AdaLead explorer.
+
+        Algorithm works as follows:
+            Initialize set of top sequences whose fitnesses are at least
+                (1 - threshold) of the maximum fitness so far
+            While we can still make model queries in this batch
+                Recombine top sequences and append to parents
+                Rollout from parents and append to mutants
+
+        Args:
+            mu: Number of mutations per sequence.
+            recomb_rate: Recombination rate.
+            threshold: `1 - threshold` forms a filter for sequence fitness values.
+            rho: Number of times to recombine.
+            eval_batch_size: (For code optimization; size of batches sent to measure.)
+        """
         name = f"Adalead_mu={mu}_threshold={threshold}"
 
         super().__init__(
@@ -73,7 +86,7 @@ class Adalead(flexs.Explorer):
         return ret
 
     def propose_sequences(self, measured_sequences):
-        """Generate."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
 
         measured_sequence_set = set(measured_sequences["sequence"])
 
@@ -92,7 +105,6 @@ class Adalead(flexs.Explorer):
         while self.model.cost - previous_model_cost < self.model_queries_per_batch:
             # generate recombinant mutants
             for i in range(self.rho):
-                # @TODO if parents=[], the outer while loops infinitely
                 parents = self._recombine_population(parents)
 
             for i in range(0, len(parents), self.eval_batch_size):

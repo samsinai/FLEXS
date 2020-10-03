@@ -1,5 +1,6 @@
 """DyNA-PPO explorer."""
 from functools import partial
+from typing import List, Optional
 
 import numpy as np
 import scipy.stats
@@ -28,7 +29,13 @@ from flexs.utils import sequence_utils as s_utils
 
 
 class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
-    def __init__(self, seq_len, alphabet, r_squared_threshold=0.5, models=None):
+    def __init__(
+        self,
+        seq_len: int,
+        alphabet: str,
+        r_squared_threshold: float = 0.5,
+        models: Optional[List[flexs.Model]] = None,
+    ):
 
         if models is None:
             models = [
@@ -114,8 +121,6 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
 
 
 class DynaPPO(flexs.Explorer):
-    """Explorer for DyNA-PPO."""
-
     def __init__(
         self,
         landscape: flexs.Landscape,
@@ -124,35 +129,20 @@ class DynaPPO(flexs.Explorer):
         model_queries_per_batch: int,
         starting_sequence: str,
         alphabet: str,
-        log_file: str = None,
-        model: flexs.Model = None,
+        log_file: Optional[str] = None,
+        model: Optional[flexs.Model] = None,
         num_experiment_rounds: int = 10,
         num_model_rounds: int = 1,
-        env_batch_size=4,
+        env_batch_size: int = 4,
     ):
         """Explorer which implements DynaPPO.
 
         Paper: https://openreview.net/pdf?id=HklxbgBKvr
 
-        Attributes:
-            threshold: Threshold of R2 scores with which to filter out models in
-                the ensemble (default: 0.5).
-            num_experiment_rounds: Number of experiment-based policy training rounds.
-            num_model_rounds: Number of model-based policy training rounds.
-            internal_ensemble: All models currently included in the ensemble.
-            internal_ensemble_archs: Corresponding architectures of `internal_ensemble`.
-            internal_ensemble_uncertainty: Uncertainty of ensemble predictions.
-            internal_ensemble_calls: Number of calls made to the ensemble.
-            model_exit_early: Whether or not we should stop model-based training, in
-                the event that the model uncertainty is too high.
-            ens: All possible models to include in the ensemble.
-            ens_archs: Corresponding architectures of `ens`.
-            meas_seqs: All measured sequences.
-            meas_seqs_it: Iterator through `meas_seqs`.
-            top_seqs: Top measured sequences by fitness score.
-            top_seqs_it: Iterator through `top_seqs`.
-            agent: PPO TF Agent.
-            tf_env: Environment in which `agent` operates.
+        Args:
+            num_experiment_rounds: Number of experiment-based rounds to run. This is by
+                default set to 10, the same number of sequence proposal of rounds run.
+            num_model_rounds: Number of model-based rounds to run.
         """
 
         tf.config.run_functions_eagerly(False)
@@ -228,7 +218,8 @@ class DynaPPO(flexs.Explorer):
                 new_seqs[seq] = self.tf_env.get_cached_fitness(seq)
 
     def propose_sequences(self, measured_sequences_data):
-        """Propose `self.sequences_batch_size` samples."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
+
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
             self.agent.collect_data_spec,
@@ -298,11 +289,6 @@ class DynaPPO(flexs.Explorer):
 
 
 class DynaPPOMutative(flexs.Explorer):
-    """Explorer for DyNA-PPO.
-
-    Note that unlike the other DynaPPO explorer, this one is mutative rather than
-    constructive."""
-
     def __init__(
         self,
         landscape: flexs.Landscape,
@@ -311,34 +297,22 @@ class DynaPPOMutative(flexs.Explorer):
         model_queries_per_batch: int,
         starting_sequence: str,
         alphabet: str,
-        log_file: str = None,
-        model: flexs.Model = None,
+        log_file: Optional[str] = None,
+        model: Optional[flexs.Model] = None,
         num_experiment_rounds: int = 10,
         num_model_rounds: int = 1,
     ):
         """Explorer which implements DynaPPO.
 
+        Note that unlike the other DynaPPO explorer, this one is mutative rather than
+        constructive.
+
         Paper: https://openreview.net/pdf?id=HklxbgBKvr
 
-        Attributes:
-            threshold: Threshold of R2 scores with which to filter out models in
-                the ensemble (default: 0.5).
-            num_experiment_rounds: Number of experiment-based policy training rounds.
-            num_model_rounds: Number of model-based policy training rounds.
-            internal_ensemble: All models currently included in the ensemble.
-            internal_ensemble_archs: Corresponding architectures of `internal_ensemble`.
-            internal_ensemble_uncertainty: Uncertainty of ensemble predictions.
-            internal_ensemble_calls: Number of calls made to the ensemble.
-            model_exit_early: Whether or not we should stop model-based training, in
-                the event that the model uncertainty is too high.
-            ens: All possible models to include in the ensemble.
-            ens_archs: Corresponding architectures of `ens`.
-            meas_seqs: All measured sequences.
-            meas_seqs_it: Iterator through `meas_seqs`.
-            top_seqs: Top measured sequences by fitness score.
-            top_seqs_it: Iterator through `top_seqs`.
-            agent: PPO TF Agent.
-            tf_env: Environment in which `agent` operates.
+        Args:
+            num_experiment_rounds: Number of experiment-based rounds to run. This is by
+                default set to 10, the same number of sequence proposal of rounds run.
+            num_model_rounds: Number of model-based rounds to run.
         """
 
         tf.config.run_functions_eagerly(False)
@@ -432,7 +406,7 @@ class DynaPPOMutative(flexs.Explorer):
                 )
 
     def propose_sequences(self, measured_sequences_data):
-        """Propose `self.sequences_batch_size` samples."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
 
         num_parallel_environments = 1
         replay_buffer_capacity = 10001

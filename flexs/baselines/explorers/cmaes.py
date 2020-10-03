@@ -1,4 +1,6 @@
 """CMAES explorer."""
+from typing import Optional
+
 import cma
 import numpy as np
 
@@ -7,24 +9,32 @@ from flexs.utils import sequence_utils as s_utils
 
 
 class CMAES(flexs.Explorer):
-    """An explorer which implements the covariance matrix adaptation evolution strategy.
-
-    http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful guide
-    """
-
     def __init__(
         self,
-        model,
-        rounds,
-        sequences_batch_size,
-        model_queries_per_batch,
-        starting_sequence,
-        alphabet,
-        population_size=15,
-        max_iter=400,
-        initial_variance=0.7,
-        log_file=None,
+        model: flexs.Model,
+        rounds: int,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        starting_sequence: str,
+        alphabet: str,
+        population_size: int = 15,
+        max_iter: int = 400,
+        initial_variance: float = 0.7,
+        log_file: Optional[str] = None,
     ):
+        """Explorer which implements CMAES.
+
+        CMAES stands for covariance matrix adaptation evolution
+        strategy.
+
+        http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful
+        guide.
+
+        Args:
+            population_size: Number of proposed solutions per iteration.
+            max_iter: Maximum number of iterations.
+            initial_variance: Initial variance passed into cma.
+        """
         name = f"CMAES_popsize{population_size}"
 
         super().__init__(
@@ -52,6 +62,7 @@ class CMAES(flexs.Explorer):
         return s_utils.one_hot_to_string(one_hot, self.alphabet)
 
     def propose_sequences(self, measured_sequences):
+        """Propose top `sequences_batch_size` sequences for evaluation."""
 
         measured_sequence_dict = dict(
             zip(measured_sequences["sequence"], measured_sequences["true_score"])
@@ -76,7 +87,7 @@ class CMAES(flexs.Explorer):
         # Starting solution gives equal weight to all residues at all positions
         x0 = s_utils.string_to_one_hot(top_seq, self.alphabet).flatten()
         opts = {"popsize": self.population_size, "verbose": -9, "verb_log": 0}
-        es = cma.CMAEvolutionStrategy(x0, self.initial_variance, opts)
+        es = cma.CMAEvolutionStrategy(x0, np.sqrt(self.initial_variance), opts)
 
         # Explore until we reach `self.max_iter` or run out of model queries
         initial_cost = self.model.cost

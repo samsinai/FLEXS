@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import torch
 
@@ -27,22 +29,22 @@ class GeneticAlgorithm(flexs.Explorer):
 
     def __init__(
         self,
-        model,
-        rounds,
-        starting_sequence,
-        sequences_batch_size,
-        model_queries_per_batch,
-        alphabet,
+        model: flexs.Model,
+        rounds: int,
+        starting_sequence: str,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        alphabet: str,
         population_size: int,
         parent_selection_strategy: str,
         children_proportion: float,
-        log_file=None,
-        parent_selection_proportion: float = None,
-        beta: float = None,
-        recombination_strategy: str = None,
-        avg_crossovers: int = None,
-        num_crossover_tiles: int = None,
-        seed: int = None,
+        log_file: Optional[str] = None,
+        parent_selection_proportion: Optional[float] = None,
+        beta: Optional[float] = None,
+        recombination_strategy: Optional[str] = None,
+        avg_crossovers: Optional[int] = None,
+        num_crossover_tiles: Optional[int] = None,
+        seed: Optional[int] = None,
     ):
         name = (
             f"GeneticAlgorithm_pop_size={population_size}_parents="
@@ -116,7 +118,8 @@ class GeneticAlgorithm(flexs.Explorer):
         return torch.multinomial(probs, num_parents, replacement=True).numpy()
 
     def propose_sequences(self, measured_sequences):
-        """Run genetic algorithm explorer."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
+
         # Set the torch seed by generating a random integer from the pre-seeded self.rng
         torch.manual_seed(self.rng.integers(-(2 ** 31), 2 ** 31))
 

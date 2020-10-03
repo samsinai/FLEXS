@@ -5,7 +5,7 @@ import os
 import time
 import warnings
 from datetime import datetime
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -30,7 +30,7 @@ class Explorer(abc.ABC):
         sequences_batch_size: int,
         model_queries_per_batch: int,
         starting_sequence: str,
-        log_file: str = None,
+        log_file: Optional[str] = None,
     ):
         """
         Create an Explorer.

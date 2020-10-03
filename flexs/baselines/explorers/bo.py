@@ -1,5 +1,6 @@
 """BO explorer."""
 from bisect import bisect_left
+from typing import Optional
 
 import numpy as np
 
@@ -14,26 +15,19 @@ from flexs.utils.sequence_utils import (
 
 
 class BO(flexs.Explorer):
-
     def __init__(
         self,
-        model,
-        rounds,
-        sequences_batch_size,
-        model_queries_per_batch,
-        starting_sequence,
-        alphabet,
-        log_file=None,
-        method="EI",
-        recomb_rate=0,
+        model: flexs.Model,
+        rounds: int,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        starting_sequence: str,
+        alphabet: str,
+        log_file: Optional[str] = None,
+        method: str = "EI",
+        recomb_rate: float = 0,
     ):
         """Evolutionary Bayesian Optimization (Evo_BO) explorer.
-
-        Parameters:
-            method (str, equal to EI or UCB): The improvement method used in BO,
-                default EI.
-            recomb_rate (float): The recombination rate on the previous batch before
-                BO proposes samples, default 0.
 
         Algorithm works as follows:
             for N experiment rounds
@@ -45,6 +39,12 @@ class BO(flexs.Explorer):
                     If variance of ensemble models is above twice that of the starting
                         sequence
                     Thompson sample another starting sequence
+
+        Args:
+            method (equal to EI or UCB): The improvement method used in BO,
+                default EI.
+            recomb_rate: The recombination rate on the previous batch before
+                BO proposes samples, default 0.
         """
         name = f"BO_method={method}"
         super().__init__(
@@ -189,7 +189,8 @@ class BO(flexs.Explorer):
         return sequences[index]
 
     def propose_sequences(self, measured_sequences):
-        """Propose `batch_size` samples."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
+
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
