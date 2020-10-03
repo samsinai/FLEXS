@@ -17,7 +17,7 @@ class Adalead(flexs.Explorer):
         recomb_rate: the probability of a crossover at any position in a sequence
         mu: expected number of mutations to the full sequence (mu/L per position).
         rho: The expected number of recombination partners for each recombinant.
-        eval_batch_size: the budget each parent gets.  
+        eval_batch_size: batch model queries for faster optimization.  
 
     """
 
