@@ -1,4 +1,4 @@
-"""Defines the AdditiveAAVPackaging landscape."""
+"""Defines the AdditiveAAVPackaging landscape and problem registry."""
 import json
 import os
 

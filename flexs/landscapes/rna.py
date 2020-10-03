@@ -1,4 +1,4 @@
-"""Defines RNA binding landscape."""
+"""Defines RNA binding landscape and problem registry."""
 from typing import Dict, List
 
 import numpy as np
@@ -16,7 +16,10 @@ class RNABinding(flexs.Landscape):
     """RNA binding landscape using ViennaRNA `duplexfold`."""
 
     def __init__(
-        self, targets: List[str], seq_length: int, conserved_region: Dict = None,
+        self,
+        targets: List[str],
+        seq_length: int,
+        conserved_region: Dict = None,
     ):
         """
         Create RNABinding landscape.
