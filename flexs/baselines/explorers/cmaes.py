@@ -8,6 +8,10 @@ from flexs.utils import sequence_utils as s_utils
 
 class CMAES(flexs.Explorer):
     """An explorer which implements the covariance matrix adaptation evolution strategy.
+    Args:
+        population_size: Size of the population 
+        max_iter: Maximum number of iterations
+        initial_variance: initial co-variance matrix values
 
     http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful guide
     """
