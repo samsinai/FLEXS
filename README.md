@@ -1,6 +1,6 @@
 ![FLEX](LOGO.png)
 
-[![build status](https://github.com/retagaine/FLSD-Sandbox/workflows/build/badge.svg)](https://github.com/retagaine/FLSD-Sandbox/actions)
+[![build status](https://github.com/samsinai/FLSD-Sandbox/workflows/build/badge.svg)](https://github.com/samsinai/FLSD-Sandbox/actions)
 
 FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. This project was developed with support from [Dyno Therapeutics](https://www.dynotx.com).
 
@@ -20,14 +20,7 @@ FLEXS is an open-source simulation environment that enables you to develop and c
 
 FLEXS is available on PyPI and can be installed with `pip install flexs`. 
 
-We strongly recommend that you install the dependencies for the sandbox in a conda virtual environment. The main dependencies of the sandbox are the latest versions of the following packages:
-
-* Numpy 
-* Scikit-Learn
-* Pandas 
-* ViennaRNA 
-* Tensorflow + Keras 
-* Editdistance 
+We strongly recommend that you install the dependencies for the sandbox in a conda virtual environment. You can update an existing conda environment with `conda env update --name {name} --file environment.yml` or initialize a new one with `conda env create -f environment.yml`.
 
 A minimal set of requirements can be installed with the following:
 ```
@@ -36,11 +29,10 @@ conda install -c bioconda viennarna -y
 conda install scikit-learn -y
 conda install pandas -y
 pip install --upgrade tensorflow 
-pip install keras 
-
+pip install keras
 ```
 
-If you are in a conda environment, you can also run `./load_environment.sh` in the main directory to install all of the dependencies. The following dependencies are required for specific use cases: 
+The following dependencies are required for specific use cases: 
 
 * TQDM (If you plan on using the Evolutionary Bayesian Explorer)
 * Tensorflow-Probability (If you aim to use DyNAPPO)
@@ -281,8 +273,3 @@ Adaptations of the following RL algorithms.
 -[Evolutionary BO](bo_explorer.py): Bayesian optimization on sparse sampling of the mutation space.
 
 -[Enumerative BO](gpr_bo_explorer.py): Bayesion optimization on fully enumerated (when possible) mutation space.
-
-
-
- 
-
