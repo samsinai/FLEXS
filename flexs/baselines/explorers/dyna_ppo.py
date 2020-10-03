@@ -1,9 +1,7 @@
 """DyNA-PPO explorer."""
 from functools import partial
-from typing import List, Set, Tuple, Type, Union
 
 import numpy as np
-import pandas as pd
 import scipy.stats
 import sklearn
 import sklearn.ensemble
@@ -11,7 +9,6 @@ import sklearn.gaussian_process
 import sklearn.linear_model
 import sklearn.tree
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
 from tf_agents.agents.ppo import ppo_agent
 from tf_agents.drivers import dynamic_episode_driver
 from tf_agents.environments import tf_py_environment
@@ -167,7 +164,8 @@ class DynaPPO(flexs.Explorer):
                 len(starting_sequence),
                 alphabet,
             )
-            # Some models in the ensemble need to be trained on dummy dataset before they can predict
+            # Some models in the ensemble need to be trained on dummy dataset before
+            # they can predict
             model.train(
                 s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
                 [0] * 10,
@@ -252,9 +250,9 @@ class DynaPPO(flexs.Explorer):
         # Experiment-based training round. Each sequence we generate here must be
         # evaluated by the ground truth landscape model. So each sequence we evaluate
         # reduces our sequence proposal budget by one.
-        # We amortize this experiment-based training cost to be 1/2 of the sequence budget
-        # at round one and linearly interpolate to a cost of 0 by the last round.
-        current_round = measured_sequences_data["round"].max()
+        # We amortize this experiment-based training cost to be 1/2 of the sequence
+        # budget at round one and linearly interpolate to a cost of 0 by the last round.
+
         experiment_based_training_budget = self.sequences_batch_size
         self.tf_env.set_fitness_model_to_gt(True)
         previous_landscape_cost = self.tf_env.landscape.cost
@@ -300,7 +298,10 @@ class DynaPPO(flexs.Explorer):
 
 
 class DynaPPOMutative(flexs.Explorer):
-    """Explorer for DyNA-PPO. Note that unlike the other DynaPPO explorer, this one is mutative rather than constructive."""
+    """Explorer for DyNA-PPO.
+
+    Note that unlike the other DynaPPO explorer, this one is mutative rather than
+    constructive."""
 
     def __init__(
         self,
@@ -455,8 +456,8 @@ class DynaPPOMutative(flexs.Explorer):
         # Experiment-based training round. Each sequence we generate here must be
         # evaluated by the ground truth landscape model. So each sequence we evaluate
         # reduces our sequence proposal budget by one.
-        # We amortize this experiment-based training cost to be 1/2 of the sequence budget
-        # at round one and linearly interpolate to a cost of 0 by the last round.
+        # We amortize this experiment-based training cost to be 1/2 of the sequence
+        # budget at round one and linearly interpolate to a cost of 0 by the last round.
         current_round = measured_sequences_data["round"].max()
         experiment_based_training_budget = int(
             (self.rounds - current_round + 1)
