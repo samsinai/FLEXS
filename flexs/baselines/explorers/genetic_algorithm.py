@@ -44,7 +44,10 @@ class GeneticAlgorithm(flexs.Explorer):
         num_crossover_tiles: int = None,
         seed: int = None,
     ):
-        name = f"GeneticAlgorithm_pop_size={population_size}_parents={parent_selection_strategy}_recomb={recombination_strategy}"
+        name = (
+            f"GeneticAlgorithm_pop_size={population_size}_parents="
+            f"{parent_selection_strategy}_recomb={recombination_strategy}"
+        )
 
         super().__init__(
             model,
@@ -62,7 +65,8 @@ class GeneticAlgorithm(flexs.Explorer):
         valid_parent_selection_strategies = ["top-proportion", "wright-fisher"]
         if parent_selection_strategy not in valid_parent_selection_strategies:
             raise ValueError(
-                f"parent_selection_strategy must be one of {valid_parent_selection_strategies}"
+                f"parent_selection_strategy must be one of "
+                f"{valid_parent_selection_strategies}"
             )
         if (
             parent_selection_strategy == "top-proportion"
@@ -83,13 +87,15 @@ class GeneticAlgorithm(flexs.Explorer):
         valid_recombination_strategies = [None, "1-point-crossover", "n-tile-crossover"]
         if recombination_strategy not in valid_recombination_strategies:
             raise ValueError(
-                f"recombination_strategy must be one of {valid_recombination_strategies}"
+                "recombination_strategy must be one of "
+                f"{valid_recombination_strategies}"
             )
         if recombination_strategy == "n-tile-crossover" and (
             avg_crossovers is None or num_crossover_tiles is None
         ):
             raise ValueError(
-                "if n-tile-crossover, avg_crossovers and num_crossover_tiles cannot be None"
+                "if n-tile-crossover, avg_crossovers and num_crossover_tiles cannot be "
+                "None"
             )
         self.recombination_strategy = recombination_strategy
         self.avg_crossovers = avg_crossovers
@@ -131,7 +137,8 @@ class GeneticAlgorithm(flexs.Explorer):
             < self.model_queries_per_batch
         ):
             # Create "children" by recombining parents selected from population
-            # according to self.parent_selection_strategy and self.recombination_strategy
+            # according to self.parent_selection_strategy and
+            # self.recombination_strategy
             num_children = int(self.children_proportion * self.population_size)
             parents = pop[self._choose_parents(scores, num_children)]
 

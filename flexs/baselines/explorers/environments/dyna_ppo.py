@@ -1,7 +1,6 @@
 """DyNA-PPO environment module."""
 import editdistance
 import numpy as np
-import tensorflow as tf
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
@@ -165,7 +164,10 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
 
 class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disable=W0223
-    """DyNA-PPO environment based on TF-Agents. Note that unlike the other DynaPPO environment, this one is mutative rather than constructive."""
+    """DyNA-PPO environment based on TF-Agents.
+
+    Note that unlike the other DynaPPO environment, this one is mutative rather than
+    constructive."""
 
     def __init__(  # pylint: disable=W0231
         self,

@@ -1,7 +1,4 @@
 """PPO environment module."""
-import os
-import sys
-
 import numpy as np
 from tf_agents.environments import py_environment
 from tf_agents.environments.utils import validate_py_environment
@@ -10,7 +7,6 @@ from tf_agents.trajectories import time_step as ts
 
 import flexs
 from flexs.utils.sequence_utils import (
-    construct_mutant_from_sample,
     one_hot_to_string,
     string_to_one_hot,
 )
