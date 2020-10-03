@@ -204,13 +204,13 @@ class DQN(flexs.Explorer):
             if random.random() < epsilon:
                 i, j = moves.shape
                 non_zero_moves = np.nonzero(moves)
-                k = len(non_zero_moves)
-                l = len(non_zero_moves[0])
-                if k != 0 and l != 0:
+                num_moves = len(non_zero_moves)
+                num_pos = len(non_zero_moves[0])
+                if num_moves != 0 and num_pos != 0:
                     rand_arg = random.choice(
                         [
-                            [non_zero_moves[alph][pos] for alph in range(k)]
-                            for pos in range(l)
+                            [non_zero_moves[alph][pos] for alph in range(num_moves)]
+                            for pos in range(num_pos)
                         ]
                     )
                 else:
@@ -257,7 +257,7 @@ class DQN(flexs.Explorer):
         action, new_state = self.get_action_and_mutant(eps)
         new_state_string = one_hot_to_string(new_state, self.alphabet)
         reward = self.model.get_fitness([new_state_string]).item()
-        if not new_state_string in all_measured_seqs:
+        if new_state_string not in all_measured_seqs:
             if reward >= self.best_fitness:
                 state_tensor = torch.FloatTensor([self.state.ravel()])
                 prediction = self.calculate_next_q_values(state_tensor).detach().numpy()
