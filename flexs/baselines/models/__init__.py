@@ -6,9 +6,9 @@ from flexs.baselines.models.mlp import MLP
 from flexs.baselines.models.noisy_abstract_model import NoisyAbstractModel
 from flexs.baselines.models.null_model import NullModel
 from flexs.baselines.models.sklearn_models import (
-    SklearnRegressor,
-    SklearnClassifier,
     LinearRegression,
     LogisticRegression,
     RandomForest,
+    SklearnClassifier,
+    SklearnRegressor,
 )

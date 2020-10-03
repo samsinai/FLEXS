@@ -1,3 +1,4 @@
+"""Defines the RosettaFolding landscape and problem registry."""
 import os
 
 import torch
@@ -56,11 +57,24 @@ class RosettaFolding(flexs.Landscape):
     one and is the approach used by RosettaDesign.
 
     We use Rosetta's centroid energy function instead of the full-atom one since
-    it is less sensitive to switching out residues without repacking side-chain conformations.
+    it is less sensitive to switching out residues without repacking side-chain
+    conformations.
+
+    We convert these energies to a maximization objective in the 0-1 scale by
+    fitness = (-energy - `sigmoid_center`) / `sigmoid_norm_value`.
 
     """
 
-    def __init__(self, pdb_file, sigmoid_center, sigmoid_norm_value):
+    def __init__(self, pdb_file: str, sigmoid_center: float, sigmoid_norm_value: float):
+        """
+        Create a RosettaFolding landscape from a .pdb file with structure.
+
+        Args:
+            pdb_file: Path to .pdb file with structure information.
+            sigmoid_center: Center of sigmoid function.
+            sigmoid_norm_value: 1 / scale of sigmoid function.
+
+        """
         super().__init__(name="RosettaFolding")
 
         # Inform the user if pyrosetta is not available.
@@ -69,7 +83,8 @@ class RosettaFolding(flexs.Landscape):
         except NameError as e:
             raise ImportError(
                 "Error: Pyrosetta not installed. "
-                "Source, binary, and conda installations available at http://www.pyrosetta.org/dow"
+                "Source, binary, and conda installations available "
+                "at http://www.pyrosetta.org/dow"
             ) from e
 
         # Initialize pyrosetta and suppress output messages
@@ -93,8 +108,7 @@ class RosettaFolding(flexs.Landscape):
         self.sigmoid_norm_value = sigmoid_norm_value
 
     def _mutate_pose(self, mut_aa, mut_pos):
-        """ This method mutates `self.pose` to contain `mut_aa` at `mut_pos`. """
-
+        """Mutate `self.pose` to contain `mut_aa` at `mut_pos`."""
         current_residue = self.pose.residue(
             mut_pos + 1
         )  # + 1 since rosetta is 1-indexed
@@ -115,7 +129,7 @@ class RosettaFolding(flexs.Landscape):
         )
 
         # Make sure we retain as much info from the previous resdiue as possible
-        prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(
+        prs.rosetta.core.conformation.copy_residue_coordinates_and_rebuild_missing_atoms(  # noqa: E501
             current_residue,
             new_res,
             conformation,
@@ -129,8 +143,11 @@ class RosettaFolding(flexs.Landscape):
         conformation.rebuild_polymer_bond_dependent_atoms_this_residue_only(mut_pos + 1)
 
     def get_folding_energy(self, sequence):
-        """ Return rosetta folding energy of the given sequence in `self.pose`'s conformation. """
+        """
+        Return rosetta folding energy of the given sequence in
+        `self.pose`'s conformation.
 
+        """
         pose_sequence = self.pose.sequence()
 
         if len(sequence) != len(pose_sequence):
@@ -138,7 +155,8 @@ class RosettaFolding(flexs.Landscape):
                 "`sequence` must be of the same length as original protein in .pdb file"
             )
 
-        # Mutate `self.pose` where necessary to have the same sequence identity as `sequence`
+        # Mutate `self.pose` where necessary to have the same sequence identity as
+        # `sequence`
         for i, aa in enumerate(sequence):
             if aa != pose_sequence[i]:
                 self._mutate_pose(aa, i)
@@ -146,16 +164,15 @@ class RosettaFolding(flexs.Landscape):
         return self.score_function(self.pose)
 
     def _fitness_function(self, sequences):
-        """ Negate and normalize folding energy to get maximization objective """
-
+        """Negate and normalize folding energy to get maximization objective"""
         energies = torch.tensor([self.get_folding_energy(seq) for seq in sequences])
-        scaled_energies = (-energies + self.sigmoid_center) / self.sigmoid_norm_value
+        scaled_energies = (-energies - self.sigmoid_center) / self.sigmoid_norm_value
         return torch.sigmoid(scaled_energies).numpy()
 
 
 def registry():
     """
-    Returns a dictionary of problems of the form:
+    Return a dictionary of problems of the form:
     `{
         "problem name": {
             "params": ...,
@@ -170,10 +187,20 @@ def registry():
         dict: Problems in the registry.
 
     """
-
     rosetta_data_dir = os.path.join(os.path.dirname(__file__), "data/rosetta")
 
     return {
-        pdb_file: {"params": {"pdb_file": os.path.join(rosetta_data_dir, pdb_file)}}
-        for pdb_file in os.listdir(rosetta_data_dir)
+        "3msi": {
+            "params": {"pdb_file": f"{rosetta_data_dir}/3msi.pdb"},
+            "starts": {
+                "ed_3_wt": "MAQASVVANQLIPINTHLTLVMMRSEVVTYVHIPAEDIPRLVSMDVNRAVPLGTTLMPDMVKGYAA",  # noqa: E501
+                "ed_5_wt": "MAQASVVFNQLIPINTHLTLVMMRFEVVTPVGCPAMDIPRLVSQQVNRAVPLGTTLMPDMVKGYAA",  # noqa: E501
+                "ed_7_wt": "WAQRSVVANQLIPINTGLTLVMMRSELVTGVGAPAEDIPRLVSMQVNRAVPLGTTNMPDMVKGYAA",  # noqa: E501
+                "ed_12_wt": "RAQESVVANQLIPILTHLTQKMSRRFVVTPVGIPAEDIPRLVNAQVDRAVPLGTTLMPDMDKGYAA",  # noqa: E501
+                "ed_27_wt": "MRRYSVIAYQERPINLHSTLTFNRSEVPWPVNRPASDAPRLVSMQNNRSVPLGTKLPEDPVCRYAL",  # noqa: E501
+            },
+        },
+        "3mx7": {
+            "params": {"pdb_file": f"{rosetta_data_dir}/3mx7.pdb"},
+        },
     }

@@ -17,7 +17,11 @@ class NoisyAbstractModel(flexs.Model):
     """
 
     def __init__(
-        self, landscape, signal_strength=0.9, landscape_id=-1, start_id=-1,
+        self,
+        landscape,
+        signal_strength=0.9,
+        landscape_id=-1,
+        start_id=-1,
     ):
         super().__init__(f"NAMb_ss{signal_strength}")
 
@@ -26,6 +30,10 @@ class NoisyAbstractModel(flexs.Model):
         self.cache = {}
 
     def _get_min_distance(self, sequence):
+        # Special case if cache is empty
+        if len(self.cache) == 0:
+            return 0, sequence
+
         new_dist = np.inf
         closest = None
 
@@ -62,7 +70,10 @@ class NoisyAbstractModel(flexs.Model):
 
             signal = self.landscape.get_fitness([seq]).item()
             neighbor_fitness = self.landscape.get_fitness([neighbor_seq]).item()
-            noise = np.random.exponential(scale=neighbor_fitness)
+            if neighbor_fitness >= 0:
+                noise = np.random.exponential(scale=neighbor_fitness)
+            else:
+                noise = np.random.choice(list(self.cache.values()))
 
             alpha = self.ss ** distance
             new_fitnesses.append(alpha * signal + (1 - alpha) * noise)

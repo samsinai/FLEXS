@@ -3,7 +3,7 @@ import cma
 import numpy as np
 
 import flexs
-import flexs.utils.sequence_utils as s_utils
+from flexs.utils import sequence_utils as s_utils
 
 
 class CMAES(flexs.Explorer):
@@ -20,9 +20,9 @@ class CMAES(flexs.Explorer):
         model_queries_per_batch,
         starting_sequence,
         alphabet,
-        population_size,
-        max_iter,
-        initial_variance=0.2,
+        population_size=15,
+        max_iter=400,
+        initial_variance=0.7,
         log_file=None,
     ):
         name = f"CMAES_popsize{population_size}"

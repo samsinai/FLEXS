@@ -1,74 +1,64 @@
+"""Defines RNA binding landscape and problem registry."""
+from typing import Dict, List
+
 import numpy as np
 
-# ViennaRNA is not available through pip, so give a warning message if not installed
+# ViennaRNA is an optional dependency
 try:
     import RNA
-except ImportError as e:
-    raise ImportError(
-        f"{e}.\n"
-        "Hint: ViennaRNA not installed.\n"
-        "      Source and binary installations available at https://www.tbi.univie.ac.at/RNA/#download.\n"
-        "      Conda installation available at https://anaconda.org/bioconda/viennarna."
-    ) from e
+except ImportError:
+    pass
 
 import flexs
 
 
-class RNAFolding(flexs.Landscape):
-    def __init__(self, threshold=False, norm_value=1, reverse=False):
-        super().__init__(name="RNAFolding")
-
-        self.sequences = {}
-        self.noise = noise
-        self.threshold = threshold
-        self.norm_value = norm_value
-        self.reverse = reverse
-
-    def _fitness_function(self, sequence):
-        _, fe = RNA.fold(sequence)
-
-        if self.threshold != False:
-            if -fe > self.threshold:
-
-                return int(not self.reverse)
-            else:
-                return int(self.reverse)
-
-        return -fe / self.norm_value
-
-    def get_fitness(self, sequence):
-        if self.noise == 0:
-            if sequence in self.sequences:
-                return self.sequences[sequence]
-            else:
-                self.sequences[sequence] = self._fitness_function(sequence)
-                return self.sequences[sequence]
-        else:
-            self.sequences[sequence] = self._fitness_function(
-                sequence
-            ) + np.random.normal(scale=self.noise)
-        return self.sequences[sequence]
-
-
 class RNABinding(flexs.Landscape):
-    """An RNA binding landscape"""
+    """RNA binding landscape using ViennaRNA `duplexfold`."""
 
     def __init__(
-        self, targets, seq_length, threshold=False, conserved_region=None, name=None
+        self,
+        targets: List[str],
+        seq_length: int,
+        conserved_region: Dict = None,
     ):
-        if name is None:
-            name = f"RNABinding_T{targets}_L{seq_length}"
-        super().__init__(name)
+        """
+        Create RNABinding landscape.
+
+        Args:
+            targets: List of RNA strings that will be binding targets.
+                If more than one, the fitness score is the mean of each binding fitness.
+            seq_length: Length of sequences to be evaluated.
+            conserved_region: A dictionary of the form `{start: int, pattern: str}`
+                defining the start of the conserved region and the pattern that must be
+                conserved. Sequences violating these criteria will receive a score of
+                zero (useful for creating `swampland` areas).
+
+        """
+        # ViennaRNA is not available through pip, so give a warning message
+        # if not installed.
+        try:
+            RNA
+        except ImportError as e:
+            raise ImportError(
+                f"{e}.\n"
+                "Hint: ViennaRNA not installed.\n"
+                "      Source and binary installations available at "
+                "https://www.tbi.univie.ac.at/RNA/#download.\n"
+                "      Conda installation available at "
+                "https://anaconda.org/bioconda/viennarna."
+            ) from e
+
+        super().__init__(name=f"RNABinding_T{targets}_L{seq_length}")
 
         self.targets = targets
         self.seq_length = seq_length
-        self.threshold = threshold
         self.conserved_region = conserved_region
         self.norm_values = self.compute_min_binding_energies()
 
         self.sequences = {}
 
     def compute_min_binding_energies(self):
+        """Compute the lowest possible binding energy for each target."""
         complements = {"A": "U", "C": "G", "G": "C", "U": "A"}
 
         min_energies = []
@@ -104,10 +94,7 @@ class RNABinding(flexs.Landscape):
             energies = np.array(
                 [RNA.duplexfold(target, seq).energy for target in self.targets]
             )
-            if self.threshold:
-                fitness = int(energies.sum() < self.threshold)
-            else:
-                fitness = (energies / self.norm_values).mean()
+            fitness = (energies / self.norm_values).mean()
 
             fitnesses.append(fitness)
 
@@ -116,7 +103,7 @@ class RNABinding(flexs.Landscape):
 
 def registry():
     """
-    Returns a dictionary of problems of the form:
+    Return a dictionary of problems of the form:
     `{
         "problem name": {
             "params": ...,
@@ -132,13 +119,12 @@ def registry():
         dict: Problems in the registry.
 
     """
-
     # RNA target sequences
     targets = [
-        "GAACGAGGCACAUUCCGGCUCGCCCGGCCCAUGUGAGCAUGGGCCGGACCCCGUCCGCGCGGGGCCCCCGCGCGGACGGGGGCGAGCCGGAAUGUGCCUC",
-        "GAGGCACAUUCCGGCUCGCCCCCGUCCGCGCGGGGGCCCCGCGCGGACGGGGUCCGGCCCGCGCGGGGCCCCCGCGCGGGAGCCGGAAUGUGCCUCGUUC",
-        "CCGGUGAUACUGUUAGUGGUCACGGUGCAUUUAUAGCGCUAAAGUACAGUCUUCCCCUGUUGAACGGCGCCAUUGCAUACAGGGCCAGCCGCGUAACGCC",
-        "UAAGAGAGCGUAAAAAUAGAGAUAUGUUCUUGGGUCAGGGCUAUGCGUACCCCAUGAGAGUAAAUCAUACCCCCAAUGGGCUUCGGCGGAAAUUCACUUA",
+        "GAACGAGGCACAUUCCGGCUCGCCCGGCCCAUGUGAGCAUGGGCCGGACCCCGUCCGCGCGGGGCCCCCGCGCGGACGGGGGCGAGCCGGAAUGUGCCUC",  # noqa: E501
+        "GAGGCACAUUCCGGCUCGCCCCCGUCCGCGCGGGGGCCCCGCGCGGACGGGGUCCGGCCCGCGCGGGGCCCCCGCGCGGGAGCCGGAAUGUGCCUCGUUC",  # noqa: E501
+        "CCGGUGAUACUGUUAGUGGUCACGGUGCAUUUAUAGCGCUAAAGUACAGUCUUCCCCUGUUGAACGGCGCCAUUGCAUACAGGGCCAGCCGCGUAACGCC",  # noqa: E501
+        "UAAGAGAGCGUAAAAAUAGAGAUAUGUUCUUGGGUCAGGGCUAUGCGUACCCCAUGAGAGUAAAUCAUACCCCCAAUGGGCUUCGGCGGAAAUUCACUUA",  # noqa: E501
     ]
 
     # Starting sequences of lengths 14, 50, and 100
@@ -158,11 +144,11 @@ def registry():
             "AGGGAAGAUUAGAUUACUCUUAUAUGACGUAGGAGAGAGUGCGGUUAAGA",
         ],
         100: [
-            "GAACGAGGCACAUUCCGGCUCGCCCGGCCCAUGUGAGCAUGGGCCGGACCCCGUCCGCGCGGGGCCCCCGCGCGGACGGGGGCGAGCCGGAAUGUGCCUC",
-            "AGCAUCUCGCCGUGGGGGCGGGCCCGGCCCAUGUGAGCAUGCGUAGGUUUAUCCCAUAGAGGACCCCGGGAGAACUGUCCAAUUGGCUCCUAGCCCACGC",
-            "GGCGGAUACUAGACCCUAUUGGCCCGGCCCAUGUGAGCAUGGCCCCAGAUCUUCCGCUCACUCGCAUAUUCCCUCCGGUUAAGUUGCCGUUUAUGAAGAU",
-            "UUGCAGGUCCCUACACCUCCGGCCCGGCCCAUGUGACCAUGAAUAGUCCACAUAAAAACCGUGAUGGCCAGUGCAGUUGAUUCCGUGCUCUGUACCCUUU",
-            "UGGCGAUGAGCCGAGCCGCCAUCGGACCAUGUGCAAUGUAGCCGUUCGUAGCCAUUAGGUGAUACCACAGAGUCUUAUGCGGUUUCACGUUGAGAUUGCA",
+            "GAACGAGGCACAUUCCGGCUCGCCCGGCCCAUGUGAGCAUGGGCCGGACCCCGUCCGCGCGGGGCCCCCGCGCGGACGGGGGCGAGCCGGAAUGUGCCUC",  # noqa: E501
+            "AGCAUCUCGCCGUGGGGGCGGGCCCGGCCCAUGUGAGCAUGCGUAGGUUUAUCCCAUAGAGGACCCCGGGAGAACUGUCCAAUUGGCUCCUAGCCCACGC",  # noqa: E501
+            "GGCGGAUACUAGACCCUAUUGGCCCGGCCCAUGUGAGCAUGGCCCCAGAUCUUCCGCUCACUCGCAUAUUCCCUCCGGUUAAGUUGCCGUUUAUGAAGAU",  # noqa: E501
+            "UUGCAGGUCCCUACACCUCCGGCCCGGCCCAUGUGACCAUGAAUAGUCCACAUAAAAACCGUGAUGGCCAGUGCAGUUGAUUCCGUGCUCUGUACCCUUU",  # noqa: E501
+            "UGGCGAUGAGCCGAGCCGCCAUCGGACCAUGUGCAAUGUAGCCGUUCGUAGCCAUUAGGUGAUACCACAGAGUCUUAUGCGGUUUCACGUUGAGAUUGCA",  # noqa: E501
         ],
     }
 
@@ -173,7 +159,7 @@ def registry():
         for length, start in starts.items():
             name = f"L{length}_RNA{t+1}"
             problems[name] = {
-                "params": {"targets": [targets[t]], "seq_length": length,},
+                "params": {"targets": [targets[t]], "seq_length": length},
                 "starts": start,
             }
 

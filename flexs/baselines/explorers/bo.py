@@ -3,14 +3,14 @@ import copy
 from bisect import bisect_left
 
 import numpy as np
-import flexs
+
 import flexs
 from flexs.utils.replay_buffers import PrioritizedReplayBuffer
 from flexs.utils.sequence_utils import (
     construct_mutant_from_sample,
     generate_random_sequences,
-    string_to_one_hot,
     one_hot_to_string,
+    string_to_one_hot,
 )
 
 
@@ -26,7 +26,6 @@ class BO(flexs.Explorer):
         starting_sequence,
         alphabet,
         log_file=None,
-        virtual_screen=10,
         method="EI",
         recomb_rate=0,
     ):
@@ -49,7 +48,7 @@ class BO(flexs.Explorer):
                         sequence
                     Thompson sample another starting sequence
         """
-        name = "BO-optimization_method={optimization_method}"
+        name = f"BO_method={method}"
         super().__init__(
             model,
             name,
@@ -63,11 +62,7 @@ class BO(flexs.Explorer):
         self.method = method
         self.recomb_rate = recomb_rate
         self.best_fitness = 0
-        self.top_sequence = []
         self.num_actions = 0
-        self.virtual_screen = virtual_screen
-        # use PER buffer, same as in DQN
-        self.model_type = "blank"
         self.state = None
         self.seq_len = None
         self.memory = None
@@ -77,25 +72,26 @@ class BO(flexs.Explorer):
         """Initialize."""
         self.state = string_to_one_hot(self.starting_sequence, self.alphabet)
         self.seq_len = len(self.starting_sequence)
+        # use PER buffer, same as in DQN
         self.memory = PrioritizedReplayBuffer(
             len(self.alphabet) * self.seq_len, 100000, self.sequences_batch_size, 0.6
         )
 
-    def reset(self):
-        """Reset the explorer."""
-        self.best_fitness = 0
-        self.batches = {-1: ""}
-        self.num_actions = 0
-
     def train_models(self):
         """Train the model."""
-        batch = self.memory.sample_batch()
+        if len(self.memory) >= self.sequences_batch_size:
+            batch = self.memory.sample_batch()
+        else:
+            self.memory.batch_size = len(self.memory)
+            batch = self.memory.sample_batch()
+            self.memory.batch_size = self.sequences_batch_size
         states = batch["next_obs"]
         state_seqs = [
-            one_hot_to_string(state.reshape((-1, self.seq_len)), self.alphabet)
+            one_hot_to_string(state.reshape((-1, len(self.alphabet))), self.alphabet)
             for state in states
         ]
-        self.model.update_model(state_seqs)
+        rewards = batch["rews"]
+        self.model.train(state_seqs, rewards)
 
     def _recombine_population(self, gen):
         np.random.shuffle(gen)
@@ -132,26 +128,25 @@ class BO(flexs.Explorer):
 
     def sample_actions(self):
         """Sample actions resulting in sequences to screen."""
-        actions, actions_set = [], set()
+        actions = set()
         pos_changes = []
-        for i in range(self.seq_len):
+        for pos in range(self.seq_len):
             pos_changes.append([])
-            for j in range(len(self.alphabet)):
-                if self.state[j, i] == 0:
-                    pos_changes[i].append((j, i))
+            for res in range(len(self.alphabet)):
+                if self.state[pos, res] == 0:
+                    pos_changes[pos].append((pos, res))
 
-        while len(actions_set) < self.virtual_screen:
+        while len(actions) < self.model_queries_per_batch / self.sequences_batch_size:
             action = []
-            for i in range(self.seq_len):
+            for pos in range(self.seq_len):
                 if np.random.random() < 1 / self.seq_len:
-                    pos_tuple = pos_changes[i][
+                    pos_tuple = pos_changes[pos][
                         np.random.randint(len(self.alphabet) - 1)
                     ]
                     action.append(pos_tuple)
-            if len(action) > 0 and tuple(action) not in actions_set:
-                actions_set.add(tuple(action))
-                actions.append(tuple(action))
-        return actions
+            if len(action) > 0 and tuple(action) not in actions:
+                actions.add(tuple(action))
+        return list(actions)
 
     def pick_action(self, all_measured_seqs):
         """Pick action."""
@@ -159,16 +154,14 @@ class BO(flexs.Explorer):
         actions = self.sample_actions()
         actions_to_screen = []
         states_to_screen = []
-        for i in range(self.virtual_screen):
-            x = np.zeros((len(self.alphabet), self.seq_len))
+        for i in range(self.model_queries_per_batch // self.sequences_batch_size):
+            x = np.zeros((self.seq_len, len(self.alphabet)))
             for action in actions[i]:
                 x[action] = 1
             actions_to_screen.append(x)
             state_to_screen = construct_mutant_from_sample(x, state)
             states_to_screen.append(one_hot_to_string(state_to_screen, self.alphabet))
-        ensemble_preds = [
-            self.model.get_fitness_distribution(state) for state in states_to_screen
-        ]
+        ensemble_preds = self.model.get_fitness(states_to_screen)
         method_pred = (
             [self.EI(vals) for vals in ensemble_preds]
             if self.method == "EI"
@@ -182,8 +175,6 @@ class BO(flexs.Explorer):
         new_state = self.state
         reward = np.mean(ensemble_preds[action_ind])
         if not new_state_string in all_measured_seqs:
-            if reward >= self.best_fitness:
-                self.top_sequence.append((reward, new_state, self.model.cost))
             self.best_fitness = max(self.best_fitness, reward)
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
         self.num_actions += 1
@@ -210,26 +201,28 @@ class BO(flexs.Explorer):
             last_batch = measured_sequences[
                 measured_sequences["round"] == last_round_num
             ]
-            last_batch_seqs = last_batch["sequence"].values
+            _last_batch_seqs = last_batch["sequence"].tolist()
+            _last_batch_true_scores = last_batch["true_score"].tolist()
+            last_batch_seqs = _last_batch_seqs
             if self.recomb_rate > 0 and len(last_batch) > 1:
-                last_batch_seqs = self._recombine_population(list(last_batch_seqs))
-            measured_batch = sorted(
-                [(self.model.get_fitness(seq), seq) for seq in last_batch]
-            )
+                last_batch_seqs = self._recombine_population(last_batch_seqs)
+            measured_batch = []
+            for seq in last_batch_seqs:
+                if seq in _last_batch_seqs:
+                    measured_batch.append(
+                        (_last_batch_true_scores[_last_batch_seqs.index(seq)], seq)
+                    )
+                else:
+                    measured_batch.append((np.mean(self.model.get_fitness([seq])), seq))
+            measured_batch = sorted(measured_batch)
             sampled_seq = self.Thompson_sample(measured_batch)
             self.state = string_to_one_hot(sampled_seq, self.alphabet)
         # generate next batch by picking actions
         self.initial_uncertainty = None
         samples = set()
-        prev_cost, prev_evals = (
-            copy.deepcopy(self.model.cost),
-            copy.deepcopy(self.model.evals),
-        )
-        all_measured_seqs = set(measured_sequences["sequence"].values)
-        while (self.model.cost - prev_cost < self.sequences_batch_size) and (
-            self.model.evals - prev_evals
-            < self.sequences_batch_size * self.virtual_screen
-        ):
+        prev_cost = self.model.cost
+        all_measured_seqs = set(measured_sequences["sequence"].tolist())
+        while self.model.cost - prev_cost < self.model_queries_per_batch:
             uncertainty, new_state_string, _ = self.pick_action(all_measured_seqs)
             all_measured_seqs.add(new_state_string)
             samples.add(new_state_string)
@@ -247,11 +240,12 @@ class BO(flexs.Explorer):
             )
             samples.update(random_sequences)
         # get predicted fitnesses of samples
-        preds = [self.model.get_fitness(sample) for sample in samples]
+        samples = list(samples)
+        preds = np.mean(self.model.get_fitness(samples), axis=1)
         # train ensemble model before returning samples
         self.train_models()
 
-        return list(samples), preds
+        return samples, preds
 
 
 class GPR_BO(flexs.Explorer):
@@ -304,7 +298,6 @@ class GPR_BO(flexs.Explorer):
     def reset(self):
         """Reset."""
         self.best_fitness = 0
-        self.batches = {-1: ""}
         self._reset = True
 
     def propose_sequences_via_thompson(self):

@@ -15,6 +15,7 @@ flexs
    flexs.explorer
    flexs.landscape
    flexs.model
+   flexs.types
 
 .. toctree::
    :maxdepth: 3

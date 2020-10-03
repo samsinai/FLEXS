@@ -5,7 +5,7 @@ with open("README.md") as f:
 
 setuptools.setup(
     name="flexs",
-    version="0.2.0",
+    version="0.2.1",
     description=(
         "FLEXS: an open simulation environment for developing and comparing model-guided "
         "biological sequence design algorithms."
@@ -19,8 +19,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires=">=3.5",
     install_requires=[
+        "cma",
         "editdistance",
-        "numpy>=1.17",
+        "numpy>=1.16",
         "pandas>=0.23",
         "torch>=0.4",
         "scikit-learn>=0.20",

@@ -1,14 +1,17 @@
+"""Defines replay buffers used by some explorers."""
 import operator
 import random
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List
 
 import numpy as np
 
 
 class SegmentTree:
-    """Create SegmentTree.
+    """
+    Create SegmentTree.
     Taken from OpenAI baselines Github repository:
     https://github.com/openai/baselines/blob/master/baselines/common/segment_tree.py
+
     Attributes:
         capacity (int)
         tree (list)
@@ -16,11 +19,14 @@ class SegmentTree:
     """
 
     def __init__(self, capacity: int, operation: Callable, init_value: float):
-        """Initialization.
+        """
+        Initialization.
+
         Args:
             capacity (int)
             operation (function)
             init_value (float)
+
         """
         assert (
             capacity > 0 and capacity & (capacity - 1) == 0
@@ -32,7 +38,7 @@ class SegmentTree:
     def _operate_helper(
         self, start: int, end: int, node: int, node_start: int, node_end: int
     ) -> float:
-        """Returns result of operation in segment."""
+        """Return result of operation in segment."""
         if start == node_start and end == node_end:
             return self.tree[node]
         mid = (node_start + node_end) // 2
@@ -48,7 +54,7 @@ class SegmentTree:
                 )
 
     def operate(self, start: int = 0, end: int = 0) -> float:
-        """Returns result of applying `self.operation`."""
+        """Return result of applying `self.operation`."""
         if end <= 0:
             end += self.capacity
         end -= 1
@@ -80,15 +86,17 @@ class SumSegmentTree(SegmentTree):
 
     def __init__(self, capacity: int):
         """Initialization.
+
         Args:
             capacity (int)
+
         """
         super(SumSegmentTree, self).__init__(
             capacity=capacity, operation=operator.add, init_value=0.0
         )
 
     def sum(self, start: int = 0, end: int = 0) -> float:
-        """Returns arr[start] + ... + arr[end]."""
+        """Return arr[start] + ... + arr[end]."""
         return super(SumSegmentTree, self).operate(start, end)
 
     def retrieve(self, upperbound: float) -> int:
@@ -119,13 +127,14 @@ class MinSegmentTree(SegmentTree):
         """Initialization.
         Args:
             capacity (int)
+
         """
         super(MinSegmentTree, self).__init__(
             capacity=capacity, operation=min, init_value=float("inf")
         )
 
     def min(self, start: int = 0, end: int = 0) -> float:
-        """Returns min(arr[start], ...,  arr[end])."""
+        """Return min(arr[start], ...,  arr[end])."""
         return super(MinSegmentTree, self).operate(start, end)
 
 
@@ -133,6 +142,7 @@ class ReplayBuffer:
     """A simple numpy replay buffer."""
 
     def __init__(self, obs_dim: int, size: int, batch_size: int = 128):
+        """Initialize."""
         self.obs_buf = np.zeros([size, obs_dim], dtype=np.float32)
         self.next_obs_buf = np.zeros([size, obs_dim], dtype=np.float32)
         self.acts_buf = np.zeros([size, obs_dim], dtype=np.float32)
@@ -144,6 +154,7 @@ class ReplayBuffer:
         )
 
     def store(self, obs: np.ndarray, act: np.ndarray, rew: float, next_obs: np.ndarray):
+        """Store timestep in replay buffer."""
         self.obs_buf[self.ptr] = obs
         self.next_obs_buf[self.ptr] = next_obs
         self.acts_buf[self.ptr] = act
@@ -152,6 +163,7 @@ class ReplayBuffer:
         self.size = min(self.size + 1, self.max_size)
 
     def sample_batch(self) -> Dict[str, np.ndarray]:
+        """Sample batch of timesteps from replay buffer."""
         idxs = np.random.choice(self.size, size=self.batch_size, replace=False)
         return dict(
             obs=self.obs_buf[idxs],
@@ -161,6 +173,7 @@ class ReplayBuffer:
         )
 
     def __len__(self) -> int:
+        """len(buffer) == `buffer.size`"""
         return self.size
 
 

@@ -1,10 +1,10 @@
+"""Defines the AdditiveAAVPackaging landscape and problem registry."""
 import json
 import os
 
 import numpy as np
 
 import flexs
-
 
 AAV2_WT = """MAADGYLPDWLEDTLSEGIRQWWKLKPGPPPPKPAERHKDDSRGLVLPGYKYLGPFNGLD\
 KGEPVNEADAAALEHDKAYDRQLDSGDNPYLKYNHADAEFQERLKEDTSFGGNLGRAVFQ\
@@ -22,9 +22,31 @@ SEPRPIGTRYLTRNL"""
 
 
 class AdditiveAAVPackaging(flexs.Landscape):
+    """
+    An Additive landscape based on data from AAV2 packaging fitness measurements.
+
+    By additive landscape, we mean that each residue at each position is given a fitness
+    and the fitness of the sequence is the sum of these individual fitnesses. This means
+    that the fitness contribution per residue is independent of the identities of the
+    other residues. This makes for a very simple landscape.
+    """
+
     def __init__(
-        self, phenotype="heart", minimum_fitness_multiplier=1, start=0, end=735
+        self,
+        phenotype: str = "heart",
+        minimum_fitness_multiplier: float = 1,
+        start: int = 0,
+        end: int = 735,
     ):
+        """
+        Create AdditiveAAVPackaging landscape.
+
+        Args:
+            phenotype: One of "heart", "lung", "kidney", "liver", "blood", or "spleen".
+            start: Starting index of AAV subsequence to evaluate.
+            end: Ending index of AAV subsequence to evaluate.
+
+        """
         super().__init__(f"AdditiveAAVPackaging_phenotype={phenotype}")
 
         self.sequences = {}
@@ -50,6 +72,7 @@ class AdditiveAAVPackaging(flexs.Landscape):
         self.top_seq, self.max_possible = self.compute_max_possible()
 
     def compute_max_possible(self):
+        """Compute max possible fitness of any sequence (used for normalization)."""
         best_seq = ""
         max_fitness = 0
         for pos in self.data:
@@ -89,25 +112,23 @@ class AdditiveAAVPackaging(flexs.Landscape):
 
 def registry():
     """
-    Returns a dictionary of problems of the form:
-    `{
+    Return a dictionary of problems of the form:
+    ```{
         "problem name": {
-            "params": ...,
-            "starts": ...
+            "params": ...
         },
         ...
-    }`
+    }```
 
-    where `flexs.landscapes.RNABinding(**problem["params"])` instantiates the
-    RNA binding landscape for the given set of parameters.
+    where `flexs.landscapes.AdditiveAAVPackaging(**problem["params"])` instantiates the
+    additive AAV packaging landscape for the given set of parameters.
 
     Returns:
         dict: Problems in the registry.
 
     """
-
     problems = {
-        "heart": {"params": {"phenotype": "heart", "start": 450, "end": 540,}},
+        "heart": {"params": {"phenotype": "heart", "start": 450, "end": 540}},
         "lung": {"params": {"phenotype": "lung", "start": 450, "end": 540}},
         "kidney": {"params": {"phenotype": "kidney", "start": 450, "end": 540}},
         "liver": {"params": {"phenotype": "liver", "start": 450, "end": 540}},

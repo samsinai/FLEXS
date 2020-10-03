@@ -1,15 +1,15 @@
+"""Defines base Model class."""
 import abc
 from typing import Any, List
 
 import numpy as np
 
 import flexs
-from flexs.landscape import SEQUENCES_TYPE
+from flexs.types import SEQUENCES_TYPE
 
 
 class Model(flexs.Landscape, abc.ABC):
     """
-
     Base model class. Inherits from `flexs.Landscape` and adds an additional
     `train` method.
 
@@ -24,18 +24,25 @@ class Model(flexs.Landscape, abc.ABC):
         based on the set of sequences it has measurements for.
 
         """
-
         pass
 
 
 class LandscapeAsModel(Model):
     """
-    This simple class wraps a `flexs.Landscape` in a `flexs.Model` to allow
-    running experiments against a perfect model.
+    This simple class wraps a `flexs.Landscape` in a `flexs.Model` to allow running
+    experiments against a perfect model.
 
+    Simply calls the landscape's `_fitness_function`.
     """
 
     def __init__(self, landscape: flexs.Landscape):
+        """
+        Create a `flexs.Model` out of a `flexs.Landscape`.
+
+        Args:
+            landscape: Landscape to wrap in a model.
+
+        """
         super().__init__(f"LandscapeAsModel={landscape.name}")
         self.landscape = landscape
 
@@ -44,5 +51,4 @@ class LandscapeAsModel(Model):
 
     def train(self, sequences: SEQUENCES_TYPE, labels: List[Any]):
         """No-op."""
-
         pass

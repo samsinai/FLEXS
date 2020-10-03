@@ -23,6 +23,18 @@ fakeModel = FakeModel(name="FakeModel")
 fakeLandscape = FakeLandscape(name="FakeLandscape")
 
 
+def test_random():
+    explorer = baselines.explorers.Random(
+        model=fakeModel,
+        rounds=3,
+        sequences_batch_size=5,
+        model_queries_per_batch=20,
+        starting_sequence="ATC",
+        alphabet="ATCG",
+    )
+    explorer.run(fakeLandscape)
+
+
 def test_adalead():
     explorer = baselines.explorers.Adalead(
         model=fakeModel,
@@ -32,51 +44,43 @@ def test_adalead():
         starting_sequence="ATC",
         alphabet="ATCG",
     )
-
-    sequences, _ = explorer.run(fakeLandscape)
-    print(sequences)
+    explorer.run(fakeLandscape)
 
 
 def test_bo():
     explorer = baselines.explorers.BO(
         model=fakeModel,
-        rounds=1,
+        rounds=3,
         sequences_batch_size=5,
         model_queries_per_batch=20,
-        starting_sequence="A",
+        starting_sequence="ATC",
         alphabet="ATCG",
     )
-
-    sequences, _ = explorer.run(fakeLandscape)
-    print(sequences)
+    explorer.run(fakeLandscape)
 
 
 def test_gpr_bo():
     explorer = baselines.explorers.GPR_BO(
         model=fakeModel,
-        rounds=1,
+        rounds=3,
         sequences_batch_size=5,
         model_queries_per_batch=20,
-        starting_sequence="A",
+        starting_sequence="ATC",
         alphabet="ATCG",
     )
-
-    sequences, _ = explorer.run(fakeLandscape)
-    print(sequences)
+    explorer.run(fakeLandscape)
 
 
 def test_dqn():
     explorer = baselines.explorers.DQN(
         model=fakeModel,
-        rounds=1,
+        rounds=3,
         sequences_batch_size=5,
         model_queries_per_batch=20,
-        starting_sequence="A",
+        starting_sequence="ATC",
         alphabet="ATCG",
     )
-
-    sequences, _ = explorer.run(fakeLandscape)
-    print(sequences)
+    explorer.run(fakeLandscape)
 
 
 def test_dynappo():
@@ -90,9 +94,7 @@ def test_dynappo():
         num_experiment_rounds=1,
         num_model_rounds=1,
     )
-
-    sequences, _ = explorer.run(fakeLandscape)
-    print(sequences)
+    explorer.run(fakeLandscape)
 
 
 def test_ppo():
@@ -104,9 +106,7 @@ def test_ppo():
         starting_sequence="ATC",
         alphabet="ATCG",
     )
-
-    sequences, _ = explorer.run(fakeLandscape)
-    print(sequences)
+    explorer.run(fakeLandscape)
 
 
 def test_cmaes():
@@ -121,6 +121,18 @@ def test_cmaes():
         model_queries_per_batch=20,
         alphabet="ATCG",
     )
+    explorer.run(fakeLandscape)
 
-    sequences, _ = explorer.run(fakeLandscape)
-    print(sequences)
+
+def test_cbas():
+    vae = baselines.explorers.VAE(3, "ATCG", epochs=2, verbose=False)
+    explorer = baselines.explorers.CbAS(
+        fakeModel,
+        vae,
+        rounds=3,
+        starting_sequence="ATC",
+        sequences_batch_size=5,
+        model_queries_per_batch=20,
+        alphabet="ATCG",
+    )
+    explorer.run(fakeLandscape)

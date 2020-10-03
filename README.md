@@ -52,7 +52,7 @@ We also provide limited support for making landscapes with [Rosetta](https://www
 ## Overview
 
 Biological sequence design through machine-guided directed evolution has been of increasing interest. This process often involves two closely connected steps:
-  * Models `f` that attempt to learn the ground truth sequence `x` to function `y` relationships `g(x) = y`. 
+  * Models `f` that attempt to learn the ground truth sequence to function relationship `g(x) = y`. 
   * Algorithms that explore the sequence space with the help of the trained model `f`. 
 
  
@@ -61,7 +61,7 @@ Biological sequence design through machine-guided directed evolution has been of
  We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the [quickstart tutorial](Tutorial.ipynb). 
 
 Our abstraction is comprised of three levels:
-#### 1.  Ground truth oracles (landscapes) 
+#### 1.  Fitness Landscapes
 These oracles `g` are simulators that are assumed as ground truth, i.e. when queried, they return the true value `y_i` associated with a sequence `x_i`. Currently we have four classes of ground truth oracles implemented. 
 - *[Transcription factor binding data](#transcription-factor-binding)*. This is comprised of 158 (experimentally) fully characterized landscapes. 
 - *[RNA landscapes](#rna-landscapes)*. A set of curated and increasingly challenging RNA binding landscapes as simulated with ViennaRNA. 
