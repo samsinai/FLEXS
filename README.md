@@ -61,6 +61,7 @@ These oracles `g` are simulators that are assumed as ground truth, i.e. when que
 - *[RNA landscapes](#rna-landscapes)*. A set of curated and increasingly challenging RNA binding landscapes as simulated with ViennaRNA. 
 - *[AAV Additive Tropism](#additive-aav-tropism)*. A hypothesized noisy additive protein landscape based on tissue tropism of single mutant AAV2 capsid protein.   
 - *[GFP fluorescence](#gfp-fluorescence)*. Fluorescence of GFP protein as predicted by TAPE transformer model. 
+- *[Rosetta-based design](#rosetta-based-design)*. Rosetta-based design task for 3MSI anti-freeze protein. 
 
 For all landscapes we also provide a fixed set of initial points with different degrees of previous optimization, so that the relative strength of algorithms when starting from locations near or far away from peaks can be evaluated. 
 
@@ -173,6 +174,25 @@ year = {2019}
   publisher={Nature Publishing Group}
 }
 ```
+### Rosetta based Design 
+
+Rosetta is a protein modeling software suite used for *de novo* design and structure prediction. Based on the principle that structure determines function, the Rosetta design process begins with a desired 3-D protein conformation and tries to find amino acid sequences that are likely to fold to that structure. . While the dynamics of protein folding are still poorly understood, this approach has proven remarkably effective in practice, and so we find it an acceptable analogue to the true fitness landscape. To keep our experiments computationally feasible, we omit the expensive step of side-chain packing and use the simplified centroid scoring frounction as our objective. We use the PyRosetta interface from PyRosetta as $g$. The Rosetta design objective function is a scaled estimate of the folding energy, which has been found to be an indicator of the probability that a sequence will fold to the desired structure. As an example, we provide an optimization challenge for the structure of 3MSI, a 66 amino acid antifreeze protein found in the ocean pout starting from 5 sequences with 3--27 mutations from the wildtype. Here, we normalize energy scores by scaling and shifting their distribution and then applying the sigmoid function.
+
+
+```
+@article{chaudhury2010pyrosetta,
+  title={PyRosetta: a script-based interface for implementing molecular modeling algorithms using Rosetta},
+  author={Chaudhury, Sidhartha and Lyskov, Sergey and Gray, Jeffrey J},
+  journal={Bioinformatics},
+  volume={26},
+  number={5},
+  pages={689--691},
+  year={2010},
+  publisher={Oxford University Press}
+}
+```
+
+
 ### Noisy Oracles
 
 #### Noisy Abstract Models
