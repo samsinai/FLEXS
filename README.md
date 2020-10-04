@@ -200,8 +200,8 @@ These models get access to the ground truth `g`, but do not allow the explorer t
 
 
 #### Empirical Models
-These models train a standard algorithm on the observed data. The currently available architectures can be found in [architectures](utils/model_architectures.py). 
-All noisy models can be ensembled using the [ensemble class](Noisy_models/Ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
+These models train a standard algorithm on the observed data. The currently available architectures can be found in [architectures](flexs/baselines/models/). 
+All noisy models can be ensembled using the [ensemble class](flexs/baselines/models/adaptive_ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
 
 
 ### Exploration Algorithms
@@ -245,18 +245,26 @@ class myExplorer(flexs.Explorer):
 
 #### Baseline Explorers
 
--[Random Explorer](explorers/random_explorer.py): A baseline random explorer.
+-[Random Explorer](flexs/baselines/explorers/random.py): A baseline random explorer.
 
 #### Evolutionary Algorithms
--[Wright-Fisher, Model-guided Wright Fisher](explorers/evolutionary_explorers.py): A standard Wright-Fisher process, in addition to a Wright-Fisher process that has access to an oracle for pre-screening. 
+-[Wright-Fisher, Model-guided Wright Fisher](flexs/baselines/explorers/genetic_algorithm.py): A standard Wright-Fisher process, in addition to a Wright-Fisher process that has access to an oracle for pre-screening. 
 
--[CMA-ES](explorers/CMAES_explorer.py): The CMA-ES algorithm (with access to the oracle) for comparison as another evolutionary baseline. 
+-[CMA-ES](flexs/baselines/explorers/cmaes.py): The CMA-ES algorithm (with access to the oracle) for comparison as another evolutionary baseline. 
 
--[Independent sites X-entropy , ADALEAD](explorers/elitist_explorers.py): Independent sites cross-entropy, and Adalead (Greedy) are both elitist explorers in the sense that they use statistics around high performing variants. ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithm.  
+-[ADALEAD](flexs/baselines/explorers/adalead.py): ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithm.  
 
+```
+@article{sinai2020adalead,
+  title={AdaLead: A simple and robust adaptive greedy search algorithm for sequence design},
+  author={Sinai, Sam and Wang, Richard and Whatley, Alexander and Slocum, Stewart and Locane, Elina and Kelsic, Eric},
+  journal={arXiv preprint},
+  year={2020}
+}
+```
 
 #### DbAS and CbAS
--Adaptation of [CbAS and DbAS](explorers/CbAS_DbAS_explorers.py)
+-Adaptation of [CbAS and DbAS](flexs/baselines/explorers/explorers/cbas_dbas.py)
 ```
 @article{brookes2019conditioning,
   title={Conditioning by adaptive sampling for robust design},
@@ -275,11 +283,11 @@ class myExplorer(flexs.Explorer):
 #### Reinforcement Learning Algorithms
 Adaptations of the following RL algorithms.
 
--[DQN](explorers/dqn_explorer.py)
+-[DQN](flexs/baselines/explorers/dqn_explorer.py)
 
--[PPO](explorers/PPO_explorer.py)
+-[PPO](flexs/baselines/explorers/ppo.py)
 
--[DyNAPPO](explorers/DynaPPO_explorer.py): See the following citation.
+-[DyNAPPO](flexs/baselines/explorers/dyna_ppo.py): See the following citation.
 ```
 @inproceedings{angermueller2019model,
   title={Model-based reinforcement learning for biological sequence design},
@@ -290,6 +298,4 @@ Adaptations of the following RL algorithms.
 ```	
 #### Bayesian Optimization 
 
--[Evolutionary BO](bo_explorer.py): Bayesian optimization on sparse sampling of the mutation space.
-
--[Enumerative BO](gpr_bo_explorer.py): Bayesion optimization on fully enumerated (when possible) mutation space.
+-[Evolutionary/Enumerative BO](flexs/baselines/explorers/bo.py): Bayesian optimization with sparse sampling of the mutation space. A fully enumerated (when possible) is also implemented mutation space.
