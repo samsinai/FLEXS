@@ -1,4 +1,4 @@
-![FLEX](logo.png)
+![FLEX](LOGO.png)
 
 [![build status](https://github.com/samsinai/FLSD-Sandbox/workflows/build/badge.svg)](https://github.com/samsinai/FLSD-Sandbox/actions)
 
