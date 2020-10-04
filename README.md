@@ -6,7 +6,7 @@ FLEXS is an open-source simulation environment that enables you to develop and c
 
 - [Installation](#installation)
 - [Overview](#overview)
-	- [Quickstart](Tutorial.ipynb)
+	- [Quickstart](examples/Tutorial.ipynb)
 - [Contribution and credits](#contributions-and-credits) 
 - [Components](#components)
   - [Ground truth landscapes](#ground-truth-landscapes)
@@ -52,7 +52,7 @@ Biological sequence design through machine-guided directed evolution has been of
  
  While in some cases, these two steps are learned simultaneously, it is fairly common to have access to a well-trained model `f` which is *not* invertible. Namely, given a sequence `x`, the model can estimate `y'` (with variable accuracy), but it cannot generate a sequence `x'` associated with a specific function `y`. Therefore it is valuable to develop exploration algorithms `E(f)` that make use of the model `f` to propose sequences `x'`. 
 
- We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the [quickstart tutorial](Tutorial.ipynb). 
+ We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the [quickstart tutorial](examples/Tutorial.ipynb). 
 
 Our abstraction is comprised of three levels:
 #### 1.  Fitness Landscapes
@@ -83,7 +83,7 @@ We also implement a suite of [evaluation modules](evaluators/Evaluator.py) that 
 - *adaptivity*: Produces data for analyzing how the explorer is sensitive to the number of batches it is allowed to sample, given a fixed total budget.
 -*scalability*: Produces data for analyzing how fast the explorer produces a batch.
 
-See the [tutorial](Tutorial.ipynb) for an example of how these can be run. 
+See the [tutorial](examples/Tutorial.ipynb) for an example of how these can be run. 
 
 ## Contributions and credits
 Your PR and contributions to this sandbox are most welcome. If you make use of data or algorithms in this sandbox, please ensure that you cite the relevant original articles upon which this work was made possible (we provide links in this readme).
