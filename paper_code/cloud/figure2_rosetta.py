@@ -1,15 +1,18 @@
 """Get data for Rosetta figure in paper."""
+from typing import Callable
+
 import flexs
 from flexs import baselines
-import flexs.utils.sequence_utils as s_utils
-from typing import Callable
+from flexs.utils import sequence_utils as s_utils
 
 
 def run_explorer(explorer, landscape, wt, start_name):
     alphabet = s_utils.AAS
     sequences_batch_size = 100
     model_queries_per_batch = 2000
-    model = baselines.models.CNN(len(wt), alphabet=alphabet, num_filters=32, hidden_size=100, loss='MSE')
+    model = baselines.models.CNN(
+        len(wt), alphabet=alphabet, num_filters=32, hidden_size=100, loss="MSE"
+    )
 
     if explorer == "adalead":
         exp = baselines.explorers.Adalead(
@@ -131,14 +134,14 @@ def main():
     )
 
     for explorer in [
-        #"cmaes",
-        #"adalead",
-        #"bo",
-        #"cbas",
-        #"dbas",
+        # "cmaes",
+        # "adalead",
+        # "bo",
+        # "cbas",
+        # "dbas",
         "dynappo",
-        #"genetic",
-        #"random",
+        # "genetic",
+        # "random",
     ]:
         for start_name, start_seq in list(problem["starts"].items())[3:]:
             print(f"\n{explorer}, start {start_name}\n")

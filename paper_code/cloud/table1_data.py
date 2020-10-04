@@ -1,12 +1,14 @@
 """Get data for Table 1 in paper."""
+from typing import Callable
+
 import flexs
 from flexs import baselines
-import flexs.utils.sequence_utils as s_utils
-from typing import Callable
+from flexs.utils import sequence_utils as s_utils
+
 
 def _robustness(
     landscape: flexs.Landscape,
-    make_explorer: Callable[[flexs.Model, float], flexs.Explorer]
+    make_explorer: Callable[[flexs.Model, float], flexs.Explorer],
 ):
     """
     This is essentially the robustness evaluator, but with the models hard-coded.
@@ -21,12 +23,20 @@ def _robustness(
         res = explorer.run(landscape, verbose=False)
 
         results.append((ss, res))
-    
+
     print("Evaluating for robustness with model accuracy; using 3xCNN ensemble")
-    cnn_ensemble = flexs.Ensemble([
-        baselines.models.CNN(len(wt), alphabet=s_utils.RNAA, num_filters=32, hidden_size=100, loss='MSE')
-        for i in range(3)
-    ])
+    cnn_ensemble = flexs.Ensemble(
+        [
+            baselines.models.CNN(
+                len(wt),
+                alphabet=s_utils.RNAA,
+                num_filters=32,
+                hidden_size=100,
+                loss="MSE",
+            )
+            for i in range(3)
+        ]
+    )
     explorer = make_explorer(cnn_ensemble, ss, tag="cnn")
     res = explorer.run(landscape, verbose=False)
 
@@ -34,12 +44,14 @@ def _robustness(
 
     return results
 
+
 def run_explorers(explorer, landscape, wt, problem_name, start_num):
     alphabet = s_utils.RNAA
     sequences_batch_size = 100
     model_queries_per_batch = 2000
 
     if explorer == "adalead":
+
         def make_explorer(model, ss, tag):
             return baselines.explorers.Adalead(
                 model,
@@ -49,8 +61,9 @@ def run_explorers(explorer, landscape, wt, problem_name, start_num):
                 sequences_batch_size=sequences_batch_size,
                 model_queries_per_batch=model_queries_per_batch,
                 alphabet=alphabet,
-                log_file=f"runs/{explorer}/{problem_name}_start{start_num}_{tag}"
+                log_file=f"runs/{explorer}/{problem_name}_start{start_num}_{tag}",
             )
+
         results = _robustness(landscape, make_explorer)
     elif explorer == "cbas" or explorer == "dbas":
         g = baselines.explorers.cbas_dbas.VAE(
@@ -65,6 +78,7 @@ def run_explorers(explorer, landscape, wt, problem_name, start_num):
             validation_split=0,
             verbose=False,
         )
+
         def make_explorer(model, ss, tag):
             return baselines.explorers.CbAS(
                 model,
@@ -75,12 +89,14 @@ def run_explorers(explorer, landscape, wt, problem_name, start_num):
                 starting_sequence=wt,
                 sequences_batch_size=sequences_batch_size,
                 model_queries_per_batch=model_queries_per_batch,
-                mutation_rate=2.0/len(wt),
+                mutation_rate=2.0 / len(wt),
                 alphabet=alphabet,
-                log_file=f"runs/{explorer}/{problem_name}_start{start_num}_{tag}"
+                log_file=f"runs/{explorer}/{problem_name}_start{start_num}_{tag}",
             )
+
         results = _robustness(landscape, make_explorer)
     elif explorer == "cmaes":
+
         def make_explorer(model, ss, tag):
             return baselines.explorers.CMAES(
                 model,
@@ -91,10 +107,12 @@ def run_explorers(explorer, landscape, wt, problem_name, start_num):
                 alphabet=alphabet,
                 population_size=40,
                 max_iter=400,
-                log_file=f"runs/{explorer}/{problem_name}_start{start_num}_{tag}"
+                log_file=f"runs/{explorer}/{problem_name}_start{start_num}_{tag}",
             )
+
         results = _robustness(landscape, make_explorer)
     elif explorer == "dynappo":
+
         def make_explorer(model, ss, tag):
             return baselines.explorers.DynaPPO(
                 model=model,
@@ -106,10 +124,12 @@ def run_explorers(explorer, landscape, wt, problem_name, start_num):
                 num_experiment_rounds=10,
                 num_model_rounds=8,
                 alphabet=alphabet,
-                log_file=f"runs/{explorer}/{problem_name}_start{start_num}_{tag}"
+                log_file=f"runs/{explorer}/{problem_name}_start{start_num}_{tag}",
             )
+
         results = _robustness(landscape, make_explorer)
     return results
+
 
 if __name__ == "__main__":
     for explorer in ["cmaes", "adalead", "cbas", "dbas", "dynappo"]:

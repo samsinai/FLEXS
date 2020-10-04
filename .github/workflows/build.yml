@@ -17,10 +17,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up Python 3.8
+    - name: Set up Python 3.7
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.7
 
     - name: Build and install dependencies
       run: $CONDA/bin/pip install -e .
@@ -29,14 +29,10 @@ jobs:
       run: $CONDA/bin/conda install -c bioconda viennarna -y
 
     - name: Install dev dependencies
-      run: $CONDA/bin/conda install pylint pydocstyle pytest
+      run: $CONDA/bin/conda install flake8 flake8-docstrings flake8-black pytest
 
-    - name: Lint with pylint and pydocstyle
-      run: |
-        $CONDA/bin/pylint --reports=n flexs
-        $CONDA/bin/pydocstyle flexs
+    - name: Lint with flake8, pydocstyle, and black
+      run: $CONDA/bin/flake8 flexs --exit-zero
 
     - name: Test with pytest
-      run: |
-        $CONDA/bin/conda install pytest
-        $CONDA/bin/pytest tests
+      run: $CONDA/bin/pytest tests

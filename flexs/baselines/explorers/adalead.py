@@ -13,7 +13,8 @@ class Adalead(flexs.Explorer):
 
     A simple evolutionary greedy algorithm for sequence design.
     Args:
-        threshold: At each round only sequences with fitness above (1-threshold)*f_max are retained as parents for generating next set of sequences.
+        threshold: At each round only sequences with fitness above (1-threshold)*f_max
+            are retained as parents for generating next set of sequences.
         recomb_rate: the probability of a crossover at any position in a sequence
         mu: expected number of mutations to the full sequence (mu/L per position).
         rho: The expected number of recombination partners for each recombinant.

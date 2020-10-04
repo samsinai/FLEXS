@@ -1,6 +1,6 @@
 format:
-	python -m black flexs
-	python -m isort --profile black flexs
+	python -m black .
+	python -m isort --profile black .
 
 lint:
 	python -m flake8 flexs --exit-zero

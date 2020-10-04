@@ -1,13 +1,16 @@
 import argparse
+
 import flexs
 from flexs import baselines
-import flexs.utils.sequence_utils as s_utils
+from flexs.utils import sequence_utils as s_utils
 
 sequences_batch_size = 100
 model_queries_per_batch = 2000
 
+
 def run_explorer_TF(landscape, wt, problem_name, start_num):
     alphabet = s_utils.DNAA
+
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPO(
             landscape=landscape,
@@ -19,13 +22,18 @@ def run_explorer_TF(landscape, wt, problem_name, start_num):
             num_model_rounds=8,
             env_batch_size=4,
             alphabet=alphabet,
-            log_file=f"runs/new_dynappo/{problem_name}_start{start_num}_ss{ss}"
+            log_file=f"runs/new_dynappo/{problem_name}_start{start_num}_ss{ss}",
         )
-    results = flexs.evaluate.robustness(landscape, make_explorer, signal_strengths=[0, 1], verbose=False)
+
+    results = flexs.evaluate.robustness(
+        landscape, make_explorer, signal_strengths=[0, 1], verbose=False
+    )
     return results
+
 
 def run_explorer_RNA(landscape, wt, problem_name, start_num):
     alphabet = s_utils.RNAA
+
     def make_explorer(model, ss):
         return baselines.explorers.DynaPPO(
             landscape=landscape,
@@ -37,15 +45,25 @@ def run_explorer_RNA(landscape, wt, problem_name, start_num):
             num_model_rounds=8,
             env_batch_size=4,
             alphabet=alphabet,
-            log_file=f"runs/new_dynappo/{problem_name}_start{start_num}_ss{ss}"
+            log_file=f"runs/new_dynappo/{problem_name}_start{start_num}_ss{ss}",
         )
-    results = flexs.evaluate.robustness(landscape, make_explorer, signal_strengths=[0, 1], verbose=False)
+
+    results = flexs.evaluate.robustness(
+        landscape, make_explorer, signal_strengths=[0, 1], verbose=False
+    )
     return results
+
 
 task = "TF"
 
 if task == "TF":
-    for p in ["SIX6_REF_R1", "POU3F4_REF_R1", "PAX3_G48R_R1", "VAX2_REF_R1", "VSX1_REF_R1"]:
+    for p in [
+        "SIX6_REF_R1",
+        "POU3F4_REF_R1",
+        "PAX3_G48R_R1",
+        "VAX2_REF_R1",
+        "VSX1_REF_R1",
+    ]:
         problem = flexs.landscapes.tf_binding.registry()[p]
         landscape = flexs.landscapes.TFBinding(**problem["params"])
         for s in range(13):

@@ -1,14 +1,16 @@
 import argparse
+
 import flexs
 from flexs import baselines
-import flexs.utils.sequence_utils as s_utils
+from flexs.utils import sequence_utils as s_utils
+
 
 def run_explorer_robustness():
-    problem = flexs.landscapes.rna.registry()['L14_RNA1']
+    problem = flexs.landscapes.rna.registry()["L14_RNA1"]
     landscape = flexs.landscapes.RNABinding(**problem["params"])
     wt = problem["starts"][0]
 
-    '''# random
+    """# random
     def make_explorer(model, ss):
         return baselines.explorers.Random(
             model,
@@ -94,7 +96,7 @@ def run_explorer_robustness():
             max_iter=400,
             log_file=f"runs/initial_results/cmaes/ss{ss}.csv"
         )
-    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)'''
+    flexs.evaluate.robustness(landscape, make_explorer, verbose=False)"""
 
     # dynappo
     def make_explorer(model, ss):
@@ -108,8 +110,9 @@ def run_explorer_robustness():
             num_experiment_rounds=10,
             num_model_rounds=8,
             alphabet=s_utils.RNAA,
-            log_file=f"runs/initial_results/dynappo/ss{ss}.csv"
+            log_file=f"runs/initial_results/dynappo/ss{ss}.csv",
         )
+
     flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
 
     # dynappo mutative
@@ -124,9 +127,11 @@ def run_explorer_robustness():
             num_experiment_rounds=10,
             num_model_rounds=8,
             alphabet=s_utils.RNAA,
-            log_file=f"runs/initial_results/dynappo_mutative/ss{ss}.csv"
+            log_file=f"runs/initial_results/dynappo_mutative/ss{ss}.csv",
         )
+
     flexs.evaluate.robustness(landscape, make_explorer, verbose=False)
+
 
 if __name__ == "__main__":
     run_explorer_robustness()
