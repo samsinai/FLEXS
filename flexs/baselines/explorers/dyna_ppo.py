@@ -28,7 +28,7 @@ from flexs.baselines.explorers.environments.dyna_ppo import (
 from flexs.utils import sequence_utils as s_utils
 
 
-class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
+class DynaPPOEnsemble(flexs.Model):
     def __init__(
         self,
         seq_len: int,
