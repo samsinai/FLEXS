@@ -2,12 +2,10 @@
 import random
 
 import numpy as np
-import scipy.special
-
 
 import flexs
 from flexs.utils import sequence_utils as s_utils
-from flex.utils.VAE_utils import Sampling, VAE
+from flexs.utils.VAE_utils import VAE
 
 
 class CbAS(flexs.Explorer):
@@ -29,7 +27,9 @@ class CbAS(flexs.Explorer):
         mutation_rate=0.2,
         log_file=None,
     ):
-        """Explorer which implements Conditioning by Adaptive Sampling (CbAS) and DbAS. 
+        """
+        Explorer which implements Conditioning by Adaptive Sampling (CbAS)
+        and DbAS.
 
         Paper: https://arxiv.org/pdf/1901.10060.pdf
 
@@ -43,6 +43,7 @@ class CbAS(flexs.Explorer):
             n_convergence: Assume convergence if max fitness doesn't change for
                 n_convergence cycles.
             explorer_type:
+
         """
         name = f"{algo}_Q={Q}_generator={generator.name}"
         super().__init__(
@@ -66,7 +67,7 @@ class CbAS(flexs.Explorer):
         self.backfill = backfill
         self.mutation_rate = mutation_rate
 
-    def extend_samples(self, samples, weights):
+    def _extend_samples(self, samples, weights):
         # generate random seqs around the input seq if the sample size is too small
         samples = list(samples)
         weights = list(weights)
@@ -86,7 +87,6 @@ class CbAS(flexs.Explorer):
 
     def propose_sequences(self, measured_sequences_data):
         """Propose `batch_size` samples."""
-
         last_round_sequences = measured_sequences_data[
             measured_sequences_data["round"] == measured_sequences_data["round"].max()
         ]
@@ -99,7 +99,7 @@ class CbAS(flexs.Explorer):
         ].to_numpy()
         initial_weights = np.ones(len(initial_batch))
 
-        initial_batch, initial_weights = self.extend_samples(
+        initial_batch, initial_weights = self._extend_samples(
             initial_batch, initial_weights
         )
         all_samples_and_weights = tuple((initial_batch, initial_weights))
