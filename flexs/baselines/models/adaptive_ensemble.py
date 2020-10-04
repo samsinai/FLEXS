@@ -20,12 +20,12 @@ class AdaptiveEnsemble(flexs.Model):
             adapt_weights_with = self._r2_weights
 
         self.models = models
-        self.weights = np.ones(len(models))
+        self.weights = np.ones(len(models)) / len(models)
 
         self.combine_with = combine_with
         self.adapt_weights_with = adapt_weights_with
 
-    def _r2_weights(model_preds, labels):
+    def _r2_weights(self, model_preds, labels):
         r2s = np.array(
             [scipy.stats.pearsonr(preds, labels)[0] ** 2 for preds in model_preds]
         )
