@@ -3,13 +3,15 @@ import random
 from typing import Optional
 
 import numpy as np
-from flex.utils.VAE_utils import VAE
 
 import flexs
 from flexs.utils import sequence_utils as s_utils
+from flexs.utils.VAE_utils import VAE
 
 
 class CbAS(flexs.Explorer):
+    """CbAS and DbAS explorers."""
+
     def __init__(
         self,
         model: flexs.Model,
@@ -25,7 +27,9 @@ class CbAS(flexs.Explorer):
         mutation_rate: float = 0.2,
         log_file: Optional[str] = None,
     ):
-        """Explorer which implements Conditioning by Adaptive Sampling (CbAS).
+        """
+        Explorer which implements Conditioning by Adaptive Sampling (CbAS)
+        and DbAS.
 
         Paper: https://arxiv.org/pdf/1901.10060.pdf
 
@@ -37,7 +41,7 @@ class CbAS(flexs.Explorer):
                 will propose and train on sequences.
             mutation_rate: Probability of mutation per residue.
         """
-        name = f"CbAS_Q={Q}_generator={generator.name}"
+        name = f"{algo}_Q={Q}_generator={generator.name}"
         super().__init__(
             model,
             name,
@@ -58,7 +62,7 @@ class CbAS(flexs.Explorer):
         self.max_cycles_per_batch = max_cycles_per_batch
         self.mutation_rate = mutation_rate
 
-    def extend_samples(self, samples, weights):
+    def _extend_samples(self, samples, weights):
         # generate random seqs around the input seq if the sample size is too small
         samples = list(samples)
         weights = list(weights)
@@ -92,7 +96,7 @@ class CbAS(flexs.Explorer):
         ].to_numpy()
         initial_weights = np.ones(len(initial_batch))
 
-        initial_batch, initial_weights = self.extend_samples(
+        initial_batch, initial_weights = self._extend_samples(
             initial_batch, initial_weights
         )
         all_samples_and_weights = tuple((initial_batch, initial_weights))

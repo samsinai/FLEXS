@@ -37,6 +37,7 @@ class AdditiveAAVPackaging(flexs.Landscape):
         minimum_fitness_multiplier: float = 1,
         start: int = 0,
         end: int = 735,
+        noise: int = 0,
     ):
         """
         Create AdditiveAAVPackaging landscape.
@@ -45,6 +46,7 @@ class AdditiveAAVPackaging(flexs.Landscape):
             phenotype: One of "heart", "lung", "kidney", "liver", "blood", or "spleen".
             start: Starting index of AAV subsequence to evaluate.
             end: Ending index of AAV subsequence to evaluate.
+            noise: Standard deviation of gaussian noise to add to landscape.
 
         """
         super().__init__(f"AdditiveAAVPackaging_phenotype={phenotype}")
@@ -55,6 +57,7 @@ class AdditiveAAVPackaging(flexs.Landscape):
         self.mfm = minimum_fitness_multiplier
         self.start = start
         self.end = end
+        self.noise = noise
         self.wild_type = AAV2_WT[start:end]
 
         with open(
@@ -105,7 +108,8 @@ class AdditiveAAVPackaging(flexs.Landscape):
             normed_fitness = self._get_raw_fitness(seq) / (
                 self.max_possible * (self.mfm + 1)
             )
-            fitnesses.append(max(0, normed_fitness))
+            fitness_with_noise = normed_fitness + np.random.normal(scale=self.noise)
+            fitnesses.append(max(0, fitness_with_noise))
 
         return np.array(fitnesses)
 

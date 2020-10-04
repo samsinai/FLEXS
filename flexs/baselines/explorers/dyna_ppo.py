@@ -36,6 +36,7 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
         r_squared_threshold: float = 0.5,
         models: Optional[List[flexs.Model]] = None,
     ):
+        super().__init__(name="DynaPPOEnsemble")
 
         if models is None:
             models = [
@@ -74,8 +75,7 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
                 ),
             ]
 
-        super().__init__(models=models)
-
+        self.models = models
         self.r_squared_vals = np.ones(len(self.models))
         self.r_squared_threshold = r_squared_threshold
 

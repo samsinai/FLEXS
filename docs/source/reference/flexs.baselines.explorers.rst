@@ -19,3 +19,8 @@ flexs.baselines.explorers
    flexs.baselines.explorers.genetic_algorithm
    flexs.baselines.explorers.ppo
    flexs.baselines.explorers.random
+
+.. toctree::
+   :maxdepth: 3
+
+   flexs.baselines.explorers.environments

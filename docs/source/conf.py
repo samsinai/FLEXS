@@ -22,9 +22,9 @@ sys.path.insert(0, os.path.abspath("../../"))
 
 project = "FLEXS"
 copyright = (
-    "2020, Sam Sinai, Richard Wang, Alexander Whatley, Eline Locane, Stewy Slocum"
+    "2020, Sam Sinai, Richard Wang, Alexander Whatley, Elina Locane, Stewy Slocum"
 )
-author = "Sam Sinai, Richard Wang, Alexander Whatley, Eline Locane, Stewy Slocum"
+author = "Sam Sinai, Richard Wang, Alexander Whatley, Elina Locane, Stewy Slocum"
 
 
 # -- General configuration ---------------------------------------------------
@@ -33,7 +33,7 @@ author = "Sam Sinai, Richard Wang, Alexander Whatley, Eline Locane, Stewy Slocum
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    #"m2r",
+    "m2r",
     "sphinx.ext.autodoc",
     # "sphinxcontrib.apidoc",
     "sphinx.ext.coverage",
@@ -41,10 +41,19 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_rtd_theme",
     "sphinx.ext.autosummary",
+    "sphinx.ext.linkcode",
 ]
 autosummary_generate = True
 source_suffix = [".rst", ".md"]
-autodoc_typehints = "description"
+
+# [source] button on a class/module takes user to that files source code on github
+def linkcode_resolve(domain, info):
+    if domain != 'py':
+        return None
+    if not info['module']:
+        return None
+    filename = info['module'].replace('.', '/')
+    return f"https://github.com/samsinai/FLSD-Sandbox/tree/master/{filename}.py"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -61,6 +70,8 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
+html_logo = '../../logo.png'
+html_favicon = 'favicon.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

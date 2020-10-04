@@ -1,9 +1,12 @@
 """Defines the RosettaFolding landscape and problem registry."""
 import os
+from typing import Dict
 
+import numpy as np
 import torch
 
 import flexs
+from flexs.types import SEQUENCES_TYPE
 
 # Pyrosetta is an optional dependency
 try:
@@ -63,6 +66,10 @@ class RosettaFolding(flexs.Landscape):
     We convert these energies to a maximization objective in the 0-1 scale by
     fitness = (-energy - `sigmoid_center`) / `sigmoid_norm_value`.
 
+    Attributes:
+        wt_pose: The original PyRosetta pose object from the .pdb file.
+            Call `wt_pose.sequence()` to get the wild type sequence.
+
     """
 
     def __init__(self, pdb_file: str, sigmoid_center: float, sigmoid_norm_value: float):
@@ -107,7 +114,7 @@ class RosettaFolding(flexs.Landscape):
         self.sigmoid_center = sigmoid_center
         self.sigmoid_norm_value = sigmoid_norm_value
 
-    def _mutate_pose(self, mut_aa, mut_pos):
+    def _mutate_pose(self, mut_aa: str, mut_pos: int):
         """Mutate `self.pose` to contain `mut_aa` at `mut_pos`."""
         current_residue = self.pose.residue(
             mut_pos + 1
@@ -142,7 +149,7 @@ class RosettaFolding(flexs.Landscape):
         # Update the coordinates of atoms that depend on polymer bonds
         conformation.rebuild_polymer_bond_dependent_atoms_this_residue_only(mut_pos + 1)
 
-    def get_folding_energy(self, sequence):
+    def get_folding_energy(self, sequence: str):
         """
         Return rosetta folding energy of the given sequence in
         `self.pose`'s conformation.
@@ -163,14 +170,14 @@ class RosettaFolding(flexs.Landscape):
 
         return self.score_function(self.pose)
 
-    def _fitness_function(self, sequences):
+    def _fitness_function(self, sequences: SEQUENCES_TYPE) -> np.ndarray:
         """Negate and normalize folding energy to get maximization objective"""
         energies = torch.tensor([self.get_folding_energy(seq) for seq in sequences])
         scaled_energies = (-energies - self.sigmoid_center) / self.sigmoid_norm_value
         return torch.sigmoid(scaled_energies).numpy()
 
 
-def registry():
+def registry() -> Dict[str, Dict]:
     """
     Return a dictionary of problems of the form:
     `{
@@ -191,7 +198,11 @@ def registry():
 
     return {
         "3msi": {
-            "params": {"pdb_file": f"{rosetta_data_dir}/3msi.pdb"},
+            "params": {
+                "pdb_file": f"{rosetta_data_dir}/3msi.pdb",
+                "sigmoid_center": -3,
+                "sigmoid_norm_value": 12,
+            },
             "starts": {
                 "ed_3_wt": "MAQASVVANQLIPINTHLTLVMMRSEVVTYVHIPAEDIPRLVSMDVNRAVPLGTTLMPDMVKGYAA",  # noqa: E501
                 "ed_5_wt": "MAQASVVFNQLIPINTHLTLVMMRFEVVTPVGCPAMDIPRLVSQQVNRAVPLGTTLMPDMVKGYAA",  # noqa: E501
@@ -201,6 +212,10 @@ def registry():
             },
         },
         "3mx7": {
-            "params": {"pdb_file": f"{rosetta_data_dir}/3mx7.pdb"},
+            "params": {
+                "pdb_file": f"{rosetta_data_dir}/3mx7.pdb",
+                "sigmoid_center": -3,
+                "sigmoid_norm_value": 12,
+            },
         },
     }

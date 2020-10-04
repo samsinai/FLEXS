@@ -1,12 +1,12 @@
-![FLEX](LOGO.png)
+![FLEX](logo.png)
 
-[![build status](https://github.com/retagaine/FLSD-Sandbox/workflows/build/badge.svg)](https://github.com/retagaine/FLSD-Sandbox/actions)
+[![build status](https://github.com/samsinai/FLSD-Sandbox/workflows/build/badge.svg)](https://github.com/samsinai/FLSD-Sandbox/actions)
 
 FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. This project was developed with support from [Dyno Therapeutics](https://www.dynotx.com).
 
 - [Installation](#installation)
 - [Overview](#overview)
-	- [Quickstart](Tutorial.ipynb)
+	- [Quickstart](examples/Tutorial.ipynb)
 - [Contribution and credits](#contributions-and-credits) 
 - [Components](#components)
   - [Ground truth landscapes](#ground-truth-landscapes)
@@ -18,36 +18,17 @@ FLEXS is an open-source simulation environment that enables you to develop and c
 
 ## Installation
 
-We strongly recommend that you install the dependencies for the sandbox in a conda virtual environment. 
-The dependencies of the sandbox are the latest versions of the following packages:
+FLEXS is available on PyPI 🐍 and can be installed with `pip install flexs`.
 
-* Numpy 
-* Scikit-Learn
-* Pandas 
-* ViennaRNA 
-* Tensorflow + Keras 
-* Editdistance 
-
-A minimal set of requirements can be installed with the following:
+There are two optional, but very useful dependencies, [ViennaRNA](https://www.tbi.univie.ac.at/RNA/) (for RNA binding landscapes) and [PyRosetta](http://www.pyrosetta.org) (for protein design landscapes). These can both be installed with conda:
 ```
-conda install pip -y
-conda install -c bioconda viennarna -y
-conda install scikit-learn -y
-conda install pandas -y
-pip install --upgrade tensorflow 
-pip install keras 
-
+$ conda install -c bioconda viennarna
+$ conda install pyrosetta  # Set up RosettaCommons conda channel first (http://www.pyrosetta.org/dow)
 ```
+Note that PyRosetta requires a commercial license if not being used for academic purposes. 
 
-If you are in a conda environment, you can also run `./load_environment.sh` in the main directory to install all of the dependencies. The following dependencies are required for specific use case. 
+If contributing or running paper code/experiments, we recommend that you install the dependencies for the sandbox in a conda virtual environment. You can update an existing conda environment with `conda env update --name {name} --file environment.yml` or initialize a new one with `conda env create -f environment.yml`. Then install the local version of `flexs` with `pip install -e .` in the root directory.
 
-* TQDM (If you plan on using the Evolutionary Bayesian Explorer)
-* Tensorflow-Probability (If you aim to use DyNAPPO)
-* TF-Agents  (If you aim to use DyNAPPO)
-* [TAPE](https://github.com/songlab-cal/tape) (If you want to use the GFP oracle)
-* Gin 
-
-We also provide limited support for making landscapes with [Rosetta](https://www.rosettacommons.org/), note that it requires a separate license.  
 
 ## Overview
 
@@ -55,18 +36,19 @@ Biological sequence design through machine-guided directed evolution has been of
   * Models `f` that attempt to learn the ground truth sequence to function relationship `g(x) = y`. 
   * Algorithms that explore the sequence space with the help of the trained model `f`. 
 
- 
+
  While in some cases, these two steps are learned simultaneously, it is fairly common to have access to a well-trained model `f` which is *not* invertible. Namely, given a sequence `x`, the model can estimate `y'` (with variable accuracy), but it cannot generate a sequence `x'` associated with a specific function `y`. Therefore it is valuable to develop exploration algorithms `E(f)` that make use of the model `f` to propose sequences `x'`. 
 
- We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the [quickstart tutorial](Tutorial.ipynb). 
+ We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the [quickstart tutorial](examples/Tutorial.ipynb). 
 
-Our abstraction is comprised of three levels:
+Our abstraction is comprised of four levels:
 #### 1.  Fitness Landscapes
 These oracles `g` are simulators that are assumed as ground truth, i.e. when queried, they return the true value `y_i` associated with a sequence `x_i`. Currently we have four classes of ground truth oracles implemented. 
 - *[Transcription factor binding data](#transcription-factor-binding)*. This is comprised of 158 (experimentally) fully characterized landscapes. 
 - *[RNA landscapes](#rna-landscapes)*. A set of curated and increasingly challenging RNA binding landscapes as simulated with ViennaRNA. 
 - *[AAV Additive Tropism](#additive-aav-tropism)*. A hypothesized noisy additive protein landscape based on tissue tropism of single mutant AAV2 capsid protein.   
 - *[GFP fluorescence](#gfp-fluorescence)*. Fluorescence of GFP protein as predicted by TAPE transformer model. 
+- *[Rosetta-based design](#rosetta-based-design)*. Rosetta-based design task for 3MSI anti-freeze protein. 
 
 For all landscapes we also provide a fixed set of initial points with different degrees of previous optimization, so that the relative strength of algorithms when starting from locations near or far away from peaks can be evaluated. 
 
@@ -82,14 +64,13 @@ Noisy oracles are (approximate) models `f` of the original ground truth landscap
 
 #### 4. Evaluators
 
-We also implement a suite of [evaluation modules](evaluators/Evaluator.py) that automatically collect data that is necessary for evaluating algorithms on different performance criteria. Some of these modules are not optimized at this time. 
+We also implement a suite of [evaluation modules](flexs/evaluate.py) that automatically collect data that is necessary for evaluating algorithms on different performance criteria.
 
-- *consistency_robustness_independence*: Produces data for analyzing how explorer performance changes given different quality of models.
+- *robustness*: Produces data for analyzing how explorer performance changes given different quality of models.
 - *efficiency*: Produces data for analyzing how explorer performance changes when more computational evaluations are allowed.
 - *adaptivity*: Produces data for analyzing how the explorer is sensitive to the number of batches it is allowed to sample, given a fixed total budget.
--*scalability*: Produces data for analyzing how fast the explorer produces a batch.
 
-See the [tutorial](Tutorial.ipynb) for an example of how these can be run. 
+See the [tutorial](examples/Tutorial.ipynb) for an example of how these can be run. 
 
 ## Contributions and credits
 Your PR and contributions to this sandbox are most welcome. If you make use of data or algorithms in this sandbox, please ensure that you cite the relevant original articles upon which this work was made possible (we provide links in this readme).
@@ -117,14 +98,14 @@ Barrera et al. (2016) surveyed the binding affinity of more than one hundred and
 }
 ```
 
-### RNA Landscapes
+#### RNA Landscapes
 Predicting RNA secondary structures is a well-studied problem. There are efficient and accurate dynamic programming approaches to calculates secondary structure of short RNA sequences. These landscapes give us a good proxy for a consistent oracle over entire domain of large landscapes.  We use the [ViennaRNA](https://www.tbi.univie.ac.at/RNA/) package to simulate binding landscapes of RNA sequences as a ground truth oracle.
 
 Our sandbox allows for constructing arbitrarily complex landscapes (although we discourage large RNA sequences as the accuracy of the simulator deteriorates above 200 nucleotides). As benchmark, we provide a series of 36 increasingly complex RNA binding landscapes. These landscapes each come with at least 5 suggested starting sequences, with various initial optimization. 
 
 The simplest landscapes are binding landscapes with a single hidden target (often larger than the design sequence resulting in multiple peaks). The designed sequences is meant to be optimized to bind the target with the minimum binding energy (we use duplex energy as our objective). We estimate `optimal(y)` by computing the binding energy of the perfect complement of the target and normalize the fitnesses using that measure (hence this is only an approximation and often a slight underestimate). RNA landscapes show many local peaks, and often multiple global peaks due to symmetry. 
 
-Additionally, we construct more complex landscapes by increasing the number of hidden targets, enforcing specific conservation patterns, and composing the scores of each landscapes multiplicatively. See [multi-dimensional models](utils/multi_dimensional_model.py) for the generic class that allows composing landscapes.  
+Additionally, we construct more complex landscapes by increasing the number of hidden targets, enforcing specific conservation patterns, and composing the scores of each landscapes multiplicatively. See [multi-dimensional models](flexs/ensemble.py) for the generic class that allows composing landscapes.  
 
 
 ```
@@ -140,7 +121,7 @@ Additionally, we construct more complex landscapes by increasing the number of h
 }
 ```
 
-### Additive AAV landscapes
+#### Additive AAV landscapes
 
  Ogden et al. (2019) perform a comprehensive single mutation scan of AAV2 capsid protein, assaying tropism for five different target tissues. The authors show that an additive model is informative about the local structure of the landscape. Here we use the data from the single mutations to generate a toy additive model. Here `y' := sum(s_i)+ e`, where `i` indicates the position across the sequences, and `s_i` indicates a sequence with mutation `s` at position `i` and `e` indicates iid Gaussian noise. This construct is also known as "Rough Mt. Fuji" (RMF) and many empirical fitness landscapes are consistent with an RMF local structure around viable natural sequences with unpredictable regions in between. In the noise-free setting, the RMF landscape is convex with a single peak. We allow the construction of multiple target tissues, and different design lengths (tasks ranging from desiging short region of the protein to tasks that encompass designing the full protein). The scores are normalized between `[0,1]`. 
 
@@ -157,15 +138,15 @@ Additionally, we construct more complex landscapes by increasing the number of h
 }
 ```
 
-### GFP 
+#### GFP 
  In [TAPE](https://github.com/songlab-cal/tape), the authors benchmark multiple machine learning methods on a set of tasks including GFP fluorescence prediction. The GFP task is comprised of training and predicting fluorescence values on approximately 52,000 protein sequences of length 238 which are derived from the naturally occurring GFP in *Aequorea victoria* (See [this paper](https://www.nature.com/articles/nature17995)). Downloading and doing inference with this model is memory and time intensive. These landscapes are not normalized and therefore scores higher than 1 are possible (we do not know the maximum activation for the model). 
 
 ```
 @inproceedings{tape2019,
-author = {Rao, Roshan and Bhattacharya, Nicholas and Thomas, Neil and Duan, Yan and Chen, Xi and Canny, John and Abbeel, Pieter and Song, Yun S},
-title = {Evaluating Protein Transfer Learning with TAPE},
-booktitle = {Advances in Neural Information Processing Systems}
-year = {2019}
+    author = {Rao, Roshan and Bhattacharya, Nicholas and Thomas, Neil and Duan, Yan and Chen, Xi and Canny, John and Abbeel, Pieter and Song, Yun S},
+    title = {Evaluating Protein Transfer Learning with TAPE},
+    booktitle = {Advances in Neural Information Processing Systems}
+    year = {2019}
 }
 
 @article{sarkisyan2016local,
@@ -179,6 +160,25 @@ year = {2019}
   publisher={Nature Publishing Group}
 }
 ```
+#### Rosetta-based Design 
+
+Rosetta is a protein modeling software suite used for *de novo* design and structure prediction. Based on the principle that structure determines function, the Rosetta design process begins with a desired 3-D protein conformation and tries to find amino acid sequences that are likely to fold to that structure. While the dynamics of protein folding are still poorly understood, this approach has proven remarkably effective in practice, and so we find it an acceptable analogue to the true fitness landscape. To keep our experiments computationally feasible, we omit the expensive step of side-chain packing and use the simplified centroid scoring frounction as our objective. We use the PyRosetta interface from PyRosetta as `g`. The Rosetta design objective function is a scaled estimate of the folding energy, which has been found to be an indicator of the probability that a sequence will fold to the desired structure. As an example, we provide an optimization challenge for the structure of 3MSI, a 66 amino acid antifreeze protein found in the ocean pout starting from 5 sequences with 3-27 mutations from the wildtype. Here, we normalize energy scores by scaling and shifting their distribution and then applying the sigmoid function.
+
+
+```
+@article{chaudhury2010pyrosetta,
+  title={PyRosetta: a script-based interface for implementing molecular modeling algorithms using Rosetta},
+  author={Chaudhury, Sidhartha and Lyskov, Sergey and Gray, Jeffrey J},
+  journal={Bioinformatics},
+  volume={26},
+  number={5},
+  pages={689--691},
+  year={2010},
+  publisher={Oxford University Press}
+}
+```
+
+
 ### Noisy Oracles
 
 #### Noisy Abstract Models
@@ -186,18 +186,18 @@ These models get access to the ground truth `g`, but do not allow the explorer t
 
 
 #### Empirical Models
-These models train a standard algorithm on the observed data. The currently available architectures can be found in [architectures](utils/model_architectures.py). 
-All noisy models can be ensembled using the [ensemble class](Noisy_models/Ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
+These models train a standard algorithm on the observed data. The currently available architectures can be found in [architectures](flexs/baselines/models/). 
+All noisy models can be ensembled using the [ensemble class](flexs/baselines/models/adaptive_ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
 
 
 ### Exploration Algorithms
 
 #### Bring your own explorer
-Exploration algorithms are search methods that use noisy oracles to select the next batch of samples from the landscape. This is the main service of this sandbox, you can implement your own explorer by simply inheriting from the [Base Explorer](explorer.py), and implementing a single method:
+Exploration algorithms are search methods that use noisy oracles to select the next batch of samples from the landscape. This is the main service of this sandbox, you can implement your own explorer by simply inheriting from the [Base Explorer](flexs/explorer.py), and implementing a single method:
 
 
 ~~~
-class myExplorer(flexs.Explorer):
+class MyExplorer(flexs.Explorer):
     """Your explorer here"""
       def __init__(self,
         model,
@@ -216,33 +216,41 @@ class myExplorer(flexs.Explorer):
             sequences_batch_size,
             model_queries_per_batch,
             starting_sequence,
-            **kwargs
         )
         "Your custom attributes here"
 
-    def propose_sequences(self, batches):
+    def propose_sequences(self, measured_sequences_data):
         """
         Your method implementation overriding the main explorer.
         It is allowed to make *model_queries_per_batch* queries to the model
         and make *sequences_batch_size* proposals in return.
         """
-
+        
+        return sequences, scores
 ~~~
 
 #### Baseline Explorers
 
--[Random Explorer](explorers/random_explorer.py): A baseline random explorer.
+-[Random Explorer](flexs/baselines/explorers/random.py): A baseline random explorer.
 
 #### Evolutionary Algorithms
--[Wright-Fisher, Model-guided Wright Fisher](explorers/evolutionary_explorers.py): A standard Wright-Fisher process, in addition to a Wright-Fisher process that has access to an oracle for pre-screening. 
+-[Wright-Fisher, Model-guided Wright Fisher](flexs/baselines/explorers/genetic_algorithm.py): A standard Wright-Fisher process, in addition to a Wright-Fisher process that has access to an oracle for pre-screening. 
 
--[CMA-ES](explorers/CMAES_explorer.py): The CMA-ES algorithm (with access to the oracle) for comparison as another evolutionary baseline. 
+-[CMA-ES](flexs/baselines/explorers/cmaes.py): The CMA-ES algorithm (with access to the oracle) for comparison as another evolutionary baseline. 
 
--[Independent sites X-entropy , ADALEAD](explorers/elitist_explorers.py): Independent sites cross-entropy, and Adalead (Greedy) are both elitist explorers in the sense that they use statistics around high performing variants. ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithm.  
+-[ADALEAD](flexs/baselines/explorers/adalead.py): ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithm.  
 
+```
+@article{sinai2020adalead,
+  title={AdaLead: A simple and robust adaptive greedy search algorithm for sequence design},
+  author={Sinai, Sam and Wang, Richard and Whatley, Alexander and Slocum, Stewart and Locane, Elina and Kelsic, Eric},
+  journal={arXiv preprint},
+  year={2020}
+}
+```
 
 #### DbAS and CbAS
--Adaptation of [CbAS and DbAS](explorers/CbAS_DbAS_explorers.py)
+-Adaptation of [CbAS and DbAS](flexs/baselines/explorers/explorers/cbas_dbas.py)
 ```
 @article{brookes2019conditioning,
   title={Conditioning by adaptive sampling for robust design},
@@ -261,11 +269,11 @@ class myExplorer(flexs.Explorer):
 #### Reinforcement Learning Algorithms
 Adaptations of the following RL algorithms.
 
--[DQN](explorers/dqn_explorer.py)
+-[DQN](flexs/baselines/explorers/dqn_explorer.py)
 
--[PPO](explorers/PPO_explorer.py)
+-[PPO](flexs/baselines/explorers/ppo.py)
 
--[DyNAPPO](explorers/DynaPPO_explorer.py): See the following citation.
+-[DyNAPPO](flexs/baselines/explorers/dyna_ppo.py): See the following citation.
 ```
 @inproceedings{angermueller2019model,
   title={Model-based reinforcement learning for biological sequence design},
@@ -276,11 +284,4 @@ Adaptations of the following RL algorithms.
 ```	
 #### Bayesian Optimization 
 
--[Evolutionary BO](bo_explorer.py): Bayesian optimization on sparse sampling of the mutation space.
-
--[Enumerative BO](gpr_bo_explorer.py): Bayesion optimization on fully enumerated (when possible) mutation space.
-
-
-
- 
-
+-[Evolutionary/Enumerative BO](flexs/baselines/explorers/bo.py): Bayesian optimization with sparse sampling of the mutation space. A fully enumerated (when possible) is also implemented mutation space.

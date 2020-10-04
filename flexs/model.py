@@ -32,7 +32,7 @@ class LandscapeAsModel(Model):
     This simple class wraps a `flexs.Landscape` in a `flexs.Model` to allow running
     experiments against a perfect model.
 
-    Simply calls the landscape's `_fitness_function`.
+    This class's `_fitness_function` simply calls the landscape's `_fitness_function`.
     """
 
     def __init__(self, landscape: flexs.Landscape):

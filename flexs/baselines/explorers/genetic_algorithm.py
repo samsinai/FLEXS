@@ -8,10 +8,7 @@ from flexs.utils import sequence_utils as s_utils
 
 
 class GeneticAlgorithm(flexs.Explorer):
-    """A genetic algorithm explorer with single point mutations and no recombination.
-
-    A strong baseline, especially with perfect models. However, is more sensitive to
-    model quality than AdaLead.
+    """A genetic algorithm explorer with single point mutations and recombination.
 
     Based on the `parent_selection_strategy`, this class implements one of three
     genetic algorithms:
