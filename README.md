@@ -119,7 +119,7 @@ Our sandbox allows for constructing arbitrarily complex landscapes (although we 
 
 The simplest landscapes are binding landscapes with a single hidden target (often larger than the design sequence resulting in multiple peaks). The designed sequences is meant to be optimized to bind the target with the minimum binding energy (we use duplex energy as our objective). We estimate `optimal(y)` by computing the binding energy of the perfect complement of the target and normalize the fitnesses using that measure (hence this is only an approximation and often a slight underestimate). RNA landscapes show many local peaks, and often multiple global peaks due to symmetry. 
 
-Additionally, we construct more complex landscapes by increasing the number of hidden targets, enforcing specific conservation patterns, and composing the scores of each landscapes multiplicatively. See [multi-dimensional models](utils/multi_dimensional_model.py) for the generic class that allows composing landscapes.  
+Additionally, we construct more complex landscapes by increasing the number of hidden targets, enforcing specific conservation patterns, and composing the scores of each landscapes multiplicatively. See [multi-dimensional models](ensemble.py) for the generic class that allows composing landscapes.  
 
 
 ```
