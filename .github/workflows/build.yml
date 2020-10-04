@@ -1,0 +1,40 @@
+name: build
+
+on:
+  pull_request:
+    branches:
+      - master
+      - dev
+  push:
+    branches:
+      - master
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Build and install dependencies
+      run: $CONDA/bin/pip install -e .
+
+    - name: Install optional dependencies
+      run: $CONDA/bin/conda install -c bioconda viennarna -y
+
+    - name: Install dev dependencies
+      run: $CONDA/bin/conda install flake8 flake8-docstrings flake8-black pytest
+
+    - name: Lint with flake8, pydocstyle, and black
+      run: $CONDA/bin/flake8 flexs --exit-zero
+
+    - name: Test with pytest
+      run: $CONDA/bin/pytest tests
