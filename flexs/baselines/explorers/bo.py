@@ -271,12 +271,11 @@ class GPR_BO(flexs.Explorer):
         starting_sequence,
         alphabet,
         log_file=None,
-        method="EI",
         seq_proposal_method="Thompson",
     ):
         """Initialize the explorer."""
         name = (
-            "GPR_BO_Explorer-method={method}-seq_proposal_method={seq_proposal_method}"
+            "GPR_BO_Explorer-seq_proposal_method={seq_proposal_method}"
         )
         super().__init__(
             model,
@@ -289,12 +288,11 @@ class GPR_BO(flexs.Explorer):
         )
         self.alphabet = alphabet
         self.alphabet_len = len(alphabet)
-        self.method = method
         self.seq_proposal_method = seq_proposal_method
         self.best_fitness = 0
         self.top_sequence = []
 
-        self.seq_len = None
+        self.seq_len = len(starting_sequence)
         self.maxima = None
 
     def reset(self):
@@ -304,7 +302,6 @@ class GPR_BO(flexs.Explorer):
 
     def propose_sequences_via_thompson(self):
         """Propose a batch of new sequences.
-
         Based on Thompson sampling with a Gaussian posterior.
         """
         print("Enumerating all sequences in the space.")
@@ -314,7 +311,8 @@ class GPR_BO(flexs.Explorer):
         def enum_and_eval(curr_seq):
             # if we have a full sequence, then let's evaluate
             if len(curr_seq) == self.seq_len:
-                mu, sigma = self.model.get_fitness(curr_seq, return_std=True)
+                mus = self.model.get_fitness(curr_seq)
+                mu, sigma = np.mean(mus), np.std(mus)
                 estimated_fitness = np.random.normal(mu, sigma)
                 self.maxima.append([estimated_fitness, curr_seq])
             else:
@@ -338,7 +336,8 @@ class GPR_BO(flexs.Explorer):
         def enum_and_eval(curr_seq):
             # if we have a full sequence, then let's evaluate
             if len(curr_seq) == self.seq_len:
-                mu = self.model.get_fitness(curr_seq, return_std=False)
+                mus = self.model.get_fitness(curr_seq)
+                mu = np.mean(mus)
                 self.maxima.append([mu, curr_seq])
             else:
                 for char in list(self.alphabet):
@@ -351,7 +350,6 @@ class GPR_BO(flexs.Explorer):
 
     def propose_sequences_via_ucb(self):
         """Propose a batch of new sequences.
-
         Based on upper confidence bound.
         """
         print("Enumerating all sequences in the space.")
@@ -361,7 +359,8 @@ class GPR_BO(flexs.Explorer):
         def enum_and_eval(curr_seq):
             # if we have a full sequence, then let's evaluate
             if len(curr_seq) == self.seq_len:
-                mu, sigma = self.model.get_fitness(curr_seq, return_std=True)
+                mus = self.model.get_fitness(curr_seq)
+                mu, sigma = np.mean(mus), np.std(mus)
                 self.maxima.append([mu + 0.01 * sigma, curr_seq])
             else:
                 for char in list(self.alphabet):
@@ -375,11 +374,11 @@ class GPR_BO(flexs.Explorer):
     def propose_sequences(self, measured_sequences):
         """Propose `batch_size` samples."""
         samples = set()
-
+        # TODO: Add UCB and Thompson proposal methods
         seq_proposal_funcs = {
-            "Thompson": self.propose_sequences_via_thompson,
             "Greedy": self.propose_sequences_via_greedy,
-            "UCB": self.propose_sequences_via_ucb,
+            "Thompson": self.propose_sequences_via_thompson,
+            "UCB": self.propose_sequences_via_ucb
         }
         seq_proposal_func = seq_proposal_funcs[self.seq_proposal_method]
         new_seqs = seq_proposal_func()
@@ -390,7 +389,7 @@ class GPR_BO(flexs.Explorer):
         while (len(new_states) < self.sequences_batch_size) and i < len(new_seqs):
             new_fitness, new_seq = new_seqs[i]
             if new_seq not in all_measured_seqs:
-                new_state = one_hot_to_string(new_seq, self.alphabet)
+                new_state = string_to_one_hot(new_seq, self.alphabet)
                 if new_fitness >= self.best_fitness:
                     self.top_sequence.append((new_fitness, new_state, self.model.cost))
                     self.best_fitness = new_fitness
