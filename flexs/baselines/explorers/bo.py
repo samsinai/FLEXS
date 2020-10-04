@@ -47,6 +47,9 @@ class BO(flexs.Explorer):
                 BO proposes samples, default 0.
         """
         name = f"BO_method={method}"
+        if not isinstance(model, flexs.Ensemble):
+            model = flexs.Ensemble([model], combine_with=lambda x: x)
+
         super().__init__(
             model,
             name,

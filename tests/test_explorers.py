@@ -85,12 +85,12 @@ def test_dqn():
 
 def test_dynappo():
     explorer = baselines.explorers.DynaPPO(
+        landscape=fakeLandscape,
         rounds=3,
         sequences_batch_size=5,
         model_queries_per_batch=20,
         starting_sequence="ATC",
         alphabet="ATCG",
-        ensemble_r_squared_threshold=0.5,
         num_experiment_rounds=1,
         num_model_rounds=1,
     )
