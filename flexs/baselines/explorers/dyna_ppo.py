@@ -30,8 +30,9 @@ from flexs.baselines.explorers.environments.dyna_ppo import (
 from flexs.utils import sequence_utils as s_utils
 
 
-class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
+class DynaPPOEnsemble(flexs.Model):
     def __init__(self, seq_len, alphabet, r_squared_threshold=0.5, models=None):
+        super().__init__(name="DynaPPOEnsemble")
 
         if models is None:
             models = [
@@ -70,8 +71,7 @@ class DynaPPOEnsemble(baselines.models.AdaptiveEnsemble):
                 ),
             ]
 
-        super().__init__(models=models)
-
+        self.models = models
         self.r_squared_vals = np.ones(len(self.models))
         self.r_squared_threshold = r_squared_threshold
 

@@ -8,7 +8,22 @@ import flexs
 
 
 class TFBinding(flexs.Landscape):
+    """
+    A landscape of binding affinity of proposed 8-mer DNA sequences to a
+    particular transcription factor.
+
+    We use experimental data from Barrera et al. (2016), a survey of the binding
+    affinity of more than one hundred and fifty transcription factors (TF) to all
+    possible DNA sequences of length 8.
+    """
+
     def __init__(self, landscape_file: str):
+        """
+        Create a TFBinding landscape from experimental data .csv file.
+
+        See https://github.com/samsinai/FLSD-Sandbox/tree/stewy-redesign/flexs/landscapes/data/tf_binding  # noqa: E501
+        for examples.
+        """
         super().__init__(name="TF_Binding")
 
         # Load TF pairwise TF binding measurements from file

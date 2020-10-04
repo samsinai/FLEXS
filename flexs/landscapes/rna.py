@@ -12,6 +12,21 @@ except ImportError:
 import flexs
 
 
+class RNAFolding(flexs.Landscape):
+    """RNA folding landscape using ViennaRNA `fold`."""
+
+    def __init__(self, norm_value=1):
+        """Create an RNAFolding landscape."""
+        super().__init__(name="RNAFolding")
+
+        self.sequences = {}
+        self.norm_value = norm_value
+
+    def _fitness_function(self, sequence):
+        _, fe = RNA.fold(sequence)
+        return -fe / self.norm_value
+
+
 class RNABinding(flexs.Landscape):
     """RNA binding landscape using ViennaRNA `duplexfold`."""
 
@@ -22,7 +37,7 @@ class RNABinding(flexs.Landscape):
         conserved_region: Dict = None,
     ):
         """
-        Create RNABinding landscape.
+        Create an RNABinding landscape.
 
         Args:
             targets: List of RNA strings that will be binding targets.
@@ -179,7 +194,7 @@ def registry():
     # Two-target problems with conserved portion
     for t1 in range(len(targets)):
         for t2 in range(t1 + 1, len(targets)):
-            name = f"C21_L100_RNA{t1+1}+{t2+1}"
+            name = f"C20_L100_RNA{t1+1}+{t2+1}"
             problems[name] = {
                 "params": {
                     "targets": [targets[t1], targets[t2]],

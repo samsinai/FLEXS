@@ -23,9 +23,22 @@ class BertGFPBrightness(flexs.Landscape):
                                                --gradient_accumulation_steps 10 \
                                                --data_dir .```
 
+    Note that the output of this landscape is not normalized to be between 0 and 1.
+
+    Attributes:
+        gfp_wt_sequence (str): Wild-type sequence for jellyfish
+            green fluorescence protein.
+
     """
 
-    def __init__(self, norm_value=1):
+    gfp_wt_sequence = (
+        "MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVT"
+        "TLSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIE"
+        "LKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNT"
+        "PIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK"
+    )
+
+    def __init__(self):
         """
         Create GFP landscape.
 

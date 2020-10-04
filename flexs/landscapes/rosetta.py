@@ -191,7 +191,11 @@ def registry():
 
     return {
         "3msi": {
-            "params": {"pdb_file": f"{rosetta_data_dir}/3msi.pdb"},
+            "params": {
+                "pdb_file": f"{rosetta_data_dir}/3msi.pdb",
+                "sigmoid_center": -3,
+                "sigmoid_norm_value": 12,
+            },
             "starts": {
                 "ed_3_wt": "MAQASVVANQLIPINTHLTLVMMRSEVVTYVHIPAEDIPRLVSMDVNRAVPLGTTLMPDMVKGYAA",  # noqa: E501
                 "ed_5_wt": "MAQASVVFNQLIPINTHLTLVMMRFEVVTPVGCPAMDIPRLVSQQVNRAVPLGTTLMPDMVKGYAA",  # noqa: E501
@@ -201,6 +205,10 @@ def registry():
             },
         },
         "3mx7": {
-            "params": {"pdb_file": f"{rosetta_data_dir}/3mx7.pdb"},
+            "params": {
+                "pdb_file": f"{rosetta_data_dir}/3mx7.pdb",
+                "sigmoid_center": -3,
+                "sigmoid_norm_value": 12,
+            },
         },
     }
