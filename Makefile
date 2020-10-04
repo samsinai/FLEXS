@@ -7,3 +7,7 @@ lint:
 
 test:
 	python -m pytest tests
+
+.PHONY: docs
+docs:
+	cd ./docs && make html

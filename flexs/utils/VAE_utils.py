@@ -1,4 +1,3 @@
-
 """Utility functions for A VAE generative model."""
 import random
 

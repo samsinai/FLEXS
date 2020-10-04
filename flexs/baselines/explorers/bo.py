@@ -15,7 +15,6 @@ from flexs.utils.sequence_utils import (
 
 
 class BO(flexs.Explorer):
-
     def __init__(
         self,
         model,

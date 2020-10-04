@@ -1,10 +1,12 @@
 """Define TFBinding landscape and problem registry."""
 import os
+from typing import Dict
 
 import numpy as np
 import pandas as pd
 
 import flexs
+from flexs.types import SEQUENCES_TYPE
 
 
 class TFBinding(flexs.Landscape):
@@ -38,25 +40,25 @@ class TFBinding(flexs.Landscape):
         self.sequences = dict(zip(data["8-mer"], norm_score))
         self.sequences.update(zip(data["8-mer.1"], norm_score))
 
-    def _fitness_function(self, sequences):
+    def _fitness_function(self, sequences: SEQUENCES_TYPE) -> np.ndarray:
         return np.array([self.sequences[seq] for seq in sequences])
 
 
-def registry():
+def registry() -> Dict[str, Dict]:
     """
     Return a dictionary of problems of the form:
-    `{
+    ```{
         "problem name": {
             "params": ...,
         },
         ...
-    }`
+    }```
 
     where `flexs.landscapes.TFBinding(**problem["params"])` instantiates the
     transcription factor binding landscape for the given set of parameters.
 
     Returns:
-        dict: Problems in the registry.
+        Problems in the registry.
 
     """
     tf_binding_data_dir = os.path.join(os.path.dirname(__file__), "data/tf_binding")

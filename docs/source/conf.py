@@ -33,7 +33,7 @@ author = "Sam Sinai, Richard Wang, Alexander Whatley, Eline Locane, Stewy Slocum
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    #"m2r",
+    "m2r",
     "sphinx.ext.autodoc",
     # "sphinxcontrib.apidoc",
     "sphinx.ext.coverage",
@@ -44,7 +44,7 @@ extensions = [
 ]
 autosummary_generate = True
 source_suffix = [".rst", ".md"]
-autodoc_typehints = "description"
+# autodoc_typehints = "description"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

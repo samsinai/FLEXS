@@ -10,5 +10,6 @@ flexs.utils
 .. toctree::
    :maxdepth: 3
 
+   flexs.utils.VAE_utils
    flexs.utils.replay_buffers
    flexs.utils.sequence_utils

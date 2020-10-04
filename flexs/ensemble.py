@@ -12,8 +12,8 @@ class Ensemble(flexs.Model):
     Class to ensemble models or landscapes together.
 
     Attributes:
-        models (list[flexs.Landscape]): List of landscapes/models being ensembled.
-        combine_with (np.ndarray -> np.ndarray]): Function to combine ensemble
+        models (List[flexs.Landscape]): List of landscapes/models being ensembled.
+        combine_with (Callable[[np.ndarray], np.ndarray]): Function to combine ensemble
             predictions.
 
     """
