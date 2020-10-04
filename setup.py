@@ -10,9 +10,9 @@ setuptools.setup(
         "FLEXS: an open simulation environment for developing and comparing "
         "model-guided biological sequence design algorithms."
     ),
-    url="https://github.com/samsinai/FLSD-Sandbox",
-    author="",
-    author_email="",
+    url="https://github.com/samsinai/FLEXS",
+    author="Stewart Slocum",
+    author_email="slocumstewy@gmail.com",
     license="Apache 2.0",
     long_description=long_description,
     long_description_content_type="text/markdown",
