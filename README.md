@@ -186,8 +186,7 @@ These models get access to the ground truth `g`, but do not allow the explorer t
 
 
 #### Empirical Models
-These models train a standard algorithm on the observed data. The currently available architectures can be found in [architectures](flexs/baselines/models/). 
-All noisy models can be ensembled using the [ensemble class](flexs/baselines/models/adaptive_ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
+These models train a standard algorithm on the observed data. Some baseline models can be found in [flexs/baselines/models](flexs/baselines/models). All landscapes and models can also be ensembled using the [ensemble class](flexs/ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
 
 
 ### Exploration Algorithms
@@ -234,11 +233,11 @@ class MyExplorer(flexs.Explorer):
 -[Random Explorer](flexs/baselines/explorers/random.py): A baseline random explorer.
 
 #### Evolutionary Algorithms
--[Wright-Fisher, Model-guided Wright Fisher](flexs/baselines/explorers/genetic_algorithm.py): A standard Wright-Fisher process, in addition to a Wright-Fisher process that has access to an oracle for pre-screening. 
+-[Naive Genetic Algorithm, Wright-Fisher](flexs/baselines/explorers/genetic_algorithm.py): A standard Wright-Fisher process that has access to an oracle for pre-screening. 
 
--[CMA-ES](flexs/baselines/explorers/cmaes.py): The CMA-ES algorithm (with access to the oracle) for comparison as another evolutionary baseline. 
+-[CMA-ES](flexs/baselines/explorers/cmaes.py): The CMA-ES algorithm that optimizes a continuous relaxation of one-hot vectors encoding sequences (another evolutionary baseline). 
 
--[ADALEAD](flexs/baselines/explorers/adalead.py): ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithm.  
+-[ADALEAD](flexs/baselines/explorers/adalead.py): ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithms.
 
 ```
 @article{sinai2020adalead,
@@ -250,7 +249,7 @@ class MyExplorer(flexs.Explorer):
 ```
 
 #### DbAS and CbAS
--Adaptation of [CbAS and DbAS](flexs/baselines/explorers/explorers/cbas_dbas.py)
+-[CbAS and DbAS](flexs/baselines/explorers/explorers/cbas_dbas.py)
 ```
 @article{brookes2019conditioning,
   title={Conditioning by adaptive sampling for robust design},

@@ -6,11 +6,18 @@ import scipy.special
 import tensorflow as tf
 from tensorflow import keras
 
+from flexs.utils import sequence_utils as s_utils
+from flexs.types import SEQUENCES_TYPE
+
 
 class Sampling(keras.layers.Layer):
-    """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
+    """Uses (z_mean, z_log_var) to sample z, the vector encoding a sequence."""
 
     def call(self, inputs):
+        """Sample from multivariate guassian defined by
+        `inputs = (z_mean, z_log_var)`.
+
+        """
         z_mean, z_log_var = inputs
         batch = tf.shape(z_mean)[0]
         dim = tf.shape(z_mean)[1]
@@ -19,7 +26,12 @@ class Sampling(keras.layers.Layer):
 
 
 class VAEModel(keras.Model):
-    def __init__(self, original_dim, intermediate_dim, latent_dim, **kwargs):
+    """Keras implementation of VAE for CbAS/DbAS."""
+
+    def __init__(
+        self, original_dim: int, intermediate_dim: int, latent_dim: int, **kwargs
+    ):
+        """Create the VAE."""
         super().__init__(**kwargs)
 
         self.original_dim = original_dim
@@ -49,16 +61,18 @@ class VAEModel(keras.Model):
         self.decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
 
     def call(self, data):
+        """Return the VAE's reconstruction of `data`."""
         z_mean, z_log_var, z = self.encoder(data)
         reconstruction = self.decoder(z)
         return reconstruction
 
     def generate(self):
-        # sampling from the latent space (normal distribution in this case)
+        """Generate a new sequence by sampling the latent space and then decoding."""
         z = np.random.randn(1, self.latent_dim)
         return self.decoder(z)
 
     def train_step(self, data):
+        """Define a custom train step taking in `data` and returning the loss."""
         with tf.GradientTape() as tape:
             z_mean, z_log_var, z = self.encoder(data)
             reconstruction = self.decoder(z)
@@ -79,19 +93,22 @@ class VAEModel(keras.Model):
 
 
 class VAE:
+    """VAE class wrapping `VAEModel`, exposing an interface friendly to CbAS/DbAS."""
+
     def __init__(
         self,
-        seq_length,
-        alphabet,
-        batch_size=10,
-        latent_dim=2,
-        intermediate_dim=250,
-        epochs=10,
-        epsilon_std=1.0,
-        beta=1,
-        validation_split=0.2,
-        verbose=True,
+        seq_length: int,
+        alphabet: str,
+        batch_size: int = 10,
+        latent_dim: int = 2,
+        intermediate_dim: int = 250,
+        epochs: int = 10,
+        epsilon_std: float = 1.0,
+        beta: float = 1,
+        validation_split: float = 0.2,
+        verbose: bool = True,
     ):
+        """Create the VAE."""
         tf.config.run_functions_eagerly(True)
 
         self.batch_size = batch_size
@@ -113,6 +130,7 @@ class VAE:
         self.vae.compile(optimizer=keras.optimizers.Adam(lr=0.0001, clipvalue=0.5))
 
     def train_model(self, samples, weights):
+        """Train VAE on `samples` according to their `weights`."""
         x_train = np.array(
             [s_utils.string_to_one_hot(sample, self.alphabet) for sample in samples],
             dtype="float32",
@@ -134,9 +152,9 @@ class VAE:
 
     def generate(self, n_samples, existing_samples, existing_weights):
         """
-        Generate `n_samples` new samples such that none of them are in existing_samples.
+        Generate `n_samples` new samples such that none of them
+        are in `existing_samples`.
         """
-
         x_reconstructed_matrix = np.reshape(
             self.vae.generate(), (len(self.alphabet), self.seq_length)
         )
@@ -168,7 +186,10 @@ class VAE:
 
         return proposals
 
-    def calculate_log_probability(self, sequences, vae=None):
+    def calculate_log_probability(
+        self, sequences: SEQUENCES_TYPE, vae: VAEModel = None
+    ):
+        """Calculate log probability of reconstructing a sequence."""
         if not vae:
             vae = self.vae
 
@@ -197,6 +218,7 @@ class VAE:
 
 
 def pwm_to_boltzmann_weights(prob_weight_matrix, temp):
+    """Convert pwm to boltzmann weights for categorical distribution sampling."""
     weights = np.array(prob_weight_matrix)
     cols_logsumexp = []
 

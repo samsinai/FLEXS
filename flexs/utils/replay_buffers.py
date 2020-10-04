@@ -16,6 +16,7 @@ class SegmentTree:
         capacity (int)
         tree (list)
         operation (function)
+
     """
 
     def __init__(self, capacity: int, operation: Callable, init_value: float):
@@ -134,7 +135,7 @@ class MinSegmentTree(SegmentTree):
         )
 
     def min(self, start: int = 0, end: int = 0) -> float:
-        """Return min(arr[start], ...,  arr[end])."""
+        """Return min(arr[start], ...,  arr[end])."""  # noqa: D402
         return super(MinSegmentTree, self).operate(start, end)
 
 

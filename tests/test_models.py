@@ -1,10 +1,9 @@
 import numpy as np
+import pytest
+import sklearn
 
 import flexs
 from flexs import baselines
-
-import pytest
-import sklearn
 
 rng = np.random.default_rng()
 
