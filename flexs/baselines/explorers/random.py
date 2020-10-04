@@ -1,5 +1,5 @@
 """Defines the Random explorer class."""
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,8 +9,9 @@ from flexs.utils import sequence_utils as s_utils
 
 
 class Random(flexs.Explorer):
-    """
-    A simple random explorer. Chooses a random previously measured sequence and mutates it.
+    """A simple random explorer.
+
+    Chooses a random previously measured sequence and mutates it.
 
     A good baseline to compare other search strategies against.
 
@@ -28,26 +29,19 @@ class Random(flexs.Explorer):
         alphabet: str,
         mu: float = 1,
         elitist: bool = False,
-        seed: int = None,
-        log_file: str = None,
+        seed: Optional[int] = None,
+        log_file: Optional[str] = None,
     ):
         """
         Create a random search explorer.
 
         Args:
-            model: Model of ground truth that the explorer will use to help guide sequence proposal.
-            rounds: Number of rounds to run for (a round consists of sequence proposal,
-                ground truth fitness measurement of proposed sequences, and retraining the model).
-            sequences_batch_size: Number of sequences to propose for measurement per round.
-            model_queries_per_batch: Number of allowed model evaluations per round.
-            starting_sequence: Sequence from which to start exploration.
-
             mu: Average number of residue mutations from parent for generated sequences.
-            elitist: If true, will propose the top `sequences_batch_size` sequences generated
-                according to `model`. If false, randomly proposes `sequences_batch_size`
-                sequences without taking model score into account (true random search).
+            elitist: If true, will propose the top `sequences_batch_size` sequences
+                generated according to `model`. If false, randomly proposes
+                `sequences_batch_size` sequences without taking model score into
+                account (true random search).
             seed: Integer seed for random number generator.
-            log_file: .csv filepath to write output.
         """
         name = f"Random_mu={mu}"
 
@@ -68,6 +62,8 @@ class Random(flexs.Explorer):
     def propose_sequences(
         self, measured_sequences: pd.DataFrame
     ) -> Tuple[np.ndarray, np.ndarray]:
+        """Propose top `sequences_batch_size` sequences for evaluation."""
+
         old_sequences = measured_sequences["sequence"]
         old_sequence_set = set(old_sequences)
         new_seqs = set()

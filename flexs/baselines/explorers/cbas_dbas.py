@@ -1,5 +1,6 @@
 """CbAS and DbAS explorers."""
 import random
+from typing import Optional
 
 import numpy as np
 
@@ -13,19 +14,18 @@ class CbAS(flexs.Explorer):
 
     def __init__(
         self,
-        model,
-        generator,
-        rounds,
-        starting_sequence,
-        sequences_batch_size,
-        model_queries_per_batch,
-        alphabet,
-        algo="cbas",
-        Q=0.9,
-        max_cycles_per_batch=30,
-        backfill=True,
-        mutation_rate=0.2,
-        log_file=None,
+        model: flexs.Model,
+        generator: VAE,
+        rounds: int,
+        starting_sequence: str,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        alphabet: str,
+        algo: str = "cbas",
+        Q: float = 0.9,
+        max_cycles_per_batch: int = 30,
+        mutation_rate: float = 0.2,
+        log_file: Optional[str] = None,
     ):
         """
         Explorer which implements Conditioning by Adaptive Sampling (CbAS)
@@ -33,17 +33,13 @@ class CbAS(flexs.Explorer):
 
         Paper: https://arxiv.org/pdf/1901.10060.pdf
 
-        Attributes:
-            generator:
-            Q:
-            n_new_proposals:
-            backfill:
-            mutation_rate:
-            all_proposals_ranked:
-            n_convergence: Assume convergence if max fitness doesn't change for
-                n_convergence cycles.
-            explorer_type:
-
+        Args:
+            generator: VAE generator.
+            algo (either cbas or dbas): Selects either CbAS or DbAS as main algorithm.
+            Q: Percentile used as fitness threshold.
+            max_cycles_per_batch: Maximum number of cycles for which the generator
+                will propose and train on sequences.
+            mutation_rate: Probability of mutation per residue.
         """
         name = f"{algo}_Q={Q}_generator={generator.name}"
         super().__init__(
@@ -64,7 +60,6 @@ class CbAS(flexs.Explorer):
         self.alphabet = alphabet
         self.Q = Q  # percentile used as the fitness threshold
         self.max_cycles_per_batch = max_cycles_per_batch
-        self.backfill = backfill
         self.mutation_rate = mutation_rate
 
     def _extend_samples(self, samples, weights):
@@ -86,13 +81,15 @@ class CbAS(flexs.Explorer):
         return np.array(samples), np.array(weights)
 
     def propose_sequences(self, measured_sequences_data):
-        """Propose `batch_size` samples."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
+
         last_round_sequences = measured_sequences_data[
             measured_sequences_data["round"] == measured_sequences_data["round"].max()
         ]
 
         # gamma is our threshold (the self.Q-th percentile of sequences from last round)
-        # we will pick all of last round's sequences with fitness above the Qth percentile
+        # we will pick all of last round's sequences with fitness above the Qth
+        # percentile
         gamma = np.percentile(last_round_sequences["true_score"], 100 * self.Q)
         initial_batch = last_round_sequences["sequence"][
             last_round_sequences["true_score"] >= gamma
@@ -150,7 +147,8 @@ class CbAS(flexs.Explorer):
             # higher than the current
             gamma = max(np.percentile(scores, self.Q * 100), gamma)
 
-            # cbas and dbas mostly the same except cbas also does an importance sampling step
+            # cbas and dbas mostly the same except cbas also does an importance
+            # sampling step
             if self.algo == "cbas":
                 # calculate the weights for the proposed batch
                 log_probs_0 = self.generator.calculate_log_probability(

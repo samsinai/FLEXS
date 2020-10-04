@@ -1,6 +1,6 @@
 """BO explorer."""
-import copy
 from bisect import bisect_left
+from typing import Optional
 
 import numpy as np
 
@@ -17,23 +17,17 @@ from flexs.utils.sequence_utils import (
 class BO(flexs.Explorer):
     def __init__(
         self,
-        model,
-        rounds,
-        sequences_batch_size,
-        model_queries_per_batch,
-        starting_sequence,
-        alphabet,
-        log_file=None,
-        method="EI",
-        recomb_rate=0,
+        model: flexs.Model,
+        rounds: int,
+        sequences_batch_size: int,
+        model_queries_per_batch: int,
+        starting_sequence: str,
+        alphabet: str,
+        log_file: Optional[str] = None,
+        method: str = "EI",
+        recomb_rate: float = 0,
     ):
         """Evolutionary Bayesian Optimization (Evo_BO) explorer.
-
-        Parameters:
-            method (str, equal to EI or UCB): The improvement method used in BO,
-                default EI.
-            recomb_rate (float): The recombination rate on the previous batch before
-                BO proposes samples, default 0.
 
         Algorithm works as follows:
             for N experiment rounds
@@ -41,10 +35,16 @@ class BO(flexs.Explorer):
                     otherwise skip
                 Thompson sample starting sequence for new batch
                 while less than B samples in batch
-                    Generate VS virtual screened samples
+                    Generate `model_queries_per_batch/sequences_batch_size` samples
                     If variance of ensemble models is above twice that of the starting
                         sequence
                     Thompson sample another starting sequence
+
+        Args:
+            method (equal to EI or UCB): The improvement method used in BO,
+                default EI.
+            recomb_rate: The recombination rate on the previous batch before
+                BO proposes samples, default 0.
         """
         name = f"BO_method={method}"
         super().__init__(
@@ -172,7 +172,7 @@ class BO(flexs.Explorer):
         self.state = string_to_one_hot(new_state_string, self.alphabet)
         new_state = self.state
         reward = np.mean(ensemble_preds[action_ind])
-        if not new_state_string in all_measured_seqs:
+        if new_state_string not in all_measured_seqs:
             self.best_fitness = max(self.best_fitness, reward)
             self.memory.store(state.ravel(), action.ravel(), reward, new_state.ravel())
         self.num_actions += 1
@@ -189,7 +189,8 @@ class BO(flexs.Explorer):
         return sequences[index]
 
     def propose_sequences(self, measured_sequences):
-        """Propose `batch_size` samples."""
+        """Propose top `sequences_batch_size` sequences for evaluation."""
+
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
@@ -227,7 +228,8 @@ class BO(flexs.Explorer):
             if self.initial_uncertainty is None:
                 self.initial_uncertainty = uncertainty
             if uncertainty > 2 * self.initial_uncertainty:
-                # reset sequence to starting sequence if we're in territory that's too uncharted
+                # reset sequence to starting sequence if we're in territory that's too
+                # uncharted
                 sampled_seq = self.Thompson_sample(measured_batch)
                 self.state = string_to_one_hot(sampled_seq, self.alphabet)
                 self.initial_uncertainty = None
@@ -250,8 +252,9 @@ class GPR_BO(flexs.Explorer):
     """Explorer using GP-based Bayesian Optimization.
 
     Uses Gaussian process with RBF kernel on black box function.
-    IMPORTANT: This explorer is not limited by `virtual_screen`, and is used to find
-    the unrestricted performance of Bayesian Optimization techniques in small landscapes.
+    IMPORTANT: This explorer is not limited by any virtual screening restriction,
+    and is used to find the unrestricted performance of Bayesian Optimization
+    techniques in small landscapes.
 
     Reference: http://krasserm.github.io/2018/03/21/bayesian-optimization/
     """
@@ -265,7 +268,6 @@ class GPR_BO(flexs.Explorer):
         starting_sequence,
         alphabet,
         log_file=None,
-        virtual_screen=10,
         method="EI",
         seq_proposal_method="Thompson",
     ):
@@ -288,7 +290,6 @@ class GPR_BO(flexs.Explorer):
         self.seq_proposal_method = seq_proposal_method
         self.best_fitness = 0
         self.top_sequence = []
-        self.virtual_screen = virtual_screen
 
         self.seq_len = None
         self.maxima = None
