@@ -42,9 +42,10 @@ class Explorer(abc.ABC):
             rounds: Number of rounds to run for (a round consists of sequence proposal,
                 ground truth fitness measurement of proposed sequences, and retraining
                 the model).
-            sequences_batch_size: Number of sequences to propose for measurement from ground truth per
-                round.
-            model_queries_per_batch: Number of allowed "in-silico" model evaluations per round.
+            sequences_batch_size: Number of sequences to propose for measurement from
+                ground truth per round.
+            model_queries_per_batch: Number of allowed "in-silico" model evaluations
+                per round.
             starting_sequence: Sequence from which to start exploration.
             log_file: .csv filepath to write output.
 
@@ -107,7 +108,8 @@ class Explorer(abc.ABC):
 
         if verbose:
             print(
-                f"round: {current_round}, top: {sequences_data['true_score'].max()}, time: {time.time() - round_start_time:02f}s"
+                f"round: {current_round}, top: {sequences_data['true_score'].max()}, "
+                "time: {time.time() - round_start_time:02f}s"
             )
 
     def run(

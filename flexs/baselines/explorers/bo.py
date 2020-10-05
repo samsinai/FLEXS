@@ -1,8 +1,9 @@
 """BO explorer."""
 from bisect import bisect_left
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 
 import flexs
 from flexs.utils.replay_buffers import PrioritizedReplayBuffer
@@ -15,6 +16,21 @@ from flexs.utils.sequence_utils import (
 
 
 class BO(flexs.Explorer):
+    """
+    Evolutionary Bayesian Optimization (Evo_BO) explorer.
+
+    Algorithm works as follows:
+        for N experiment rounds
+            recombine samples from previous batch if it exists and measure them,
+                otherwise skip
+            Thompson sample starting sequence for new batch
+            while less than B samples in batch
+                Generate `model_queries_per_batch/sequences_batch_size` samples
+                If variance of ensemble models is above twice that of the starting
+                    sequence
+                Thompson sample another starting sequence
+    """
+
     def __init__(
         self,
         model: flexs.Model,
@@ -27,24 +43,13 @@ class BO(flexs.Explorer):
         method: str = "EI",
         recomb_rate: float = 0,
     ):
-        """Evolutionary Bayesian Optimization (Evo_BO) explorer.
-
-        Algorithm works as follows:
-            for N experiment rounds
-                recombine samples from previous batch if it exists and measure them,
-                    otherwise skip
-                Thompson sample starting sequence for new batch
-                while less than B samples in batch
-                    Generate `model_queries_per_batch/sequences_batch_size` samples
-                    If variance of ensemble models is above twice that of the starting
-                        sequence
-                    Thompson sample another starting sequence
-
+        """
         Args:
             method (equal to EI or UCB): The improvement method used in BO,
                 default EI.
             recomb_rate: The recombination rate on the previous batch before
                 BO proposes samples, default 0.
+
         """
         name = f"BO_method={method}"
         if not isinstance(model, flexs.Ensemble):
@@ -118,7 +123,7 @@ class BO(flexs.Explorer):
         return ret
 
     def EI(self, vals):
-        """Expected improvement."""
+        """Compute expected improvement."""
         return np.mean([max(val - self.best_fitness, 0) for val in vals])
 
     @staticmethod
@@ -191,9 +196,10 @@ class BO(flexs.Explorer):
         sequences = [x[1] for x in measured_batch]
         return sequences[index]
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
@@ -371,7 +377,9 @@ class GPR_BO(flexs.Explorer):
         # Sort descending based on the value.
         return sorted(self.maxima, reverse=True, key=lambda x: x[0])
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose `batch_size` samples."""
         samples = set()
         # TODO: Add UCB and Thompson proposal methods

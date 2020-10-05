@@ -1,8 +1,9 @@
 """DyNA-PPO explorer."""
 from functools import partial
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
+import pandas as pd
 import scipy.stats
 import sklearn
 import sklearn.ensemble
@@ -29,6 +30,13 @@ from flexs.utils import sequence_utils as s_utils
 
 
 class DynaPPOEnsemble(flexs.Model):
+    """
+    Ensemble from DyNAPPO paper.
+
+    Ensembles many models together but only uses those with an $r^2$ above
+    a certain threshold (on validation data) at test-time.
+    """
+
     def __init__(
         self,
         seq_len: int,
@@ -36,6 +44,7 @@ class DynaPPOEnsemble(flexs.Model):
         r_squared_threshold: float = 0.5,
         models: Optional[List[flexs.Model]] = None,
     ):
+        """Create the ensemble from `models`."""
         super().__init__(name="DynaPPOEnsemble")
 
         if models is None:
@@ -80,6 +89,7 @@ class DynaPPOEnsemble(flexs.Model):
         self.r_squared_threshold = r_squared_threshold
 
     def train(self, sequences, labels):
+        """Train the ensemble, calculating $r^2$ values on a holdout set."""
         if len(sequences) < 10:
             return
 
@@ -121,6 +131,27 @@ class DynaPPOEnsemble(flexs.Model):
 
 
 class DynaPPO(flexs.Explorer):
+    """
+    Explorer which implements DynaPPO.
+
+    This RL-based sequence design algorithm works as follows:
+        for r in rounds:
+            train_policy(experimental_data_rewards[r])
+            for m in model_based_rounds:
+                train_policy(model_fitness_rewards[m])
+
+    An episode for the agent begins with an empty sequence, and at
+    each timestep, one new residue is generated and added to the sequence
+    until the desired length of the sequence is reached. The reward
+    is zero at all timesteps until the last one, when the reward is
+    `reward = lambda * sequence_density + sequence_fitness` where
+    sequence density is the density of nearby sequences already proposed.
+
+    As described above, this explorer generates sequences *constructively*.
+
+    Paper: https://openreview.net/pdf?id=HklxbgBKvr
+    """
+
     def __init__(
         self,
         landscape: flexs.Landscape,
@@ -135,16 +166,13 @@ class DynaPPO(flexs.Explorer):
         num_model_rounds: int = 1,
         env_batch_size: int = 4,
     ):
-        """Explorer which implements DynaPPO.
-
-        Paper: https://openreview.net/pdf?id=HklxbgBKvr
-
+        """
         Args:
             num_experiment_rounds: Number of experiment-based rounds to run. This is by
                 default set to 10, the same number of sequence proposal of rounds run.
             num_model_rounds: Number of model-based rounds to run.
-        """
 
+        """
         tf.config.run_functions_eagerly(False)
 
         name = f"DynaPPO_Agent_{num_experiment_rounds}_{num_model_rounds}"
@@ -217,9 +245,10 @@ class DynaPPO(flexs.Explorer):
                 seq = s_utils.one_hot_to_string(obs.numpy()[:, :-1], self.alphabet)
                 new_seqs[seq] = self.tf_env.get_cached_fitness(seq)
 
-    def propose_sequences(self, measured_sequences_data):
+    def propose_sequences(
+        self, measured_sequences_data: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
             self.agent.collect_data_spec,
@@ -289,6 +318,20 @@ class DynaPPO(flexs.Explorer):
 
 
 class DynaPPOMutative(flexs.Explorer):
+    """
+    Explorer which implements DynaPPO.
+
+    Note that unlike the other DynaPPO explorer, this one is mutative rather than
+    constructive. Specifically, instead of starting from an empty sequence
+    and generating residues one-by-one, this explorer starts from a complete
+    sequence (fitness thresholds to start with good sequences) and mutates it
+    until the mutant's fitness has started to decrease. Then it ends the episode.
+
+    This has proven to be a stronger algorithm than the original DyNAPPO.
+
+    Paper: https://openreview.net/pdf?id=HklxbgBKvr
+    """
+
     def __init__(
         self,
         landscape: flexs.Landscape,
@@ -302,19 +345,13 @@ class DynaPPOMutative(flexs.Explorer):
         num_experiment_rounds: int = 10,
         num_model_rounds: int = 1,
     ):
-        """Explorer which implements DynaPPO.
-
-        Note that unlike the other DynaPPO explorer, this one is mutative rather than
-        constructive.
-
-        Paper: https://openreview.net/pdf?id=HklxbgBKvr
-
+        """
         Args:
             num_experiment_rounds: Number of experiment-based rounds to run. This is by
                 default set to 10, the same number of sequence proposal of rounds run.
             num_model_rounds: Number of model-based rounds to run.
-        """
 
+        """
         tf.config.run_functions_eagerly(False)
 
         name = f"DynaPPO_Agent_{num_experiment_rounds}_{num_model_rounds}"
@@ -405,9 +442,10 @@ class DynaPPOMutative(flexs.Explorer):
                     [seq for seq, _ in new_seqs.items()]
                 )
 
-    def propose_sequences(self, measured_sequences_data):
+    def propose_sequences(
+        self, measured_sequences_data: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         num_parallel_environments = 1
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(

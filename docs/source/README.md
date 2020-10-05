@@ -1,12 +1,12 @@
 ![FLEX](LOGO.png)
 
-[![build status](https://github.com/samsinai/FLEXS/workflows/build/badge.svg)](https://github.com/samsinai/FLEXS/actions) [![PyPI package](https://img.shields.io/pypi/v/flexs)](https://pypi.org/project/flexs/)
+[![build status](https://github.com/samsinai/FLEXS/workflows/build/badge.svg)](https://github.com/samsinai/FLEXS/actions) [![PyPI package](https://img.shields.io/pypi/v/flexs)](https://pypi.org/project/https://github.com/samsinai/FLEXS/blob/master/flexs/)
 
 💪FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. This project was developed with support from [Dyno Therapeutics](https://www.dynotx.com).
 
 - [Installation](#installation)
 - [Overview](#overview)
-- [Tutorial](examples/Tutorial.ipynb)
+- [Tutorial](https://github.com/samsinai/FLEXS/blob/master/examples/Tutorial.ipynb)
 - [Contribution and credits](#contributions-and-credits) 
 - [Components](#components)
   - [Ground truth landscapes](#ground-truth-landscapes)
@@ -39,7 +39,7 @@ Biological sequence design through machine-guided directed evolution has been of
 
  While in some cases, these two steps are learned simultaneously, it is fairly common to have access to a well-trained model `f` which is *not* invertible. Namely, given a sequence `x`, the model can estimate `y'` (with variable accuracy), but it cannot generate a sequence `x'` associated with a specific function `y`. Therefore it is valuable to develop exploration algorithms `E(f)` that make use of the model `f` to propose sequences `x'`. 
 
- We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the [quickstart tutorial](examples/Tutorial.ipynb). 
+ We implement a simulation environment that allows you to develop or port landscape exploration algorithms for a variety of challenging tasks. Our environment allows you to abstract away the model `f = Noisy_abstract_model(g)` or employ empirical models (like Keras/Pytorch or Sklearn models). You can see how these work in the [quickstart tutorial](https://github.com/samsinai/FLEXS/blob/master/examples/Tutorial.ipynb). 
 
 Our abstraction is comprised of four levels:
 #### 1.  Fitness Landscapes 🏔️
@@ -64,13 +64,13 @@ Noisy oracles are (approximate) models `f` of the original ground truth landscap
 
 #### 4. Evaluators 📊
 
-We also implement a suite of [evaluation modules](flexs/evaluate.py) that automatically collect data that is necessary for evaluating algorithms on different performance criteria.
+We also implement a suite of [evaluation modules](https://github.com/samsinai/FLEXS/blob/master/flexs/evaluate.py) that automatically collect data that is necessary for evaluating algorithms on different performance criteria.
 
 - *robustness*: Produces data for analyzing how explorer performance changes given different quality of models.
 - *efficiency*: Produces data for analyzing how explorer performance changes when more computational evaluations are allowed.
 - *adaptivity*: Produces data for analyzing how the explorer is sensitive to the number of batches it is allowed to sample, given a fixed total budget.
 
-See the [tutorial](examples/Tutorial.ipynb) for an example of how these can be run. 
+See the [tutorial](https://github.com/samsinai/FLEXS/blob/master/examples/Tutorial.ipynb) for an example of how these can be run. 
 
 ## Contributions and credits 🤩
 Your PR and contributions to this sandbox are most welcome. If you make use of data or algorithms in this sandbox, please ensure that you cite the relevant original articles upon which this work was made possible (we provide links in this readme). To cite the sandbox itself:
@@ -113,7 +113,7 @@ Our sandbox allows for constructing arbitrarily complex landscapes (although we 
 
 The simplest landscapes are binding landscapes with a single hidden target (often larger than the design sequence resulting in multiple peaks). The designed sequences is meant to be optimized to bind the target with the minimum binding energy (we use duplex energy as our objective). We estimate `optimal(y)` by computing the binding energy of the perfect complement of the target and normalize the fitnesses using that measure (hence this is only an approximation and often a slight underestimate). RNA landscapes show many local peaks, and often multiple global peaks due to symmetry. 
 
-Additionally, we construct more complex landscapes by increasing the number of hidden targets, enforcing specific conservation patterns, and composing the scores of each landscapes multiplicatively. See [multi-dimensional models](flexs/ensemble.py) for the generic class that allows composing landscapes.  
+Additionally, we construct more complex landscapes by increasing the number of hidden targets, enforcing specific conservation patterns, and composing the scores of each landscapes multiplicatively. See [multi-dimensional models](https://github.com/samsinai/FLEXS/blob/master/flexs/ensemble.py) for the generic class that allows composing landscapes.  
 
 
 ```
@@ -194,13 +194,13 @@ These models get access to the ground truth `g`, but do not allow the explorer t
 
 
 #### Empirical Models
-These models train a standard algorithm on the observed data. Some baseline models can be found in [flexs/baselines/models](flexs/baselines/models). All landscapes and models can also be ensembled using the [ensemble class](flexs/ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
+These models train a standard algorithm on the observed data. Some baseline models can be found in [https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/models](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/models). All landscapes and models can also be ensembled using the [ensemble class](https://github.com/samsinai/FLEXS/blob/master/flexs/ensemble.py). Ensembles also have the ability to be *adaptive* i.e. the models within an ensemble will be reweighted based on their accuracy on the last measured set.
 
 
 ### Exploration Algorithms
 
 #### Bring your own explorer
-Exploration algorithms are search methods that use noisy oracles to select the next batch of samples from the landscape. This is the main service of this sandbox, you can implement your own explorer by simply inheriting from the [Base Explorer](flexs/explorer.py), and implementing a single method:
+Exploration algorithms are search methods that use noisy oracles to select the next batch of samples from the landscape. This is the main service of this sandbox, you can implement your own explorer by simply inheriting from the [Base Explorer](https://github.com/samsinai/FLEXS/blob/master/flexs/explorer.py), and implementing a single method:
 
 
 ```python
@@ -237,14 +237,14 @@ class MyExplorer(flexs.Explorer):
 
 #### Baseline Explorers
 
-- [Random Explorer](flexs/baselines/explorers/random.py): A baseline random explorer.
+- [Random Explorer](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/random.py): A baseline random explorer.
 
 #### Evolutionary Algorithms
-- [Naive Genetic Algorithm, Wright-Fisher](flexs/baselines/explorers/genetic_algorithm.py): A standard Wright-Fisher process that has access to an oracle for pre-screening. 
+- [Naive Genetic Algorithm, Wright-Fisher](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/genetic_algorithm.py): A standard Wright-Fisher process that has access to an oracle for pre-screening. 
 
-- [CMA-ES](flexs/baselines/explorers/cmaes.py): The CMA-ES algorithm that optimizes a continuous relaxation of one-hot vectors encoding sequences (another evolutionary baseline). 
+- [CMA-ES](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/cmaes.py): The CMA-ES algorithm that optimizes a continuous relaxation of one-hot vectors encoding sequences (another evolutionary baseline). 
 
-- [ADALEAD](flexs/baselines/explorers/adalead.py) ⭐️: ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithms.
+- [ADALEAD](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/adalead.py) ⭐️: ADALEAD is our recommended "benchmark" algorithm as it is robust to hyperparameters, and is relatively fast in execution. It also compares strongly to other state of the art algorithms.
 
 ```
 @article{sinai2020adalead,
@@ -256,7 +256,8 @@ class MyExplorer(flexs.Explorer):
 ```
 
 #### DbAS and CbAS
-- [CbAS and DbAS](flexs/baselines/explorers/explorers/cbas_dbas.py)
+- [CbAS and DbAS](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/explorers/cbas_dbas.py)
+
 ```
 @article{brookes2019conditioning,
   title={Conditioning by adaptive sampling for robust design},
@@ -273,13 +274,11 @@ class MyExplorer(flexs.Explorer):
 ```
 
 #### Reinforcement Learning Algorithms
-Adaptations of the following RL algorithms.
+- [DQN](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/dqn_explorer.py)
 
-- [DQN](flexs/baselines/explorers/dqn_explorer.py)
+- [PPO](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/ppo.py)
 
-- [PPO](flexs/baselines/explorers/ppo.py)
-
-- [DyNAPPO](flexs/baselines/explorers/dyna_ppo.py): See the following citation.
+- [DyNAPPO](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/dyna_ppo.py): See the following citation.
 ```
 @inproceedings{angermueller2019model,
   title={Model-based reinforcement learning for biological sequence design},
@@ -288,6 +287,6 @@ Adaptations of the following RL algorithms.
   year={2019}
 }
 ```	
-#### Bayesian Optimization 
 
-- [Evolutionary/Enumerative BO](flexs/baselines/explorers/bo.py): Bayesian optimization with sparse sampling of the mutation space. A fully enumerated (when possible) is also implemented mutation space.
+#### Bayesian Optimization 
+- [Evolutionary/Enumerative BO](https://github.com/samsinai/FLEXS/blob/master/flexs/baselines/explorers/bo.py): Bayesian optimization with sparse sampling of the mutation space. A fully enumerated (when possible) is also implemented mutation space.

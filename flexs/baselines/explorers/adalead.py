@@ -1,14 +1,26 @@
 """Defines the Adalead explorer class."""
 import random
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 
 import flexs
 from flexs.utils import sequence_utils as s_utils
 
 
 class Adalead(flexs.Explorer):
+    """
+    Adalead explorer.
+
+    Algorithm works as follows:
+        Initialize set of top sequences whose fitnesses are at least
+            (1 - threshold) of the maximum fitness so far
+        While we can still make model queries in this batch
+            Recombine top sequences and append to parents
+            Rollout from parents and append to mutants
+    """
+
     def __init__(
         self,
         model: flexs.Model,
@@ -24,15 +36,7 @@ class Adalead(flexs.Explorer):
         eval_batch_size: int = 20,
         log_file: Optional[str] = None,
     ):
-        """AdaLead explorer.
-
-        Algorithm works as follows:
-            Initialize set of top sequences whose fitnesses are at least
-                (1 - threshold) of the maximum fitness so far
-            While we can still make model queries in this batch
-                Recombine top sequences and append to parents
-                Rollout from parents and append to mutants
-
+        """
         Args:
             mu: Expected number of mutations to the full sequence (mu/L per position).
             recomb_rate: The probability of a crossover at any position in a sequence.
@@ -41,6 +45,7 @@ class Adalead(flexs.Explorer):
                 sequences.
             rho: The expected number of recombination partners for each recombinant.
             eval_batch_size: (For code optimization; size of batches sent to model.)
+
         """
         name = f"Adalead_mu={mu}_threshold={threshold}"
 
@@ -87,9 +92,10 @@ class Adalead(flexs.Explorer):
             ret.append("".join(strB))
         return ret
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         measured_sequence_set = set(measured_sequences["sequence"])
 
         top_fitness = measured_sequences["true_score"].max()

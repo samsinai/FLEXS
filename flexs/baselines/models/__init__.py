@@ -11,7 +11,6 @@ from flexs.baselines.models.mlp import MLP  # noqa: F401
 from flexs.baselines.models.noisy_abstract_model import (  # noqa: F401
     NoisyAbstractModel,
 )
-from flexs.baselines.models.null_model import NullModel  # noqa: F401
 from flexs.baselines.models.sklearn_models import (  # noqa: F401
     LinearRegression,
     LogisticRegression,

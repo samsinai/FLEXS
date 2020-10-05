@@ -52,7 +52,7 @@ class BertGFPBrightness(flexs.Landscape):
             os.mkdir("fluorescence-model")
 
             # URL for BERT GFP fluorescence model
-            gfp_model_path = "https://fluorescence-model.s3.amazonaws.com/fluorescence_transformer_20-05-25-03-49-06_184764/"
+            gfp_model_path = "https://fluorescence-model.s3.amazonaws.com/fluorescence_transformer_20-05-25-03-49-06_184764/"  # noqa: E501
             for file_name in [
                 "args.json",
                 "checkpoint.bin",

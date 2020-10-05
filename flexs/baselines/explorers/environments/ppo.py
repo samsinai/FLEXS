@@ -19,7 +19,8 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         model: flexs.Model,
         max_num_steps: int,
     ):  # pylint: disable=W0231
-        """Initialize PPO agent environment.
+        """
+        Initialize PPO agent environment.
 
         Based on this tutorial:
         https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
@@ -33,8 +34,8 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             max_num_steps: Maximum number of steps before
                 episode is forced to terminate. Usually the
                 `model_queries_per_batch`.
+
         """
-        # alphabet
         self.alphabet = alphabet
 
         # model/model/measurements
@@ -101,7 +102,6 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         The agent moves until the reward is decreasing. The number of sequences that
         can be evaluated at each episode is capped to `self.max_num_steps`.
         """
-
         # if we've exceeded the maximum number of steps, terminate
         if self.num_steps >= self.max_num_steps:
             return ts.termination(self._state, 0)

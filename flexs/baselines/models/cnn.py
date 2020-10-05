@@ -1,21 +1,24 @@
+"""Define a baseline CNN Model."""
 import tensorflow as tf
 
 from . import keras_model
 
 
 class CNN(keras_model.KerasModel):
+    """A baseline CNN model with 3 conv layers and 2 dense layers."""
+
     def __init__(
         self,
-        seq_len,
-        num_filters,
-        hidden_size,
-        alphabet,
+        seq_len: int,
+        num_filters: int,
+        hidden_size: int,
+        alphabet: str,
         loss="MSE",
-        name=None,
-        batch_size=256,
-        epochs=20,
+        name: str = None,
+        batch_size: int = 256,
+        epochs: int = 20,
     ):
-
+        """Create the CNN."""
         model = tf.keras.models.Sequential(
             [
                 tf.keras.layers.Conv1D(

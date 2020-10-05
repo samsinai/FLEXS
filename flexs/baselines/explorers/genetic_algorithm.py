@@ -1,6 +1,8 @@
-from typing import Optional
+"""Define a baseline genetic algorithm implementation."""
+from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 import torch
 
 import flexs
@@ -21,7 +23,6 @@ class GeneticAlgorithm(flexs.Explorer):
            genetic algorithm based off of the Wright-Fisher model of evolution,
            where members of the population become parents with a probability
            exponential to their fitness (softmax the scores then sample).
-
     """
 
     def __init__(
@@ -38,14 +39,12 @@ class GeneticAlgorithm(flexs.Explorer):
         log_file: Optional[str] = None,
         parent_selection_proportion: Optional[float] = None,
         beta: Optional[float] = None,
-        recombination_strategy: Optional[str] = None,
-        avg_crossovers: Optional[int] = None,
-        num_crossover_tiles: Optional[int] = None,
         seed: Optional[int] = None,
     ):
+        """Create genetic algorithm."""
         name = (
-            f"GeneticAlgorithm_pop_size={population_size}_parents="
-            f"{parent_selection_strategy}_recomb={recombination_strategy}"
+            f"GeneticAlgorithm_pop_size={population_size}_"
+            f"parents={parent_selection_strategy}"
         )
 
         super().__init__(
@@ -82,29 +81,10 @@ class GeneticAlgorithm(flexs.Explorer):
         self.children_proportion = children_proportion
         self.parent_selection_proportion = parent_selection_proportion
 
-        # Validate recombination_strategy
-        valid_recombination_strategies = [None, "1-point-crossover", "n-tile-crossover"]
-        if recombination_strategy not in valid_recombination_strategies:
-            raise ValueError(
-                "recombination_strategy must be one of "
-                f"{valid_recombination_strategies}"
-            )
-        if recombination_strategy == "n-tile-crossover" and (
-            avg_crossovers is None or num_crossover_tiles is None
-        ):
-            raise ValueError(
-                "if n-tile-crossover, avg_crossovers and num_crossover_tiles cannot be "
-                "None"
-            )
-        self.recombination_strategy = recombination_strategy
-        self.avg_crossovers = avg_crossovers
-        self.num_crossover_tiles = num_crossover_tiles
-
         self.rng = np.random.default_rng(seed)
 
     def _choose_parents(self, scores, num_parents):
         """Return parent indices according to `self.parent_selection_strategy`."""
-
         if self.parent_selection_strategy == "top-proportion":
             k = int(self.parent_selection_proportion * self.population_size)
             return self.rng.choice(np.argsort(scores)[-k:], num_parents)
@@ -114,9 +94,10 @@ class GeneticAlgorithm(flexs.Explorer):
         probs = torch.Tensor(fitnesses / np.sum(fitnesses))
         return torch.multinomial(probs, num_parents, replacement=True).numpy()
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         # Set the torch seed by generating a random integer from the pre-seeded self.rng
         torch.manual_seed(self.rng.integers(-(2 ** 31), 2 ** 31))
 

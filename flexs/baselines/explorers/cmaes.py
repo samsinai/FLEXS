@@ -1,21 +1,24 @@
 """CMAES explorer."""
-from typing import Optional
+from typing import Optional, Tuple
 
 import cma
 import numpy as np
+import pandas as pd
 
 import flexs
 from flexs.utils import sequence_utils as s_utils
 
 
 class CMAES(flexs.Explorer):
-    """An explorer which implements the covariance matrix adaptation evolution strategy.
-    Args:
-        population_size: Size of the population
-        max_iter: Maximum number of iterations
-        initial_variance: initial co-variance matrix values
+    """
+    An explorer which implements the covariance matrix adaptation evolution
+    strategy (CMAES).
 
-    http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful guide
+    Optimizes a continuous relaxation of the one-hot sequence that we use to
+    construct a normal distribution around, sample from, and then argmax to get
+    sequences for the objective function.
+
+    http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful guide.
     """
 
     def __init__(
@@ -28,17 +31,10 @@ class CMAES(flexs.Explorer):
         alphabet: str,
         population_size: int = 15,
         max_iter: int = 400,
-        initial_variance: float = 0.7,
+        initial_variance: float = 0.2,
         log_file: Optional[str] = None,
     ):
-        """Explorer which implements CMAES.
-
-        CMAES stands for covariance matrix adaptation evolution
-        strategy.
-
-        http://blog.otoro.net/2017/10/29/visual-evolution-strategies/ is a helpful
-        guide.
-
+        """
         Args:
             population_size: Number of proposed solutions per iteration.
             max_iter: Maximum number of iterations.
@@ -62,7 +58,7 @@ class CMAES(flexs.Explorer):
         self.initial_variance = initial_variance
         self.round = 0
 
-    def soln_to_string(self, soln):
+    def _soln_to_string(self, soln):
         x = soln.reshape((len(self.starting_sequence), len(self.alphabet)))
 
         one_hot = np.zeros(x.shape)
@@ -70,9 +66,10 @@ class CMAES(flexs.Explorer):
 
         return s_utils.one_hot_to_string(one_hot, self.alphabet)
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         measured_sequence_dict = dict(
             zip(measured_sequences["sequence"], measured_sequences["true_score"])
         )
@@ -84,7 +81,7 @@ class CMAES(flexs.Explorer):
         sequences = {top_seq: top_val}
 
         def objective_function(soln):
-            seq = self.soln_to_string(soln)
+            seq = self._soln_to_string(soln)
 
             if seq in sequences:
                 return sequences[seq]
@@ -114,7 +111,7 @@ class CMAES(flexs.Explorer):
 
             # Store scores of generated sequences
             for soln, f in zip(solutions, fitnesses):
-                sequences[self.soln_to_string(soln)] = f
+                sequences[self._soln_to_string(soln)] = f
 
         # We propose the top `self.sequences_batch_size` new sequences we have generated
         new_seqs = np.array(list(sequences.keys()))

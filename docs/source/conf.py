@@ -42,9 +42,14 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",
+    "nbsphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autosectionlabel",
 ]
 autosummary_generate = True
 source_suffix = [".rst", ".md"]
+nbsphinx_execute = "never"
+autosectionlabel_prefix_document = True
 
 # [source] button on a class/module takes user to that files source code on github
 def linkcode_resolve(domain, info):

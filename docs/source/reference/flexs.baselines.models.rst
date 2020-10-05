@@ -16,5 +16,4 @@ flexs.baselines.models
    flexs.baselines.models.keras_model
    flexs.baselines.models.mlp
    flexs.baselines.models.noisy_abstract_model
-   flexs.baselines.models.null_model
    flexs.baselines.models.sklearn_models
