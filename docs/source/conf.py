@@ -35,14 +35,12 @@ author = "Sam Sinai, Richard Wang, Alexander Whatley, Elina Locane, Stewy Slocum
 extensions = [
     "m2r",
     "sphinx.ext.autodoc",
-    # "sphinxcontrib.apidoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinx_rtd_theme",
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",
-    "nbsphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.autosectionlabel",
 ]

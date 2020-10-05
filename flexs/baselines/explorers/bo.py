@@ -280,9 +280,7 @@ class GPR_BO(flexs.Explorer):
         seq_proposal_method="Thompson",
     ):
         """Initialize the explorer."""
-        name = (
-            "GPR_BO_Explorer-seq_proposal_method={seq_proposal_method}"
-        )
+        name = f"GPR_BO_Explorer-seq_proposal_method={seq_proposal_method}"
         super().__init__(
             model,
             name,
@@ -386,7 +384,7 @@ class GPR_BO(flexs.Explorer):
         seq_proposal_funcs = {
             "Greedy": self.propose_sequences_via_greedy,
             "Thompson": self.propose_sequences_via_thompson,
-            "UCB": self.propose_sequences_via_ucb
+            "UCB": self.propose_sequences_via_ucb,
         }
         seq_proposal_func = seq_proposal_funcs[self.seq_proposal_method]
         new_seqs = seq_proposal_func()

@@ -44,7 +44,7 @@ def test_adaptive_ensemble():
     models = [FakeModel(name="FakeModel") for _ in range(2)]
     ens = baselines.models.AdaptiveEnsemble(models)
 
-    ens.train(["ATC", "ATC", "ATC"], [1, 2, 3])
+    ens.train(["ATC"]*15, list(range(15)))
 
     print(ens.weights)
     assert np.any(ens.weights != np.ones(len(models)) / len(models))
@@ -96,14 +96,6 @@ def test_noisy_abstract_model():
     nam.get_fitness(["ATC"])
     # Flaky, but extremely unlikely to fail
     assert nam.get_fitness(["ATG"]) != [2]
-
-
-def test_null_model():
-    null = baselines.models.NullModel()
-    assert len(null.cache) == 0
-    fitness = null.get_fitness(["ATC"])
-    assert len(null.cache) == 1
-    assert null.get_fitness(["ATC"]) == fitness
 
 
 def test_sklearn_models():

@@ -1,9 +1,12 @@
 absl-py==0.10.0
 aiohttp==3.6.2
+alabaster==0.7.12
+ApiDoc==1.4.0
 appdirs==1.4.3
 astunparse==1.6.3
 async-timeout==3.0.1
 attrs @ file:///home/conda/feedstock_root/build_artifacts/attrs_1599308529326/work
+Babel==2.8.0
 biopython==1.78
 black @ file:///home/conda/feedstock_root/build_artifacts/black-recipe_1599478779128/work
 boto3==1.15.11
@@ -16,11 +19,12 @@ cloudpickle==1.3.0
 cma==3.0.3
 decorator==4.4.2
 dm-tree==0.1.5
+docutils==0.16
 editdistance==0.5.3
 flake8 @ file:///home/conda/feedstock_root/build_artifacts/flake8_1601874335748/work
 flake8-black @ file:///home/conda/feedstock_root/build_artifacts/flake8-black_1595694611041/work
 flake8-docstrings==1.5.0
--e git+https://github.com/samsinai/FLEXS.git@77b9f54ed73ef8e7b35eeee197121ae92a331724#egg=flexs
+-e git+https://github.com/samsinai/FLEXS.git@516f7502844764609bfcc5cb89f1d2f31aacb53f#egg=flexs
 future==0.18.2
 gast==0.3.3
 gin-config==0.3.0
@@ -30,14 +34,21 @@ google-pasta==0.2.0
 grpcio==1.32.0
 h5py==2.10.0
 idna==2.10
+imagesize==1.2.0
 importlib-metadata @ file:///Users/runner/miniforge3/conda-bld/importlib-metadata_1600910442428/work
 iniconfig @ file:///home/conda/feedstock_root/build_artifacts/iniconfig_1596221474428/work
+isort==5.5.4
+Jinja2==2.7.3
 jmespath==0.10.0
 joblib==0.17.0
+jsonschema==2.4.0
 Keras-Preprocessing==1.1.2
 lmdb==1.0.0
+m2r==0.2.1
 Markdown==3.2.2
+MarkupSafe==1.1.1
 mccabe==0.6.1
+mistune==0.8.4
 more-itertools @ file:///home/conda/feedstock_root/build_artifacts/more-itertools_1598643641143/work
 multidict==4.7.6
 mypy-extensions==0.4.3
@@ -55,10 +66,12 @@ pyasn1-modules==0.2.8
 pycodestyle @ file:///home/conda/feedstock_root/build_artifacts/pycodestyle_1589305246696/work
 pydocstyle @ file:///home/conda/feedstock_root/build_artifacts/pydocstyle_1598747747227/work
 pyflakes==2.2.0
+Pygments==2.7.1
 pyparsing==2.4.7
 pytest==6.1.1
 python-dateutil==2.8.1
 pytz==2020.1
+PyYAML==3.11
 regex @ file:///Users/runner/miniforge3/conda-bld/regex_1601211214836/work
 requests==2.24.0
 requests-oauthlib==1.3.0
@@ -68,6 +81,15 @@ scikit-learn==0.23.2
 scipy==1.5.2
 six @ file:///home/conda/feedstock_root/build_artifacts/six_1590081179328/work
 snowballstemmer==2.0.0
+Sphinx==2.4.4
+sphinx-autodoc-typehints==1.11.0
+sphinx-rtd-theme==0.5.0
+sphinxcontrib-applehelp==1.0.2
+sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-htmlhelp==1.0.3
+sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-qthelp==1.0.3
+sphinxcontrib-serializinghtml==1.1.4
 tape-proteins==0.4
 tensorboard==2.3.0
 tensorboard-plugin-wit==1.7.0

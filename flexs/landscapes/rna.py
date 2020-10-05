@@ -53,7 +53,7 @@ class RNABinding(flexs.Landscape):
         # if not installed.
         try:
             RNA
-        except ImportError as e:
+        except NameError as e:
             raise ImportError(
                 f"{e}.\n"
                 "Hint: ViennaRNA not installed.\n"
