@@ -1,6 +1,6 @@
 ![FLEX](LOGO.png)
 
-[![build status](https://github.com/samsinai/FLEXS/workflows/build/badge.svg)](https://github.com/samsinai/FLEXS/actions) [![PyPI package](https://img.shields.io/pypi/v/flexs)](https://pypi.org/project/https://github.com/samsinai/FLEXS/blob/master/flexs/)
+[![build status](https://github.com/samsinai/FLEXS/workflows/build/badge.svg)](https://github.com/samsinai/FLEXS/actions) [![Documentation Status](https://readthedocs.org/projects/flexs/badge/?version=latest)](https://flexs.readthedocs.io/en/latest/?badge=latest) [![PyPI package](https://img.shields.io/pypi/v/flexs)](https://pypi.org/project/https://github.com/samsinai/FLEXS/blob/master/flexs/)
 
 💪 FLEXS is an open-source simulation environment that enables you to develop and compare model-guided biological sequence design algorithms. This project was developed with support from [Dyno Therapeutics](https://www.dynotx.com).
 

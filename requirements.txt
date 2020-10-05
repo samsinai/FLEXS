@@ -5,10 +5,10 @@ ApiDoc==1.4.0
 appdirs==1.4.3
 astunparse==1.6.3
 async-timeout==3.0.1
-attrs @ file:///home/conda/feedstock_root/build_artifacts/attrs_1599308529326/work
+attrs==20.2.0
 Babel==2.8.0
 biopython==1.78
-black @ file:///home/conda/feedstock_root/build_artifacts/black-recipe_1599478779128/work
+black==20.8b1
 boto3==1.15.11
 botocore==1.18.11
 cachetools==4.1.1
@@ -21,10 +21,10 @@ decorator==4.4.2
 dm-tree==0.1.5
 docutils==0.16
 editdistance==0.5.3
-flake8 @ file:///home/conda/feedstock_root/build_artifacts/flake8_1601874335748/work
-flake8-black @ file:///home/conda/feedstock_root/build_artifacts/flake8-black_1595694611041/work
+flake8==3.8.4
+flake8-black==0.2.1
 flake8-docstrings==1.5.0
--e git+https://github.com/samsinai/FLEXS.git@516f7502844764609bfcc5cb89f1d2f31aacb53f#egg=flexs
+flexs==0.2.1
 future==0.18.2
 gast==0.3.3
 gin-config==0.3.0
@@ -35,8 +35,8 @@ grpcio==1.32.0
 h5py==2.10.0
 idna==2.10
 imagesize==1.2.0
-importlib-metadata @ file:///Users/runner/miniforge3/conda-bld/importlib-metadata_1600910442428/work
-iniconfig @ file:///home/conda/feedstock_root/build_artifacts/iniconfig_1596221474428/work
+importlib-metadata==2.0.0
+iniconfig==1.0.1
 isort==5.5.4
 Jinja2==2.7.3
 jmespath==0.10.0
@@ -49,22 +49,23 @@ Markdown==3.2.2
 MarkupSafe==1.1.1
 mccabe==0.6.1
 mistune==0.8.4
-more-itertools @ file:///home/conda/feedstock_root/build_artifacts/more-itertools_1598643641143/work
+more-itertools==8.5.0
 multidict==4.7.6
 mypy-extensions==0.4.3
 numpy==1.19.2
 oauthlib==3.1.0
 opt-einsum==3.3.0
-packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1589925210001/work
+packaging==20.4
 pandas==1.1.2
 pathspec==0.8.0
-pluggy @ file:///Users/runner/miniforge3/conda-bld/pluggy_1592827481065/work
+pip==20.2.3
+pluggy==0.13.1
 protobuf==3.13.0
-py @ file:///home/conda/feedstock_root/build_artifacts/py_1593088446458/work
+py==1.9.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pycodestyle @ file:///home/conda/feedstock_root/build_artifacts/pycodestyle_1589305246696/work
-pydocstyle @ file:///home/conda/feedstock_root/build_artifacts/pydocstyle_1598747747227/work
+pycodestyle==2.6.0
+pydocstyle==5.1.1
 pyflakes==2.2.0
 Pygments==2.7.1
 pyparsing==2.4.7
@@ -72,14 +73,15 @@ pytest==6.1.1
 python-dateutil==2.8.1
 pytz==2020.1
 PyYAML==3.11
-regex @ file:///Users/runner/miniforge3/conda-bld/regex_1601211214836/work
+regex==2020.9.27
 requests==2.24.0
 requests-oauthlib==1.3.0
 rsa==4.6
 s3transfer==0.3.3
 scikit-learn==0.23.2
 scipy==1.5.2
-six @ file:///home/conda/feedstock_root/build_artifacts/six_1590081179328/work
+setuptools==49.6.0.post20200925
+six==1.15.0
 snowballstemmer==2.0.0
 Sphinx==2.4.4
 sphinx-autodoc-typehints==1.11.0
@@ -100,13 +102,14 @@ tensorflow-probability==0.11.1
 termcolor==1.1.0
 tf-agents==0.6.0
 threadpoolctl==2.1.0
-toml @ file:///home/conda/feedstock_root/build_artifacts/toml_1589469402899/work
+toml==0.10.1
 torch==1.6.0
 tqdm==4.50.0
 typed-ast==1.4.1
-typing-extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1588470653596/work
+typing-extensions==3.7.4.2
 urllib3==1.25.10
 Werkzeug==1.0.1
+wheel==0.35.1
 wrapt==1.12.1
 yarl==1.6.0
-zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1601765966131/work
+zipp==3.3.0
