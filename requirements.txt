@@ -71,7 +71,7 @@ pyparsing==2.4.7
 pytest==6.1.1
 python-dateutil==2.8.1
 pytz==2020.1
-PyYAML==3.11
+PyYAML==5.1
 regex @ file:///Users/runner/miniforge3/conda-bld/regex_1601211214836/work
 requests==2.24.0
 requests-oauthlib==1.3.0
