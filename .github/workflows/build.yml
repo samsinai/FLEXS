@@ -29,7 +29,7 @@ jobs:
       run: $CONDA/bin/conda install -c bioconda viennarna -y
 
     - name: Install dev dependencies
-      run: $CONDA/bin/conda install -c conda-forge flake8 flake8-docstrings flake8-black pytest
+      run: $CONDA/bin/conda install -c conda-forge flake8 flake8-docstrings flake8-black pytest -y
 
     - name: Lint with flake8, pydocstyle, and black
       run: $CONDA/bin/flake8 flexs

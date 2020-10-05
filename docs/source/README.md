@@ -18,10 +18,10 @@
 
 ## Installation
 
-FLEXS is available on PyPI 🐍 and can be installed with `pip install flexs`.
+FLEXS is available on [PyPI](https://pypi.org/project/flexs/) 🐍 and can be installed with `pip install flexs`.
 
 There are two optional, but very useful dependencies, [ViennaRNA](https://www.tbi.univie.ac.at/RNA/) (for RNA binding landscapes) and [PyRosetta](http://www.pyrosetta.org) (for protein design landscapes). These can both be installed with conda:
-```
+```bash
 $ conda install -c bioconda viennarna
 $ conda install pyrosetta  # Set up RosettaCommons conda channel first (http://www.pyrosetta.org/dow)
 ```
