@@ -1,28 +1,38 @@
-import random
-
+"""Define the noisy abstract model class."""
 import editdistance
 import numpy as np
-from scipy.stats import pearsonr
-from sklearn.metrics import explained_variance_score, r2_score
 
 import flexs
+from flexs.types import SEQUENCES_TYPE
 
 
 class NoisyAbstractModel(flexs.Model):
-    """
+    r"""
     Behaves like a ground truth model.
 
     It corrupts a ground truth model with noise, which is modulated by distance
     to already measured sequences.
+
+    Specifically, $\hat{f}(x) = \alpha^d f(x) + (1 - \alpha^d) \epsilon$ where
+    $\epsilon$ is drawn from an exponential distribution with mean $f(x)$
+    $d$ is the edit distance to the closest measured neighbor,
+    and $\alpha$ is the signal strength.
     """
 
     def __init__(
         self,
-        landscape,
-        signal_strength=0.9,
-        landscape_id=-1,
-        start_id=-1,
+        landscape: flexs.Landscape,
+        signal_strength: float = 0.9,
     ):
+        """
+        Create a noisy abstract model.
+
+        Args:
+            landscape: The ground truth landscape.
+            signal_strength: A value between 0 and 1 representing the
+                true signal strength.
+
+        """
         super().__init__(f"NAMb_ss{signal_strength}")
 
         self.landscape = landscape
@@ -49,7 +59,11 @@ class NoisyAbstractModel(flexs.Model):
 
         return new_dist, closest
 
-    def train(self, sequences, labels):
+    def train(self, sequences: SEQUENCES_TYPE, labels: np.ndarray):
+        """
+        Training step simply stores sequences and labels in a
+        dictionary for future lookup.
+        """
         self.cache.update(zip(sequences, labels))
 
     def _fitness_function(self, sequences):
@@ -65,7 +79,8 @@ class NoisyAbstractModel(flexs.Model):
 
             # Otherwise, fitness = alpha * true_fitness + (1 - alpha) * noise
             # where alpha = signal_strength ^ (dist to nearest neighbor)
-            # and noise is the nearest neighbor's fitness plus exponentially distributed noise
+            # and noise is the nearest neighbor's fitness plus exponentially
+            # distributed noise
             distance, neighbor_seq = self._get_min_distance(seq)
 
             signal = self.landscape.get_fitness([seq]).item()

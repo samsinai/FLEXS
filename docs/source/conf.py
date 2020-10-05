@@ -35,16 +35,19 @@ author = "Sam Sinai, Richard Wang, Alexander Whatley, Elina Locane, Stewy Slocum
 extensions = [
     "m2r",
     "sphinx.ext.autodoc",
-    # "sphinxcontrib.apidoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinx_rtd_theme",
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autosectionlabel",
 ]
 autosummary_generate = True
 source_suffix = [".rst", ".md"]
+nbsphinx_execute = "never"
+autosectionlabel_prefix_document = True
 
 # [source] button on a class/module takes user to that files source code on github
 def linkcode_resolve(domain, info):

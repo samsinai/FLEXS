@@ -3,7 +3,7 @@ format:
 	python -m isort --profile black .
 
 lint:
-	python -m flake8 flexs --exit-zero
+	python -m flake8 flexs
 
 test:
 	python -m pytest tests

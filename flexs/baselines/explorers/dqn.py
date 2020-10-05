@@ -1,9 +1,10 @@
 """DQN explorer."""
 import random
 from collections import Counter
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 import torch
 from torch import nn
 from torch import optim as optim
@@ -50,6 +51,19 @@ def build_q_network(sequence_len, alphabet_len, device):
 
 
 class DQN(flexs.Explorer):
+    """
+    DQN explorer class.
+
+    DQN Explorer implementation, based off
+    https://colab.research.google.com/drive/1NsbSPn6jOcaJB_mp9TmkgQX7UrRIrTi0.
+
+    Algorithm works as follows:
+    for N experiment rounds
+        collect samples with policy
+        policy updates using Q network:
+            Q(s, a) <- Q(s, a) + alpha * (R(s, a) + gamma * max Q(s, a) - Q(s, a))
+    """
+
     def __init__(
         self,
         model: flexs.Model,
@@ -64,17 +78,7 @@ class DQN(flexs.Explorer):
         gamma: float = 0.9,
         device: str = "cpu",
     ):
-        """DQN explorer class.
-
-        DQN Explorer implementation, based off
-        https://colab.research.google.com/drive/1NsbSPn6jOcaJB_mp9TmkgQX7UrRIrTi0.
-
-        Algorithm works as follows:
-        for N experiment rounds
-            collect samples with policy
-            policy updates using Q network:
-                Q(s, a) <- Q(s, a) + alpha * (R(s, a) + gamma * max Q(s, a) - Q(s, a))
-
+        """
         Args:
             memory_size: Size of agent memory.
             gamma: Discount factor.
@@ -240,11 +244,11 @@ class DQN(flexs.Explorer):
         return action, mutant
 
     def pick_action(self, all_measured_seqs):
-        """Pick an action.
+        """
+        Pick an action.
 
         Generates a new string representing the state, along with its associated reward.
         """
-
         eps = max(
             self.epsilon_min,
             (0.5 - self.model.cost / (self.sequences_batch_size * self.rounds)),
@@ -270,9 +274,10 @@ class DQN(flexs.Explorer):
         self.num_actions += 1
         return new_state_string, reward
 
-    def propose_sequences(self, measured_sequences_data):
+    def propose_sequences(
+        self, measured_sequences_data: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()

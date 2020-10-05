@@ -1,8 +1,9 @@
 """BO explorer."""
 from bisect import bisect_left
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 
 import flexs
 from flexs.utils.replay_buffers import PrioritizedReplayBuffer
@@ -15,6 +16,21 @@ from flexs.utils.sequence_utils import (
 
 
 class BO(flexs.Explorer):
+    """
+    Evolutionary Bayesian Optimization (Evo_BO) explorer.
+
+    Algorithm works as follows:
+        for N experiment rounds
+            recombine samples from previous batch if it exists and measure them,
+                otherwise skip
+            Thompson sample starting sequence for new batch
+            while less than B samples in batch
+                Generate `model_queries_per_batch/sequences_batch_size` samples
+                If variance of ensemble models is above twice that of the starting
+                    sequence
+                Thompson sample another starting sequence
+    """
+
     def __init__(
         self,
         model: flexs.Model,
@@ -27,24 +43,13 @@ class BO(flexs.Explorer):
         method: str = "EI",
         recomb_rate: float = 0,
     ):
-        """Evolutionary Bayesian Optimization (Evo_BO) explorer.
-
-        Algorithm works as follows:
-            for N experiment rounds
-                recombine samples from previous batch if it exists and measure them,
-                    otherwise skip
-                Thompson sample starting sequence for new batch
-                while less than B samples in batch
-                    Generate `model_queries_per_batch/sequences_batch_size` samples
-                    If variance of ensemble models is above twice that of the starting
-                        sequence
-                    Thompson sample another starting sequence
-
+        """
         Args:
             method (equal to EI or UCB): The improvement method used in BO,
                 default EI.
             recomb_rate: The recombination rate on the previous batch before
                 BO proposes samples, default 0.
+
         """
         name = f"BO_method={method}"
         if not isinstance(model, flexs.Ensemble):
@@ -118,7 +123,7 @@ class BO(flexs.Explorer):
         return ret
 
     def EI(self, vals):
-        """Expected improvement."""
+        """Compute expected improvement."""
         return np.mean([max(val - self.best_fitness, 0) for val in vals])
 
     @staticmethod
@@ -191,9 +196,10 @@ class BO(flexs.Explorer):
         sequences = [x[1] for x in measured_batch]
         return sequences[index]
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         if self.num_actions == 0:
             # indicates model was reset
             self.initialize_data_structures()
@@ -271,13 +277,10 @@ class GPR_BO(flexs.Explorer):
         starting_sequence,
         alphabet,
         log_file=None,
-        method="EI",
         seq_proposal_method="Thompson",
     ):
         """Initialize the explorer."""
-        name = (
-            "GPR_BO_Explorer-method={method}-seq_proposal_method={seq_proposal_method}"
-        )
+        name = f"GPR_BO_Explorer-seq_proposal_method={seq_proposal_method}"
         super().__init__(
             model,
             name,
@@ -289,12 +292,11 @@ class GPR_BO(flexs.Explorer):
         )
         self.alphabet = alphabet
         self.alphabet_len = len(alphabet)
-        self.method = method
         self.seq_proposal_method = seq_proposal_method
         self.best_fitness = 0
         self.top_sequence = []
 
-        self.seq_len = None
+        self.seq_len = len(starting_sequence)
         self.maxima = None
 
     def reset(self):
@@ -304,7 +306,6 @@ class GPR_BO(flexs.Explorer):
 
     def propose_sequences_via_thompson(self):
         """Propose a batch of new sequences.
-
         Based on Thompson sampling with a Gaussian posterior.
         """
         print("Enumerating all sequences in the space.")
@@ -314,7 +315,8 @@ class GPR_BO(flexs.Explorer):
         def enum_and_eval(curr_seq):
             # if we have a full sequence, then let's evaluate
             if len(curr_seq) == self.seq_len:
-                mu, sigma = self.model.get_fitness(curr_seq, return_std=True)
+                mus = self.model.get_fitness(curr_seq)
+                mu, sigma = np.mean(mus), np.std(mus)
                 estimated_fitness = np.random.normal(mu, sigma)
                 self.maxima.append([estimated_fitness, curr_seq])
             else:
@@ -338,7 +340,8 @@ class GPR_BO(flexs.Explorer):
         def enum_and_eval(curr_seq):
             # if we have a full sequence, then let's evaluate
             if len(curr_seq) == self.seq_len:
-                mu = self.model.get_fitness(curr_seq, return_std=False)
+                mus = self.model.get_fitness(curr_seq)
+                mu = np.mean(mus)
                 self.maxima.append([mu, curr_seq])
             else:
                 for char in list(self.alphabet):
@@ -351,7 +354,6 @@ class GPR_BO(flexs.Explorer):
 
     def propose_sequences_via_ucb(self):
         """Propose a batch of new sequences.
-
         Based on upper confidence bound.
         """
         print("Enumerating all sequences in the space.")
@@ -361,7 +363,8 @@ class GPR_BO(flexs.Explorer):
         def enum_and_eval(curr_seq):
             # if we have a full sequence, then let's evaluate
             if len(curr_seq) == self.seq_len:
-                mu, sigma = self.model.get_fitness(curr_seq, return_std=True)
+                mus = self.model.get_fitness(curr_seq)
+                mu, sigma = np.mean(mus), np.std(mus)
                 self.maxima.append([mu + 0.01 * sigma, curr_seq])
             else:
                 for char in list(self.alphabet):
@@ -372,13 +375,15 @@ class GPR_BO(flexs.Explorer):
         # Sort descending based on the value.
         return sorted(self.maxima, reverse=True, key=lambda x: x[0])
 
-    def propose_sequences(self, measured_sequences):
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose `batch_size` samples."""
         samples = set()
-
+        # TODO: Add UCB and Thompson proposal methods
         seq_proposal_funcs = {
-            "Thompson": self.propose_sequences_via_thompson,
             "Greedy": self.propose_sequences_via_greedy,
+            "Thompson": self.propose_sequences_via_thompson,
             "UCB": self.propose_sequences_via_ucb,
         }
         seq_proposal_func = seq_proposal_funcs[self.seq_proposal_method]
@@ -390,7 +395,7 @@ class GPR_BO(flexs.Explorer):
         while (len(new_states) < self.sequences_batch_size) and i < len(new_seqs):
             new_fitness, new_seq = new_seqs[i]
             if new_seq not in all_measured_seqs:
-                new_state = one_hot_to_string(new_seq, self.alphabet)
+                new_state = string_to_one_hot(new_seq, self.alphabet)
                 if new_fitness >= self.best_fitness:
                     self.top_sequence.append((new_fitness, new_state, self.model.cost))
                     self.best_fitness = new_fitness

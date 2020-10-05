@@ -1,7 +1,7 @@
 Welcome to FLEXS's documentation!
 =================================
 
-.. mdinclude:: ../../README.md
+.. mdinclude:: README.md
 
 API Documentation
 =================

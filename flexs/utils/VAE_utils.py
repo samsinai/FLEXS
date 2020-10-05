@@ -6,8 +6,8 @@ import scipy.special
 import tensorflow as tf
 from tensorflow import keras
 
-from flexs.utils import sequence_utils as s_utils
 from flexs.types import SEQUENCES_TYPE
+from flexs.utils import sequence_utils as s_utils
 
 
 class Sampling(keras.layers.Layer):

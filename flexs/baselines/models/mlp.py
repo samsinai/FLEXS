@@ -1,11 +1,12 @@
+"""Define a baseline multilayer perceptron model."""
 import tensorflow as tf
-
-import flexs
 
 from . import keras_model
 
 
 class MLP(keras_model.KerasModel):
+    """A baseline MLP with three dense layers and relu activations."""
+
     def __init__(
         self,
         seq_len,
@@ -16,6 +17,7 @@ class MLP(keras_model.KerasModel):
         batch_size=256,
         epochs=20,
     ):
+        """Create an MLP."""
         model = tf.keras.models.Sequential(
             [
                 tf.keras.layers.Flatten(),

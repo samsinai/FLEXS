@@ -1,8 +1,9 @@
 """CbAS and DbAS explorers."""
 import random
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 
 import flexs
 from flexs.utils import sequence_utils as s_utils
@@ -35,11 +36,13 @@ class CbAS(flexs.Explorer):
 
         Args:
             generator: VAE generator.
-            algo (either cbas or dbas): Selects either CbAS or DbAS as main algorithm.
+            algo (either 'cbas' or 'dbas'): Selects either CbAS or DbAS as the main
+                algorithm.
             Q: Percentile used as fitness threshold.
             max_cycles_per_batch: Maximum number of cycles for which the generator
                 will propose and train on sequences.
             mutation_rate: Probability of mutation per residue.
+
         """
         name = f"{algo}_Q={Q}_generator={generator.name}"
         super().__init__(
@@ -80,9 +83,10 @@ class CbAS(flexs.Explorer):
 
         return np.array(samples), np.array(weights)
 
-    def propose_sequences(self, measured_sequences_data):
+    def propose_sequences(
+        self, measured_sequences_data: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         last_round_sequences = measured_sequences_data[
             measured_sequences_data["round"] == measured_sequences_data["round"].max()
         ]

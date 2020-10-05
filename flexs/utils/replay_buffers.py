@@ -21,7 +21,7 @@ class SegmentTree:
 
     def __init__(self, capacity: int, operation: Callable, init_value: float):
         """
-        Initialization.
+        Initialize SegmentTree.
 
         Args:
             capacity (int)
@@ -86,7 +86,7 @@ class SumSegmentTree(SegmentTree):
     """
 
     def __init__(self, capacity: int):
-        """Initialization.
+        """Initialize SumSegmentTree.
 
         Args:
             capacity (int)
@@ -125,7 +125,7 @@ class MinSegmentTree(SegmentTree):
     """
 
     def __init__(self, capacity: int):
-        """Initialization.
+        """Initialize MinSegmentTree.
         Args:
             capacity (int)
 
@@ -193,7 +193,7 @@ class PrioritizedReplayBuffer(ReplayBuffer):
     def __init__(
         self, obs_dim: int, size: int, batch_size: int = 32, alpha: float = 0.6
     ):
-        """Initialization."""
+        """Initialize PrioritizedReplayBuffer."""
         assert alpha >= 0
 
         super(PrioritizedReplayBuffer, self).__init__(obs_dim, size, batch_size)

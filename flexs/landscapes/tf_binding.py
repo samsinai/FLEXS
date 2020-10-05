@@ -47,12 +47,15 @@ class TFBinding(flexs.Landscape):
 def registry() -> Dict[str, Dict]:
     """
     Return a dictionary of problems of the form:
-    ```{
+
+    ```python
+    {
         "problem name": {
             "params": ...,
         },
         ...
-    }```
+    }
+    ```
 
     where `flexs.landscapes.TFBinding(**problem["params"])` instantiates the
     transcription factor binding landscape for the given set of parameters.

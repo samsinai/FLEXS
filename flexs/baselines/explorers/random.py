@@ -42,6 +42,7 @@ class Random(flexs.Explorer):
                 `sequences_batch_size` sequences without taking model score into
                 account (true random search).
             seed: Integer seed for random number generator.
+
         """
         name = f"Random_mu={mu}"
 
@@ -63,7 +64,6 @@ class Random(flexs.Explorer):
         self, measured_sequences: pd.DataFrame
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         old_sequences = measured_sequences["sequence"]
         old_sequence_set = set(old_sequences)
         new_seqs = set()

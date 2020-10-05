@@ -1,23 +1,28 @@
-import numpy as np
+"""Define a global epistasis model."""
 import tensorflow as tf
-
-import flexs
-from flexs.utils import sequence_utils as s_utils
 
 from . import keras_model
 
 
 class GlobalEpistasisModel(keras_model.KerasModel):
+    """
+    Global epistasis model.
+
+    Weighted sum of input features follow by several dense layers.
+    A simple, but relatively uneffective nonlinear model.
+    """
+
     def __init__(
         self,
-        seq_len,
-        hidden_size,
-        alphabet,
+        seq_len: int,
+        hidden_size: int,
+        alphabet: int,
         loss="MSE",
-        name=None,
-        batch_size=256,
-        epochs=20,
+        name: str = None,
+        batch_size: int = 256,
+        epochs: int = 20,
     ):
+        """Create a global epistasis model."""
         model = tf.keras.models.Sequential(
             [
                 tf.keras.layers.Flatten(),

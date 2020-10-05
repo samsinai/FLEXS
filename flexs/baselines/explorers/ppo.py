@@ -1,7 +1,7 @@
 """PPO explorer."""
 
 from functools import partial
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,6 +19,17 @@ from flexs.utils.sequence_utils import one_hot_to_string
 
 
 class PPO(flexs.Explorer):
+    """
+    Explorer which uses PPO.
+
+    The algorithm is:
+        for N experiment rounds
+            collect samples with policy
+            train policy on samples
+
+    A simpler baseline than DyNAPPOMutative with similar performance.
+    """
+
     def __init__(
         self,
         model: flexs.Model,
@@ -29,14 +40,7 @@ class PPO(flexs.Explorer):
         alphabet: str,
         log_file: Optional[str] = None,
     ):
-        """Explorer which uses PPO.
-
-        The algorithm is:
-            for N experiment rounds
-                collect samples with policy
-                train policy on samples
-        """
-
+        """Create PPO explorer."""
         super().__init__(
             model,
             "PPO_Agent",
@@ -111,9 +115,10 @@ class PPO(flexs.Explorer):
                     [seq for seq, _ in new_seqs.items()]
                 )
 
-    def propose_sequences(self, measured_sequences_data: pd.DataFrame):
+    def propose_sequences(
+        self, measured_sequences_data: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
-
         num_parallel_environments = 1
         replay_buffer_capacity = 10001
         replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(

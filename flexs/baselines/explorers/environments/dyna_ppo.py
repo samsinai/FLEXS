@@ -21,7 +21,8 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         landscape: flexs.Landscape,
         batch_size: int,
     ):
-        """Initialize DyNA-PPO agent environment.
+        """
+        Initialize DyNA-PPO agent environment.
 
         Based on this tutorial:
         https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
@@ -38,8 +39,8 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
             get_fitness_ensemble: Ensemble model fitness function.
             give_oracle_reward: Whether or not to give reward based
                 on oracle or on ensemble model.
-        """
 
+        """
         self.alphabet = alphabet
         self._batch_size = batch_size
 
@@ -86,10 +87,12 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         )
 
     def batched(self):
+        """Tf-agents function that says that this env returns batches of timesteps."""
         return True
 
     @property
     def batch_size(self):
+        """Tf-agents property that return env batch size."""
         return self._batch_size
 
     def time_step_spec(self):
@@ -115,6 +118,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
         return dens
 
     def get_cached_fitness(self, seq):
+        """Get cached sequence fitness computed in previous episodes."""
         return self.all_seqs[seq]
 
     def set_fitness_model_to_gt(self, fitness_model_is_gt):
@@ -164,10 +168,12 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
 
 class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disable=W0223
-    """DyNA-PPO environment based on TF-Agents.
+    """
+    DyNA-PPO environment based on TF-Agents.
 
     Note that unlike the other DynaPPO environment, this one is mutative rather than
-    constructive."""
+    constructive.
+    """
 
     def __init__(  # pylint: disable=W0231
         self,
@@ -177,7 +183,8 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
         landscape: flexs.Landscape,
         max_num_steps: int,
     ):
-        """Initialize DyNA-PPO agent environment.
+        """
+        Initialize DyNA-PPO agent environment.
 
         Based on this tutorial:
         https://www.mikulskibartosz.name/how-to-create-an-environment-for-a-tensorflow-agent
@@ -191,8 +198,8 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
             max_num_steps: Maximum number of steps before
                 episode is forced to terminate. Usually the
                 `model_queries_per_batch`.
+
         """
-        # alphabet
         self.alphabet = alphabet
 
         # model/model/measurements
@@ -284,7 +291,6 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
         The agent moves until the reward is decreasing. The number of sequences that
         can be evaluated at each episode is capped to `self.max_num_steps`.
         """
-
         # if we've exceeded the maximum number of steps, terminate
         if self.num_steps >= self.max_num_steps:
             return ts.termination(self._state, 0)
