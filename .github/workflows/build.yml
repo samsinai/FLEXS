@@ -32,7 +32,7 @@ jobs:
       run: $CONDA/bin/conda install -c conda-forge flake8 flake8-docstrings flake8-black pytest
 
     - name: Lint with flake8, pydocstyle, and black
-      run: $CONDA/bin/flake8 flexs --exit-zero
+      run: $CONDA/bin/flake8 flexs
 
     - name: Test with pytest
-      run: $CONDA/bin/pytest tests
+      run: $CONDA/bin/pytest tests --verbose
