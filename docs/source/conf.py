@@ -46,7 +46,8 @@ extensions = [
 ]
 autosummary_generate = True
 source_suffix = [".rst", ".md"]
-nbsphinx_execute = "never"
+autodoc_typehints = "signature"
+napoleon_use_param = True
 autosectionlabel_prefix_document = True
 
 # [source] button on a class/module takes user to that files source code on github
@@ -74,7 +75,7 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
-html_logo = "../../logo.png"
+html_logo = "LOGO.png"
 html_favicon = "favicon.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,

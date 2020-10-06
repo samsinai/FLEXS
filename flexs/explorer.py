@@ -83,8 +83,8 @@ class Explorer(abc.ABC):
             "true_score", "model_score", and "round".
 
         Returns:
-            (np.ndarray(string), np.ndarray(float)): A tuple containing the proposed
-            sequences and their scores (according to the model).
+            A tuple containing the proposed sequences and their scores
+                (according to the model).
 
         """
         pass
