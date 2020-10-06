@@ -38,7 +38,7 @@ imagesize==1.2.0
 importlib-metadata==2.0.0
 iniconfig==1.0.1
 isort==5.5.4
-Jinja2==2.7.3
+Jinja2
 jmespath==0.10.0
 joblib==0.17.0
 jsonschema==2.4.0
