@@ -109,7 +109,7 @@ class Explorer(abc.ABC):
         if verbose:
             print(
                 f"round: {current_round}, top: {sequences_data['true_score'].max()}, "
-                "time: {time.time() - round_start_time:02f}s"
+                f"time: {time.time() - round_start_time:02f}s"
             )
 
     def run(

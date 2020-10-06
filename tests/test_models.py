@@ -44,7 +44,7 @@ def test_adaptive_ensemble():
     models = [FakeModel(name="FakeModel") for _ in range(2)]
     ens = baselines.models.AdaptiveEnsemble(models)
 
-    ens.train(["ATC"]*15, list(range(15)))
+    ens.train(["ATC"] * 15, list(range(15)))
 
     print(ens.weights)
     assert np.any(ens.weights != np.ones(len(models)) / len(models))
