@@ -33,12 +33,8 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 the sequence which is initially mutated.
             model: Landscape or model which evaluates
                 each sequence.
-            max_num_steps: Maximum number of steps before
-                episode is forced to terminate. Usually the
-                `model_queries_per_batch`.
-            get_fitness_ensemble: Ensemble model fitness function.
-            give_oracle_reward: Whether or not to give reward based
-                on oracle or on ensemble model.
+            landscape: True fitness landscape.
+            batch_size: Number of epsisodes to batch together and run in parallel.
 
         """
         self.alphabet = alphabet

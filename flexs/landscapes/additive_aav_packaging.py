@@ -29,6 +29,10 @@ class AdditiveAAVPackaging(flexs.Landscape):
     and the fitness of the sequence is the sum of these individual fitnesses. This means
     that the fitness contribution per residue is independent of the identities of the
     other residues. This makes for a very simple landscape.
+
+    Attributes:
+        wild_type (str): AAV2 wild_type substring between positions `start` and `end`.
+
     """
 
     def __init__(

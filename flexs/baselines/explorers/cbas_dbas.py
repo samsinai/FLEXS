@@ -23,8 +23,8 @@ class CbAS(flexs.Explorer):
         model_queries_per_batch: int,
         alphabet: str,
         algo: str = "cbas",
-        Q: float = 0.9,
-        max_cycles_per_batch: int = 30,
+        Q: float = 0.7,
+        cycle_batch_size: int = 30,
         mutation_rate: float = 0.2,
         log_file: Optional[str] = None,
     ):
@@ -39,8 +39,7 @@ class CbAS(flexs.Explorer):
             algo (either 'cbas' or 'dbas'): Selects either CbAS or DbAS as the main
                 algorithm.
             Q: Percentile used as fitness threshold.
-            max_cycles_per_batch: Maximum number of cycles for which the generator
-                will propose and train on sequences.
+            cycle_batch_size: Number of sequences to propose per cycle.
             mutation_rate: Probability of mutation per residue.
 
         """
@@ -62,7 +61,7 @@ class CbAS(flexs.Explorer):
         self.generator = generator
         self.alphabet = alphabet
         self.Q = Q  # percentile used as the fitness threshold
-        self.max_cycles_per_batch = max_cycles_per_batch
+        self.cycle_batch_size = cycle_batch_size
         self.mutation_rate = mutation_rate
 
     def _extend_samples(self, samples, weights):
@@ -87,8 +86,25 @@ class CbAS(flexs.Explorer):
         self, measured_sequences_data: pd.DataFrame
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
+        # If we are on the first round, our model has no data yet, so the
+        # best policy is to propose random sequences in a small neighborhood.
+        last_round = measured_sequences_data["round"].max()
+        if last_round == 0:
+            sequences = set()
+            while len(sequences) < self.sequences_batch_size:
+                sequences.add(
+                    s_utils.generate_random_mutant(
+                        self.starting_sequence,
+                        2 / len(self.starting_sequence),
+                        self.alphabet,
+                    )
+                )
+
+            sequences = np.array(list(sequences))
+            return sequences, self.model.get_fitness(sequences)
+
         last_round_sequences = measured_sequences_data[
-            measured_sequences_data["round"] == measured_sequences_data["round"].max()
+            measured_sequences_data["round"] == last_round
         ]
 
         # gamma is our threshold (the self.Q-th percentile of sequences from last round)
@@ -127,22 +143,17 @@ class CbAS(flexs.Explorer):
         generator_0.vae.set_weights(original_weights)
         vae_0 = generator_0.vae
 
-        count = 0  # total count of proposed sequences
-
         sequences = {}
-        current_cycle = 0
-        while current_cycle < self.max_cycles_per_batch and (
-            count < self.model_queries_per_batch
-        ):
+        previous_model_cost = self.model.cost
+        while self.model.cost - previous_model_cost < self.model_queries_per_batch:
             # generate new samples using the generator (second argument is a list of all
             # existing measured and proposed seqs)
             proposals = []
             proposals = self.generator.generate(
-                self.sequences_batch_size,
+                self.cycle_batch_size,
                 all_samples_and_weights[0],
                 all_samples_and_weights[1],
             )
-            count += len(proposals)
 
             # calculate the scores of the new samples using the model
             scores = self.model.get_fitness(proposals)

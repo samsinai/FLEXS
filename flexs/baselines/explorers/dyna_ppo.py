@@ -171,6 +171,7 @@ class DynaPPO(flexs.Explorer):
             num_experiment_rounds: Number of experiment-based rounds to run. This is by
                 default set to 10, the same number of sequence proposal of rounds run.
             num_model_rounds: Number of model-based rounds to run.
+            env_batch_size: Number of epsisodes to batch together and run in parallel.
 
         """
         tf.config.run_functions_eagerly(False)
