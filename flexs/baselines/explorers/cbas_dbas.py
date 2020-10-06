@@ -24,7 +24,7 @@ class CbAS(flexs.Explorer):
         alphabet: str,
         algo: str = "cbas",
         Q: float = 0.7,
-        cycle_batch_size: int = 30,
+        cycle_batch_size: int = 100,
         mutation_rate: float = 0.2,
         log_file: Optional[str] = None,
     ):
@@ -154,6 +154,7 @@ class CbAS(flexs.Explorer):
                 all_samples_and_weights[0],
                 all_samples_and_weights[1],
             )
+            print(self.model.cost - previous_model_cost, len(proposals))
 
             # calculate the scores of the new samples using the model
             scores = self.model.get_fitness(proposals)
