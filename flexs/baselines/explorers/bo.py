@@ -4,6 +4,10 @@ from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from skopt import Optimizer
+from skopt import gp_minimize
+from skopt.space import Real, Integer
+from skopt.utils import use_named_args
 
 import flexs
 from flexs.utils.replay_buffers import PrioritizedReplayBuffer
@@ -12,6 +16,8 @@ from flexs.utils.sequence_utils import (
     generate_random_sequences,
     one_hot_to_string,
     string_to_one_hot,
+    enumerate_to_string,
+    string_to_enumerate 
 )
 
 
@@ -408,3 +414,92 @@ class GPR_BO(flexs.Explorer):
         print("Current best fitness:", self.best_fitness)
 
         return list(samples), new_fitnesses
+
+
+class BO_Standard(flexs.Explorer):
+    """Explorer using Bayesian Optimization based upon implementations in standard libraries. 
+
+    Scikit-Optimize: https://scikit-optimize.github.io/
+    SMAC: https://www.automl.org/automated-algorithm-design/algorithm-configuration/smac/
+    """
+
+    def __init__(
+        self,
+        model,
+        rounds,
+        sequences_batch_size,
+        model_queries_per_batch,
+        starting_sequence,
+        alphabet,
+        log_file=None,
+        seq_proposal_method="EI",
+        library="skopt"
+    ):
+        """Initialize the explorer."""
+        name = f"GPR_BO_Explorer-seq_proposal_method={seq_proposal_method}"
+        super().__init__(
+            model,
+            name,
+            rounds,
+            sequences_batch_size,
+            model_queries_per_batch,
+            starting_sequence,
+            log_file,
+        )
+        self.alphabet = alphabet
+        self.alphabet_len = len(alphabet)
+        self.seq_proposal_method = seq_proposal_method
+        self.best_fitness = 0
+        self.top_sequence = []
+        self.num_actions = 0
+
+        self.seq_len = len(starting_sequence)
+        self.maxima = None
+        self.library = library 
+
+    def propose_sequences_skopt(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        '''
+        Propose sequences using gp_minimize from skopt. 
+        '''
+        space = [Integer(0, self.alphabet_len-1) for _ in range(self.seq_len)]
+        opt = Optimizer(space, random_state=0)
+        if self.num_actions == 0:
+            # train on starting sequence on first iteration 
+            enumerated_starting_seq = string_to_enumerate(self.starting_sequence, self.alphabet).tolist()
+            opt.tell(enumerated_starting_seq, -self.model.get_fitness([self.starting_sequence])[0])
+        # train optimizer on previous measured sequences, if available 
+        for [seq, true_score] in measured_sequences[["sequence", "true_score"]].values:
+            enumerated_seq = string_to_enumerate(seq, self.alphabet).tolist()
+            opt.tell(enumerated_seq, -true_score)
+        # exploration routine 
+        samples = set()
+        preds = []
+        prev_cost = self.model.cost
+        all_measured_seqs = set(measured_sequences["sequence"].tolist())
+        while self.model.cost - prev_cost < self.model_queries_per_batch:
+            next_seq_enumerated = opt.ask()
+            next_seq = enumerate_to_string(next_seq_enumerated, self.alphabet)
+            fitness_pred = self.model.get_fitness([next_seq])[0]
+            opt.tell(next_seq_enumerated, -fitness_pred)
+            all_measured_seqs.add(next_seq)
+            samples.add(next_seq)
+            preds.append(fitness_pred)
+            self.num_actions += 1 
+        if len(samples) < self.sequences_batch_size:
+            random_sequences = generate_random_sequences(
+                self.seq_len, self.sequences_batch_size - len(samples), self.alphabet
+            )
+            samples.update(random_sequences)
+            preds.extend(self.model.get_fitness(random_sequences))
+        samples = list(samples)
+
+        return samples, preds
+
+    def propose_sequences(
+        self, measured_sequences: pd.DataFrame
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Propose `batch_size` samples."""
+        if self.library == 'skopt':
+            return self.propose_sequences_skopt(measured_sequences)

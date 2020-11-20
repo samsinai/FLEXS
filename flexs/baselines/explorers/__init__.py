@@ -1,7 +1,7 @@
 """FLEXS `explorers` module"""
 from flexs.baselines.explorers import environments  # noqa: F401
 from flexs.baselines.explorers.adalead import Adalead  # noqa: F401
-from flexs.baselines.explorers.bo import BO, GPR_BO  # noqa: F401
+from flexs.baselines.explorers.bo import BO, GPR_BO, BO_Standard  # noqa: F401
 from flexs.baselines.explorers.cbas_dbas import VAE, CbAS  # noqa: F401
 from flexs.baselines.explorers.cmaes import CMAES  # noqa: F401
 from flexs.baselines.explorers.dqn import DQN  # noqa: F401

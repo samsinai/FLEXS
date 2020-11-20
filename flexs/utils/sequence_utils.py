@@ -66,6 +66,16 @@ def one_hot_to_string(
     return "".join([alphabet[idx] for idx in residue_idxs])
 
 
+def enumerate_to_string(
+    enumerated: Union[List[List[int]], np.ndarray], alphabet: str
+) -> np.ndarray:
+    return "".join([alphabet[idx] for idx in enumerated])
+
+
+def string_to_enumerate(sequence: str, alphabet: str) -> np.ndarray:
+    return np.array([alphabet.find(char) for char in sequence])
+    
+
 def generate_single_mutants(wt: str, alphabet: str) -> List[str]:
     """Generate all single mutants of `wt`."""
     sequences = [wt]
