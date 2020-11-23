@@ -468,7 +468,7 @@ class BO_Standard(flexs.Explorer):
         if self.num_actions == 0:
             # train on starting sequence on first iteration 
             enumerated_starting_seq = string_to_enumerate(self.starting_sequence, self.alphabet).tolist()
-            opt.tell(enumerated_starting_seq, -self.model.get_fitness([self.starting_sequence])[0])
+            opt.tell(enumerated_starting_seq, -self.model.get_fitness([self.starting_sequence])[0][0])
         # train optimizer on previous measured sequences, if available 
         for [seq, true_score] in measured_sequences[["sequence", "true_score"]].values:
             enumerated_seq = string_to_enumerate(seq, self.alphabet).tolist()
@@ -481,7 +481,7 @@ class BO_Standard(flexs.Explorer):
         while self.model.cost - prev_cost < self.model_queries_per_batch:
             next_seq_enumerated = opt.ask()
             next_seq = enumerate_to_string(next_seq_enumerated, self.alphabet)
-            fitness_pred = self.model.get_fitness([next_seq])[0]
+            fitness_pred = self.model.get_fitness([next_seq])[0][0]
             opt.tell(next_seq_enumerated, -fitness_pred)
             all_measured_seqs.add(next_seq)
             samples.add(next_seq)
