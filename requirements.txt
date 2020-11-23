@@ -24,7 +24,6 @@ editdistance==0.5.3
 flake8==3.8.4
 flake8-black==0.2.1
 flake8-docstrings==1.5.0
--e git+https://github.com/samsinai/FLEXS.git@2e4a5a18234fed6d0f401cab45ef424ac9737632#egg=flexs
 future==0.18.2
 gast==0.3.3
 gin-config==0.3.0
@@ -79,6 +78,7 @@ requests-oauthlib==1.3.0
 rsa==4.6
 s3transfer==0.3.3
 scikit-learn==0.23.2
+scikit-optimize==0.8.1
 scipy==1.5.2
 setuptools==49.6.0
 six==1.15.0
