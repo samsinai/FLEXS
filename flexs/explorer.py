@@ -166,7 +166,6 @@ class Explorer(abc.ABC):
                 warnings.warn(
                     "Must propose <= `self.sequences_batch_size` sequences per round"
                 )
-
             sequences_data = sequences_data.append(
                 pd.DataFrame(
                     {

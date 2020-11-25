@@ -483,16 +483,19 @@ class BO_Standard(flexs.Explorer):
             next_seq = enumerate_to_string(next_seq_enumerated, self.alphabet)
             fitness_pred = self.model.get_fitness([next_seq])[0][0]
             opt.tell(next_seq_enumerated, -fitness_pred)
-            all_measured_seqs.add(next_seq)
-            samples.add(next_seq)
-            preds.append(fitness_pred)
+            if next_seq not in samples:
+                all_measured_seqs.add(next_seq)
+                samples.add(next_seq)
+                preds.append(fitness_pred)
             self.num_actions += 1 
-        if len(samples) < self.sequences_batch_size:
+        print(len(samples), self.sequences_batch_size)
+        while len(samples) < self.sequences_batch_size:
             random_sequences = generate_random_sequences(
                 self.seq_len, self.sequences_batch_size - len(samples), self.alphabet
             )
-            samples.update(random_sequences)
-            preds.extend(self.model.get_fitness(random_sequences))
+            new_seqs = list(set(random_sequences).difference(samples))
+            samples.update(new_seqs)
+            preds.extend(self.model.get_fitness(new_seqs))
         samples = list(samples)
 
         return samples, preds

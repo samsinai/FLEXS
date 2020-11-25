@@ -6,7 +6,7 @@ from flexs import baselines
 from flexs.utils import sequence_utils as s_utils
 
 sequences_batch_size = 100
-model_queries_per_batch = 2000
+model_queries_per_batch = 100
 
 
 def run_bo(landscape, wt, problem_name, start_num):
