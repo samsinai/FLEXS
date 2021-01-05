@@ -219,9 +219,10 @@ class DynaPPO(flexs.Explorer):
             self.tf_env.observation_spec(), fc_layer_params=[128]
         )
 
+        print(self.tf_env.action_spec())
         self.agent = ppo_agent.PPOAgent(
-            self.tf_env.time_step_spec(),
-            self.tf_env.action_spec(),
+            time_step_spec=self.tf_env.time_step_spec(),
+            action_spec=self.tf_env.action_spec(),
             optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5),
             actor_net=actor_net,
             value_net=value_net,
