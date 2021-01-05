@@ -27,6 +27,8 @@ $ conda install pyrosetta  # Set up RosettaCommons conda channel first (http://w
 ```
 Note that PyRosetta requires a commercial license if not being used for academic purposes. 
 
+IMPORTANT: ViennaRNA seems to have issues with Python 3.8, so try to run in a Python 3.5>=, <=3.7 environment.
+
 If contributing or running paper code/experiments, we recommend that you install the dependencies for the sandbox in a conda virtual environment. You can update an existing conda environment with `conda env update --name {name} --file environment.yml` or initialize a new one with `conda env create -f environment.yml`. Then install the local version of `flexs` with `pip install -e .` in the root directory.
 
 
