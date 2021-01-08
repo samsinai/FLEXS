@@ -65,9 +65,7 @@ class DynaPPOEnsemble(flexs.Model):
                     sklearn.linear_model.Lasso(), alphabet, "lasso"
                 ),
                 baselines.models.SklearnRegressor(
-                    sklearn.linear_model.BayesianRidge(),
-                    alphabet,
-                    "bayesian_ridge",
+                    sklearn.linear_model.BayesianRidge(), alphabet, "bayesian_ridge",
                 ),
                 baselines.models.SklearnRegressor(
                     sklearn.gaussian_process.GaussianProcessRegressor(),
@@ -179,10 +177,7 @@ class DynaPPO(flexs.Explorer):
         name = f"DynaPPO_Agent_{num_experiment_rounds}_{num_model_rounds}"
 
         if model is None:
-            model = DynaPPOEnsemble(
-                len(starting_sequence),
-                alphabet,
-            )
+            model = DynaPPOEnsemble(len(starting_sequence), alphabet,)
             # Some models in the ensemble need to be trained on dummy dataset before
             # they can predict
             model.train(
@@ -359,10 +354,7 @@ class DynaPPOMutative(flexs.Explorer):
         name = f"DynaPPO_Agent_{num_experiment_rounds}_{num_model_rounds}"
 
         if model is None:
-            model = DynaPPOEnsemble(
-                len(starting_sequence),
-                alphabet,
-            )
+            model = DynaPPOEnsemble(len(starting_sequence), alphabet,)
             model.train(
                 s_utils.generate_random_sequences(len(starting_sequence), 10, alphabet),
                 [0] * 10,

@@ -232,7 +232,9 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
                 minimum=0,
                 maximum=1,
             ),
-            "fitness": array_spec.BoundedArraySpec(shape=(1,), minimum=0, maximum=1, dtype=np.float32),
+            "fitness": array_spec.BoundedArraySpec(
+                shape=(1,), minimum=0, maximum=1, dtype=np.float32
+            ),
         }
 
         self.num_steps = 0

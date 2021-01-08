@@ -1,4 +1,4 @@
-![FLEX](LOGO.png)
+![FLEXS Logo](LOGO.png)
 
 [![build status](https://github.com/samsinai/FLEXS/workflows/build/badge.svg)](https://github.com/samsinai/FLEXS/actions) [![Documentation Status](https://readthedocs.org/projects/flexs/badge/?version=latest)](https://flexs.readthedocs.io/en/latest/?badge=latest) [![PyPI package](https://img.shields.io/pypi/v/flexs)](https://pypi.org/project/flexs/)
 

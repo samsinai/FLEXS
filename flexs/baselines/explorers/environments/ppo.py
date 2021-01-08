@@ -13,11 +13,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """PPO environment based on TF-Agents."""
 
     def __init__(
-        self,
-        alphabet: str,
-        starting_seq: str,
-        model: flexs.Model,
-        max_num_steps: int,
+        self, alphabet: str, starting_seq: str, model: flexs.Model, max_num_steps: int,
     ):  # pylint: disable=W0231
         """
         Initialize PPO agent environment.
@@ -66,7 +62,9 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 minimum=0,
                 maximum=1,
             ),
-            "fitness": array_spec.BoundedArraySpec(shape=(1,), minimum=1, maximum=1, dtype=np.float32),
+            "fitness": array_spec.BoundedArraySpec(
+                shape=(1,), minimum=1, maximum=1, dtype=np.float32
+            ),
         }
         self._time_step_spec = ts.time_step_spec(self._observation_spec)
 

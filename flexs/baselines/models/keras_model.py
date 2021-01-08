@@ -74,4 +74,6 @@ class KerasModel(flexs.Model):
             dtype=tf.float32,
         )
 
-        return self.model.predict(one_hots, batch_size=self.batch_size).squeeze(axis=1)
+        return np.nan_to_num(
+            self.model.predict(one_hots, batch_size=self.batch_size).squeeze(axis=1)
+        )
