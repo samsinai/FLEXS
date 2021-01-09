@@ -97,18 +97,6 @@ def test_dynappo():
     explorer.run(fakeLandscape)
 
 
-def test_ppo():
-    explorer = baselines.explorers.PPO(
-        model=fakeModel,
-        rounds=3,
-        sequences_batch_size=1,
-        model_queries_per_batch=20,
-        starting_sequence=starting_sequence,
-        alphabet="ATCG",
-    )
-    explorer.run(fakeLandscape)
-
-
 def test_cmaes():
     explorer = baselines.explorers.CMAES(
         fakeModel,
