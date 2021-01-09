@@ -28,6 +28,8 @@ class BertGFPBrightness(flexs.Landscape):
     Attributes:
         gfp_wt_sequence (str): Wild-type sequence for jellyfish
             green fluorescence protein.
+        starts (dict): A dictionary of starting sequences at different edit distances
+            from wild-type with different difficulties of optimization.
 
     """
 
