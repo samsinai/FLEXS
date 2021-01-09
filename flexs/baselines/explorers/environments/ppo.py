@@ -13,7 +13,11 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
     """PPO environment based on TF-Agents."""
 
     def __init__(
-        self, alphabet: str, starting_seq: str, model: flexs.Model, max_num_steps: int,
+        self,
+        alphabet: str,
+        starting_seq: str,
+        model: flexs.Model,
+        max_num_steps: int,
     ):  # pylint: disable=W0231
         """
         Initialize PPO agent environment.

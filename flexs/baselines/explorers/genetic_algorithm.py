@@ -105,7 +105,8 @@ class GeneticAlgorithm(flexs.Explorer):
 
         # Create initial population by choosing parents from `measured_sequences`
         initial_pop_inds = self._choose_parents(
-            measured_sequences["true_score"].to_numpy(), self.population_size,
+            measured_sequences["true_score"].to_numpy(),
+            self.population_size,
         )
         pop = measured_sequences["sequence"].to_numpy()[initial_pop_inds]
         scores = measured_sequences["true_score"].to_numpy()[initial_pop_inds]

@@ -63,12 +63,16 @@ def test_keras_models():
     cnn.get_fitness(["ATC"])
 
     gem = baselines.models.GlobalEpistasisModel(
-        seq_len=3, hidden_size=1, alphabet=flexs.utils.sequence_utils.DNAA,
+        seq_len=3,
+        hidden_size=1,
+        alphabet=flexs.utils.sequence_utils.DNAA,
     )
     gem.get_fitness(["ATC"])
 
     mlp = baselines.models.MLP(
-        seq_len=3, hidden_size=1, alphabet=flexs.utils.sequence_utils.DNAA,
+        seq_len=3,
+        hidden_size=1,
+        alphabet=flexs.utils.sequence_utils.DNAA,
     )
     mlp.get_fitness(["ATC"])
 
@@ -102,7 +106,9 @@ def test_sklearn_models():
         baselines.models.RandomForest,
     ]
     for model in sklearn_models:
-        m = model(alphabet=flexs.utils.sequence_utils.DNAA,)
+        m = model(
+            alphabet=flexs.utils.sequence_utils.DNAA,
+        )
         with pytest.raises(sklearn.exceptions.NotFittedError):
             m.get_fitness(["ATC"])
         m.train(["ATC", "ATG"], [1, 2])

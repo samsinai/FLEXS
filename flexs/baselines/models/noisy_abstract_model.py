@@ -20,7 +20,9 @@ class NoisyAbstractModel(flexs.Model):
     """
 
     def __init__(
-        self, landscape: flexs.Landscape, signal_strength: float = 0.9,
+        self,
+        landscape: flexs.Landscape,
+        signal_strength: float = 0.9,
     ):
         """
         Create a noisy abstract model.

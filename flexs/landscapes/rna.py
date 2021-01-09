@@ -31,7 +31,10 @@ class RNABinding(flexs.Landscape):
     """RNA binding landscape using ViennaRNA `duplexfold`."""
 
     def __init__(
-        self, targets: List[str], seq_length: int, conserved_region: Dict = None,
+        self,
+        targets: List[str],
+        seq_length: int,
+        conserved_region: Dict = None,
     ):
         """
         Create an RNABinding landscape.
