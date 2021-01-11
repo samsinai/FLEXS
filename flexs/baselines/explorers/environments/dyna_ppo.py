@@ -59,7 +59,7 @@ class DynaPPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
         # tf_agents environment
         self._action_spec = array_spec.BoundedArraySpec(
-            shape=(1,),
+            shape=(),
             dtype=np.integer,
             minimum=0,
             maximum=len(self.alphabet) - 1,
@@ -219,7 +219,7 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
 
         # tf_agents environment
         self._action_spec = array_spec.BoundedArraySpec(
-            shape=(1,),
+            shape=(),
             dtype=np.integer,
             minimum=0,
             maximum=len(self.seq) * len(self.alphabet) - 1,
@@ -232,7 +232,9 @@ class DynaPPOEnvironmentMutative(py_environment.PyEnvironment):  # pylint: disab
                 minimum=0,
                 maximum=1,
             ),
-            "fitness": array_spec.ArraySpec(shape=(1,), dtype=np.float32),
+            "fitness": array_spec.BoundedArraySpec(
+                shape=(1,), minimum=0, maximum=1, dtype=np.float32
+            ),
         }
 
         self.num_steps = 0

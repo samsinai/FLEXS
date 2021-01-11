@@ -14,6 +14,7 @@ class CNN(keras_model.KerasModel):
         hidden_size: int,
         alphabet: str,
         loss="MSE",
+        kernel_size: int = 5,
         name: str = None,
         batch_size: int = 256,
         epochs: int = 20,
@@ -23,13 +24,18 @@ class CNN(keras_model.KerasModel):
             [
                 tf.keras.layers.Conv1D(
                     num_filters,
-                    len(alphabet) - 1,
+                    kernel_size,
                     padding="valid",
+                    activation="relu",
                     strides=1,
                     input_shape=(seq_len, len(alphabet)),
                 ),
                 tf.keras.layers.Conv1D(
-                    num_filters, 20, padding="same", activation="relu", strides=1
+                    num_filters,
+                    kernel_size,
+                    padding="same",
+                    activation="relu",
+                    strides=1,
                 ),
                 tf.keras.layers.MaxPooling1D(1),
                 tf.keras.layers.Conv1D(

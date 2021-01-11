@@ -28,6 +28,8 @@ class BertGFPBrightness(flexs.Landscape):
     Attributes:
         gfp_wt_sequence (str): Wild-type sequence for jellyfish
             green fluorescence protein.
+        starts (dict): A dictionary of starting sequences at different edit distances
+            from wild-type with different difficulties of optimization.
 
     """
 
@@ -37,6 +39,12 @@ class BertGFPBrightness(flexs.Landscape):
         "LKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNT"
         "PIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK"
     )
+
+    starts = {
+        "ed_10_wt": "MSKGEVLFTGVVPILVEMDGDVNGHKFSVSGEGEGDATYGKLTTKFTCTTGKLPVPWPTKVTTLSYRVQCFSRYPDVMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVQFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNIKRDCMVLLEFVTAAGITHGMDELYK",  # noqa: E501
+        "ed_18_wt": "MSKGEHLFTGVVPILVELDGDVNGKKFSVSGEGQGDATYGKLTLKFICTTAKVHVPWCTLVTTLSYGVQCFSRYPDHMKQHDFFKGAMPEGYVQERTIFFKDIGNYKLRAEVKFEGDTLVNRIELKGIDFKEDGNIHGHKLEYNYNSQNVYIMASKQKNGIKVNFKIRLNIEDGSVQLAEHYQVNTPIGDFPVLLPDNHKLSAQSADSKDPNEKRDHMHLLEFVTAVGITHGMDELYK",  # noqa: E501
+        "ed_31_wt": "MSKGEELFSGVQPILVELDGCVNGHKFSVSGEGEIDATYGKLTLKFICTTWKLPMPWPCLVTFGSYGVQCFSRYRDHPKQHDFFKSAVPEGYVQERTIFMKDDLLYKTRAEVKFEGLTLVNRIELKGKDFKEDGNILGHKLEYNYNSHCVYPMADWNKNWIKVNSKIRLPIEDGSVILADHYQQNTPIGDQPVLLPENHYLSTQSALSKDPEEKGDLMVLLEFVTAAGITHGMDELYK",  # noqa: E501
+    }
 
     def __init__(self):
         """
@@ -73,9 +81,16 @@ class BertGFPBrightness(flexs.Landscape):
 
     def _fitness_function(self, sequences):
         sequences = np.array(sequences)
+        scores = []
 
-        encoded_seqs = torch.tensor(
-            [self.tokenizer.encode(seq) for seq in sequences]
-        ).to(self.device)
+        # Score sequences in batches of size 32
+        for subset in np.array_split(sequences, max(1, len(sequences) // 32)):
+            encoded_seqs = torch.tensor(
+                [self.tokenizer.encode(seq) for seq in subset]
+            ).to(self.device)
 
-        return self.model(encoded_seqs)[0].detach().numpy().astype(float).reshape(-1)
+            scores.append(
+                self.model(encoded_seqs)[0].detach().numpy().astype(float).reshape(-1)
+            )
+
+        return np.concatenate(scores)

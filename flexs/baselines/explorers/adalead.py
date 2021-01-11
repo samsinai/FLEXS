@@ -18,7 +18,8 @@ class Adalead(flexs.Explorer):
             (1 - threshold) of the maximum fitness so far
         While we can still make model queries in this batch
             Recombine top sequences and append to parents
-            Rollout from parents and append to mutants
+            Rollout from parents and append to mutants.
+
     """
 
     def __init__(
@@ -44,7 +45,7 @@ class Adalead(flexs.Explorer):
                 (1-threshold)*f_max are retained as parents for generating next set of
                 sequences.
             rho: The expected number of recombination partners for each recombinant.
-            eval_batch_size: (For code optimization; size of batches sent to model.)
+            eval_batch_size: For code optimization; size of batches sent to model.
 
         """
         name = f"Adalead_mu={mu}_threshold={threshold}"
@@ -98,6 +99,7 @@ class Adalead(flexs.Explorer):
         """Propose top `sequences_batch_size` sequences for evaluation."""
         measured_sequence_set = set(measured_sequences["sequence"])
 
+        # Get all sequences within `self.threshold` percentile of the top_fitness
         top_fitness = measured_sequences["true_score"].max()
         top_inds = measured_sequences["true_score"] >= top_fitness * (
             1 - np.sign(top_fitness) * self.threshold
@@ -158,6 +160,12 @@ class Adalead(flexs.Explorer):
                     for idx, child, fitness in zip(child_idxs, children, fitnesses):
                         if fitness >= root_fitnesses[idx]:
                             nodes.append((idx, child))
+
+        if len(sequences) == 0:
+            raise ValueError(
+                "No sequences generated. If `model_queries_per_batch` is small, try "
+                "making `eval_batch_size` smaller"
+            )
 
         # We propose the top `self.sequences_batch_size` new sequences we have generated
         new_seqs = np.array(list(sequences.keys()))

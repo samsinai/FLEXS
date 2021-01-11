@@ -40,6 +40,7 @@ def test_adalead():
         rounds=3,
         sequences_batch_size=5,
         model_queries_per_batch=20,
+        eval_batch_size=1,
         starting_sequence=starting_sequence,
         alphabet="ATCG",
     )
@@ -92,18 +93,6 @@ def test_dynappo():
         alphabet="ATCG",
         num_experiment_rounds=1,
         num_model_rounds=1,
-    )
-    explorer.run(fakeLandscape)
-
-
-def test_ppo():
-    explorer = baselines.explorers.PPO(
-        model=fakeModel,
-        rounds=3,
-        sequences_batch_size=5,
-        model_queries_per_batch=20,
-        starting_sequence=starting_sequence,
-        alphabet="ATCG",
     )
     explorer.run(fakeLandscape)
 

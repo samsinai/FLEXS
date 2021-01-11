@@ -57,6 +57,7 @@ def test_keras_models():
         seq_len=3,
         num_filters=1,
         hidden_size=1,
+        kernel_size=2,
         alphabet=flexs.utils.sequence_utils.DNAA,
     )
     cnn.get_fitness(["ATC"])

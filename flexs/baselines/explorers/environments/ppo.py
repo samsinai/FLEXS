@@ -53,7 +53,7 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
 
         # tf_agents environment
         self._action_spec = array_spec.BoundedArraySpec(
-            shape=(1,),
+            shape=(),
             dtype=np.integer,
             minimum=0,
             maximum=len(self.seq) * len(self.alphabet) - 1,
@@ -66,8 +66,11 @@ class PPOEnvironment(py_environment.PyEnvironment):  # pylint: disable=W0223
                 minimum=0,
                 maximum=1,
             ),
-            "fitness": array_spec.ArraySpec(shape=(1,), dtype=np.float32),
+            "fitness": array_spec.BoundedArraySpec(
+                shape=(1,), minimum=1, maximum=1, dtype=np.float32
+            ),
         }
+        self._time_step_spec = ts.time_step_spec(self._observation_spec)
 
         self.num_steps = 0
         self.max_num_steps = max_num_steps
