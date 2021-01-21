@@ -5,7 +5,7 @@ with open("README.md") as f:
 
 setuptools.setup(
     name="flexs",
-    version="0.2.7",
+    version="0.2.8",
     description=(
         "FLEXS: an open simulation environment for developing and comparing "
         "model-guided biological sequence design algorithms."

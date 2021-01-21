@@ -72,22 +72,22 @@ def registry() -> Dict[str, Dict]:
 
         problems[problem_name] = {
             "params": {"landscape_file": os.path.join(tf_binding_data_dir, fname)},
-            "starts": [
-                "GCTCGAGC",
-                "GCGCGCGC",
-                "TGCGCGCC",
-                "ATATAGCC",
-                "GTTTGGTA",
-                "ATTATGTT",
-                "CAGTTTTT",
-                "AAAAATTT",
-                "AAAAACGC",
-                "GTTGTTTT",
-                "TGCTTTTT",
-                "AAAGATAG",
-                "CCTTCTTT",
-                "AAAGAGAG",
-            ],
+            "starts": {
+                1: "GCTCGAGC",
+                2: "GCGCGCGC",
+                3: "TGCGCGCC",
+                4: "ATATAGCC",
+                5: "GTTTGGTA",
+                6: "ATTATGTT",
+                7: "CAGTTTTT",
+                8: "AAAAATTT",
+                9: "AAAAACGC",
+                10: "GTTGTTTT",
+                11: "TGCTTTTT",
+                12: "AAAGATAG",
+                13: "CCTTCTTT",
+                14: "AAAGAGAG",
+            },
         }
 
     return problems
