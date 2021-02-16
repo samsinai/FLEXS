@@ -258,7 +258,7 @@ class MyExplorer(flexs.Explorer):
 ```
 
 #### DbAS and CbAS
-- [CbAS and DbAS](flexs/baselines/explorers/explorers/cbas_dbas.py)
+- [CbAS and DbAS](flexs/baselines/explorers/cbas_dbas.py)
 ```
 @article{brookes2019conditioning,
   title={Conditioning by adaptive sampling for robust design},
