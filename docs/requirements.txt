@@ -1,5 +1,5 @@
 absl-py==0.10.0
-aiohttp==3.6.2
+aiohttp==3.7.4
 alabaster==0.7.12
 ApiDoc==1.4.0
 appdirs==1.4.3
