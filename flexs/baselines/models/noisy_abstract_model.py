@@ -90,7 +90,7 @@ class NoisyAbstractModel(flexs.Model):
             else:
                 noise = np.random.choice(list(self.cache.values()))
 
-            alpha = self.ss ** distance
+            alpha = self.ss**distance
             new_fitnesses.append(alpha * signal + (1 - alpha) * noise)
 
         fitnesses[~cached] = new_fitnesses

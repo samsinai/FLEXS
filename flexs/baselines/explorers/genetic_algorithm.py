@@ -99,7 +99,7 @@ class GeneticAlgorithm(flexs.Explorer):
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Propose top `sequences_batch_size` sequences for evaluation."""
         # Set the torch seed by generating a random integer from the pre-seeded self.rng
-        torch.manual_seed(self.rng.integers(-(2 ** 31), 2 ** 31))
+        torch.manual_seed(self.rng.integers(-(2**31), 2**31))
 
         measured_sequence_set = set(measured_sequences["sequence"])
 
