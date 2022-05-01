@@ -212,8 +212,8 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         """Store experience and priority."""
         super().store(obs, act, rew, next_obs)
 
-        self.sum_tree[self.tree_ptr] = self.max_priority ** self.alpha
-        self.min_tree[self.tree_ptr] = self.max_priority ** self.alpha
+        self.sum_tree[self.tree_ptr] = self.max_priority**self.alpha
+        self.min_tree[self.tree_ptr] = self.max_priority**self.alpha
         self.tree_ptr = (self.tree_ptr + 1) % self.max_size
 
     def sample_batch(self, beta: float = 0.4) -> Dict[str, np.ndarray]:
@@ -246,8 +246,8 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             assert priority > 0
             assert 0 <= idx < len(self)
 
-            self.sum_tree[idx] = priority ** self.alpha
-            self.min_tree[idx] = priority ** self.alpha
+            self.sum_tree[idx] = priority**self.alpha
+            self.min_tree[idx] = priority**self.alpha
 
             self.max_priority = max(self.max_priority, priority)
 
