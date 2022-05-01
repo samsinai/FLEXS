@@ -154,7 +154,6 @@ class CbAS(flexs.Explorer):
                 all_samples_and_weights[0],
                 all_samples_and_weights[1],
             )
-            print(self.model.cost - previous_model_cost, len(proposals))
 
             # calculate the scores of the new samples using the model
             scores = self.model.get_fitness(proposals)
