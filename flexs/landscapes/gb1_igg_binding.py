@@ -8,7 +8,7 @@ import flexs
 from flexs.types import SEQUENCES_TYPE
 
 
-class GB1IgBinding(flexs.Landscape):
+class GB1IgGBinding(flexs.Landscape):
     """
     A landscape of fitnesses based on stability binding affinity of the 4-AA GB1 domain of Protein G to IgG-FC.
 
@@ -40,7 +40,7 @@ def registry() -> Dict[str, Dict]:
     }
     ```
 
-    where `flexs.landscapes.GB1IgBinding(**problem["params"])` instantiates the
+    where `flexs.landscapes.GB1IgGBinding(**problem["params"])` instantiates the
     GB1 landscape for the given set of parameters.
 
     Returns:
@@ -54,7 +54,7 @@ def registry() -> Dict[str, Dict]:
         "GB1_IgG_Binding": {
             "params": {"landscape_fpath": gb1_landscape_fpath},
             "starts": [
-                GB1IgBinding.gb1_domain_wt_sequence,
+                GB1IgGBinding.gb1_domain_wt_sequence,
             ],
         }
     }
