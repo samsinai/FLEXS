@@ -51,6 +51,7 @@ These oracles `g` are simulators that are assumed as ground truth, i.e. when que
 - *[AAV Additive Tropism](#additive-aav-tropism)*. A hypothesized noisy additive protein landscape based on tissue tropism of single mutant AAV2 capsid protein.   
 - *[GFP fluorescence](#gfp-fluorescence)*. Fluorescence of GFP protein as predicted by TAPE transformer model. 
 - *[Rosetta-based design](#rosetta-based-design)*. Rosetta-based design task for 3MSI anti-freeze protein. 
+- *[Protein GB1 Domain Stability and IgG Binding](#gb1-fitness). Fully characterized fitness landscape of four sites in Protein G's GB1 domain's impact on stability and IgG binding affinity.
 
 For all landscapes we also provide a fixed set of initial points with different degrees of previous optimization, so that the relative strength of algorithms when starting from locations near or far away from peaks can be evaluated. 
 
@@ -188,6 +189,22 @@ Additionally, we construct more complex landscapes by increasing the number of h
 }
 ```
 
+#### Protein G GB1 Domain Fitness Landscape
+Wu et al. experimentally characterized the full fitness landscape of 4 amino acids (`20^4 = 160,000` sequences) within Protein G's GB1 domain. For this landscape, fitness refers to the measured impact on relative-to-wild-type abundance post-selection for stability and IgG-FC binding as part of a deep mutational scan. Here, we use this fully characterized landscape to provide another benchmark task, analogous to the TF binding tasks, in which we know the full underlying landscape and can determine how well different methods can find both local and global peaks. Unlike the TF binding task however, this landscape was partly designed to have significant pairwise epistasis between positions and therefore can allow us to test how well methods handle epistatic landscapes.
+
+We provide the wild type sequence as a starting point. 
+
+```
+@article{wu2016adaptation,
+  title={Adaptation in protein fitness landscapes is facilitated by indirect paths},
+  author={Wu, Nicholas C and Dai, Lei and Olson, C Anders and Lloyd-Smith, James O and Sun, Ren},
+  journal={Elife},
+  volume={5},
+  pages={e16965},
+  year={2016},
+  publisher={eLife Sciences Publications Limited}
+}
+```
 
 ### Noisy Oracles
 
