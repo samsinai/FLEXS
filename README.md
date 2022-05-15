@@ -29,7 +29,7 @@ Note that PyRosetta requires a commercial license if not being used for academic
 
 IMPORTANT: ViennaRNA seems to have issues with Python 3.8, so try to run in a Python 3.5>=, <=3.7 environment.
 
-If contributing or running paper code/experiments, we recommend that you install the dependencies for the sandbox in a conda virtual environment. You can initialize a new Python 3.7 environement with `conda env create --name {env_name} python=3.7`. Then install the local version of `flexs` with `pip install -e .` in the root directory.
+If contributing or running paper code/experiments, we recommend that you install the dependencies for the sandbox in a conda virtual environment. You can initialize a new Python 3.7 environement with `conda create --name {env_name} python=3.7`. Then install the local version of `flexs` with `pip install -e .` in the root directory.
 
 
 ## Overview
