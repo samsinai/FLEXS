@@ -1,3 +1,4 @@
+"""Define GB1IgGBinding landscape and problem registry."""
 import os
 from typing import Dict
 
