@@ -1,9 +1,11 @@
 import os
+from typing import Dict
 
 import numpy as np
 import pandas as pd
 
 import flexs
+from flexs.types import SEQUENCES_TYPE
 
 
 class GB1IgBinding(flexs.Landscape):
@@ -17,10 +19,9 @@ class GB1IgBinding(flexs.Landscape):
     gb1_domain_wt_sequence = "VDGV"
 
     def __init__(self, landscape_fpath: str):
-        super().__init__(name="GB1_Ig_Binding")
+        super().__init__(name="GB1_IgG_Binding")
         data = pd.read_csv(landscape_fpath)
-        score = data["Fitness"]
-        self.sequences = dict(zip(data["Variants"], score))
+        self.sequences = dict(zip(data["sequence"], data["fitness"]))
 
     def _fitness_function(self, sequences: SEQUENCES_TYPE) -> np.ndarray:
         return np.array([self.sequences[seq] for seq in sequences])
@@ -50,7 +51,7 @@ def registry() -> Dict[str, Dict]:
         os.path.dirname(__file__), "data/gb1_igg_binding", "full_landscape.csv"
     )
     return {
-        "GB1_Ig_Binding": {
+        "GB1_IgG_Binding": {
             "params": {"landscape_fpath": gb1_landscape_fpath},
             "starts": [
                 GB1IgBinding.gb1_domain_wt_sequence,
