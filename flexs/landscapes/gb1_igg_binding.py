@@ -10,15 +10,19 @@ from flexs.types import SEQUENCES_TYPE
 
 class GB1IgGBinding(flexs.Landscape):
     """
-    A landscape of fitnesses based on stability binding affinity of the 4-AA GB1 domain of Protein G to IgG-FC.
+    Protein G GB1 domain fitness landscape for 4-AA sequences.
 
-    We use experimental data from Wu et al. which can be downloaded in its original form here:
+    This landscape maps 4 AA fragments to fitnesses based on their measured
+    ability to stabilize and bind IgG-FC. This uses experimental data from Wu
+    et al. which can be downloaded in its original form here:
+
         https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4985287/
     """
 
     gb1_domain_wt_sequence = "VDGV"
 
     def __init__(self, landscape_fpath: str):
+        """Initialize the landscape."""
         super().__init__(name="GB1_IgG_Binding")
         data = pd.read_csv(landscape_fpath)
         self.sequences = dict(zip(data["sequence"], data["fitness"]))
