@@ -40,7 +40,7 @@ iniconfig==1.0.1
 isort==5.5.4
 Jinja2
 jmespath==0.10.0
-joblib==0.17.0
+joblib==1.2.0
 jsonschema==2.4.0
 Keras-Preprocessing==1.1.2
 lmdb==1.0.0
